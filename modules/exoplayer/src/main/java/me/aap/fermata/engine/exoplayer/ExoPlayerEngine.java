@@ -77,8 +77,14 @@ public class ExoPlayerEngine extends MediaEngineBase implements Player.Listener 
 	private static final DataSource.Factory httpDsFactory;
 
 	static {
-		CronetEngine cre = CronetUtil.buildCronetEngine(FermataApplication.get(),
-				"Fermata/" + BuildConfig.VERSION_NAME, true);
+		CronetEngine cre;
+		try {
+			cre = CronetUtil.buildCronetEngine(FermataApplication.get(),
+					"Fermata/" + BuildConfig.VERSION_NAME, true);
+		} catch (Throwable ex) {
+			Log.e(ex, "Failed to build Cronet engine, falling back to DefaultHttpDataSource");
+			cre = null;
+		}
 		if (cre != null) {
 			httpDsFactory = new CronetDataSource.Factory(cre, Executors.newSingleThreadExecutor());
 		} else {

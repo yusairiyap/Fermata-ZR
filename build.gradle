@@ -98,6 +98,12 @@ subprojects {
             resValues = true
         }
 
+        packagingOptions {
+            resources {
+                excludes += ['META-INF/*.version']
+            }
+        }
+
         compileOptions {
             sourceCompatibility = JavaVersion.VERSION_17
             targetCompatibility = JavaVersion.VERSION_17
@@ -122,8 +128,10 @@ subprojects {
     configurations.configureEach {
         resolutionStrategy {
             preferProjectModules()
+            force "androidx.fragment:fragment:${libs.versions.androidxFragment.get()}"
             eachDependency { details ->
-                if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
+                if ('com.google.guava'.equals(details.requested.group) &&
+                        'guava'.equals(details.requested.name)) {
                     details.useVersion GUAVA_VERSION
                 }
             }
