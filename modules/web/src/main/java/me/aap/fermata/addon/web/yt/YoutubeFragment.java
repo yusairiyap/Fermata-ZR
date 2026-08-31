@@ -260,18 +260,19 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 
 		MainActivityDelegate a = MainActivityDelegate.get(requireContext());
 		DefaultMediaLib lib = (DefaultMediaLib) a.getLib();
+		MediaLib.Favorites favorites = lib.getFavorites();
 		YoutubeVideoItem item = new YoutubeVideoItem(videoId, addon.getRootItem(lib));
 
 		if (item.isFavoriteItem()) {
 			b.addItem(me.aap.fermata.R.id.favorites_remove, me.aap.fermata.R.drawable.favorite_filled,
 					me.aap.fermata.R.string.favorites_remove).setHandler(i -> {
-				lib.getFavorites().removeItem(item);
+				favorites.removeItem(item);
 				return true;
 			});
 		} else {
 			b.addItem(me.aap.fermata.R.id.favorites_add, me.aap.fermata.R.drawable.favorite,
 					me.aap.fermata.R.string.favorites_add).setHandler(i -> {
-				lib.getFavorites().addItem(item);
+				favorites.addItem(item);
 				return true;
 			});
 		}

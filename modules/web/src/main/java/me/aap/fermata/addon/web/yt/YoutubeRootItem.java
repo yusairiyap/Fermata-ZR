@@ -27,7 +27,8 @@ class YoutubeRootItem extends ExtRoot {
 
 	@Override
 	protected FutureSupplier<List<Item>> listChildren() {
-		FutureSupplier<List<Item>> children = getLib().getFavorites().getUnsortedChildren();
+		me.aap.fermata.media.lib.MediaLib.Favorites favorites = getLib().getFavorites();
+		FutureSupplier<List<Item>> children = favorites.getUnsortedChildren();
 		return children.map(list -> {
 			List<Item> yt = new ArrayList<>();
 			for (Item i : list) {
