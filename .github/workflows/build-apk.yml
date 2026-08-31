@@ -63,9 +63,8 @@ jobs:
 
           owner="$(sanitize_package_segment "$BRANCH_OWNER")"
           branch="$(sanitize_package_segment "$BRANCH_NAME")"
-          sha="$(git rev-parse --short HEAD)"
 
-          [ -v APP_NAME ] || echo "APP_NAME=Fermata Auto (${BRANCH_OWNER}-${sha})" >> "$GITHUB_ENV"
+          [ -v APP_NAME ] || echo "APP_NAME=Fermata ZR" >> "$GITHUB_ENV"
           [ -v APP_ID_SFX ] || echo "APP_ID_SFX=.${owner}" >> "$GITHUB_ENV"
           [ -v ARTIFACT_SFX ] || echo "ARTIFACT_SFX=-${owner}-${branch}" >> "$GITHUB_ENV"
 

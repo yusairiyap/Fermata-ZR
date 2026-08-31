@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name_mobile_release" translatable="false">Fermata</string>
-    <string name="app_name_auto_release" translatable="false">Fermata Auto</string>
+    <string name="app_name_auto_release" translatable="false">Fermata ZR</string>
     <string name="app_name_mobile_debug" translatable="false">Debug Fermata</string>
-    <string name="app_name_auto_debug" translatable="false">Debug Fermata Auto</string>
+    <string name="app_name_auto_debug" translatable="false">Debug Fermata ZR</string>
     <string name="mirror_service_name_release" translatable="false">Fermata Mirror</string>
     <string name="mirror_service_name_debug" translatable="false">Debug Fermata Mirror</string>
     <string name="mirror_fs_service_name_release" translatable="false">FS Fermata Mirror</string>
