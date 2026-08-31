@@ -309,7 +309,8 @@ public class ToolBarView extends ConstraintLayout implements ActivityListener,
 		}
 
 		default void setButtonPadding(View v) {
-			int pad = toIntPx(v.getContext(), 6);
+			float scale = ActivityDelegate.get(v.getContext()).getToolBarSize();
+			int pad = toIntPx(v.getContext(), Math.round(6 * scale));
 			v.setPadding(pad, pad, pad, pad);
 		}
 

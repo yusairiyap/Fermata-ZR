@@ -1,13 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!--Material You dynamic color theme. Standard M3 color role attrs (colorPrimary,
-    colorSurface, colorSurfaceVariant, colorOutline, colorTertiary, etc.) are left unset here so
-    that com.google.android.material.color.DynamicColors can inject the device wallpaper's
-    palette into them at runtime (API 31+); on older devices they fall back to the M3 base
-    theme's default baseline palette. The app's own legacy attrs are mapped onto those roles so
-    every screen follows the dynamic palette consistently.-->
+    <!--Material You dynamic color theme. Every M3 color role below has a static, high-contrast
+    fallback (reusing the Dark theme's palette) so the theme looks correct wherever
+    com.google.android.material.color.DynamicColors can't inject the device wallpaper's palette
+    at runtime, e.g. API &lt;31 devices, or the Android Auto mirrored car Activity, which never
+    calls DynamicColors.applyToActivityIfAvailable since it isn't the phone's own MainActivity.
+    On a supporting phone Activity, DynamicColors' theme overlay still overrides these same role
+    attrs unconditionally with the wallpaper palette, so the static fallback below never blocks
+    the actual dynamic look, it only guarantees a sane, readable theme everywhere else. The
+    app's own legacy attrs are mapped onto these roles so every screen follows along.-->
     <style name="AppTheme.Dynamic" parent="AppTheme">
+
+        <!-- Static fallback palette (reused from AppTheme.Dark) -->
+        <item name="colorPrimary">#1C1B1F</item>
+        <item name="colorOnPrimary">#4E6AA2</item>
+        <item name="colorSecondary">#0F1012</item>
+        <item name="colorOnSecondary">#4E6AA2</item>
+        <item name="colorSurface">#1C1B1F</item>
+        <item name="colorOnSurface">#4E6AA2</item>
+        <item name="colorSurfaceVariant">#1C1B1F</item>
+        <item name="colorOnSurfaceVariant">#4E6AA2</item>
+        <item name="colorOutline">#4E6AA2</item>
+        <item name="colorTertiary">#A11477</item>
+        <item name="colorOnTertiary">#FFFFFF</item>
+        <item name="colorError">#FFB4AB</item>
+        <item name="colorOnError">#690005</item>
+        <item name="colorErrorContainer">#93000A</item>
+        <item name="colorOnErrorContainer">#FFDAD6</item>
+
+        <!-- Legacy app attrs, mapped onto the roles above so they follow the dynamic palette too -->
         <item name="android:colorBackground">?attr/colorSurface</item>
         <item name="colorPrimaryDark">?attr/colorPrimary</item>
         <item name="colorPrimarySurface">?attr/colorSurfaceVariant</item>

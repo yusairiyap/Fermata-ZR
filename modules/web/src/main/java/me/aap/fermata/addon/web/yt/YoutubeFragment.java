@@ -2,6 +2,7 @@ package me.aap.fermata.addon.web.yt;
 
 import static me.aap.fermata.addon.web.FermataWebClient.isYoutubeUri;
 import static me.aap.utils.async.Completed.completed;
+import static me.aap.utils.async.Completed.completedVoid;
 
 import android.net.Uri;
 import android.os.Bundle;
@@ -33,11 +34,14 @@ import me.aap.fermata.media.service.FermataServiceUiBinder;
 import me.aap.fermata.media.service.MediaSessionCallback;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
 import me.aap.fermata.ui.view.VideoView;
+import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.function.LongSupplier;
 import me.aap.utils.pref.PreferenceStore;
 import me.aap.utils.pref.PreferenceStore.Pref;
 import me.aap.utils.pref.SharedPreferenceStore;
+import me.aap.utils.ui.UiUtils;
 import me.aap.utils.ui.menu.OverlayMenu;
+import me.aap.utils.ui.menu.OverlayMenuItem;
 import me.aap.utils.ui.view.ToolBarView;
 
 /**
@@ -248,37 +252,125 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 	public void contributeToNavBarMenu(OverlayMenu.Builder b) {
 		super.contributeToNavBarMenu(b);
 
-		String videoId = getCurrentVideoId();
-		if (videoId == null) return;
-
-		YoutubeAddon addon = (YoutubeAddon) getAddon();
-		FermataWebView v = getWebView();
-		if ((addon == null) || (v == null)) return;
-
-		String title = v.getTitle();
-		addon.cacheVideoTitle(videoId, ((title == null) || title.isEmpty()) ? videoId : title);
-
 		MainActivityDelegate a = MainActivityDelegate.get(requireContext());
 		DefaultMediaLib lib = (DefaultMediaLib) a.getLib();
 		MediaLib.Favorites favorites = lib.getFavorites();
-		YoutubeVideoItem item = new YoutubeVideoItem(videoId, addon.getRootItem(lib));
+		YoutubeVideoItem current = getCurrentVideoItem(lib);
 
-		if (item.isFavoriteItem()) {
-			b.addItem(me.aap.fermata.R.id.favorites_remove, me.aap.fermata.R.drawable.favorite_filled,
-					me.aap.fermata.R.string.favorites_remove).setHandler(i -> {
-				favorites.removeItem(item);
-				return true;
-			});
-		} else {
-			b.addItem(me.aap.fermata.R.id.favorites_add, me.aap.fermata.R.drawable.favorite,
-					me.aap.fermata.R.string.favorites_add).setHandler(i -> {
-				favorites.addItem(item);
-				return true;
-			});
+		boolean isFav = (current != null) && current.isFavoriteItem();
+		b.addItem(me.aap.fermata.R.id.favorites,
+				isFav ? me.aap.fermata.R.drawable.favorite_filled : me.aap.fermata.R.drawable.favorite,
+				me.aap.fermata.R.string.favorites)
+				.setFutureSubmenu(sb -> favoritesMenu(sb, favorites, current));
+
+		b.addItem(me.aap.fermata.R.id.playlists, me.aap.fermata.R.drawable.playlist,
+				me.aap.fermata.R.string.playlists)
+				.setFutureSubmenu(sb -> playlistsMenu(sb, lib, current));
+	}
+
+	@Nullable
+	private YoutubeVideoItem getCurrentVideoItem(DefaultMediaLib lib) {
+		String videoId = getCurrentVideoId();
+		if (videoId == null) return null;
+
+		YoutubeAddon addon = (YoutubeAddon) getAddon();
+		FermataWebView v = getWebView();
+		if ((addon == null) || (v == null)) return null;
+
+		String title = v.getTitle();
+		addon.cacheVideoTitle(videoId, ((title == null) || title.isEmpty()) ? videoId : title);
+		return new YoutubeVideoItem(videoId, addon.getRootItem(lib));
+	}
+
+	private FutureSupplier<Void> favoritesMenu(OverlayMenu.Builder b, MediaLib.Favorites favorites,
+																							@Nullable YoutubeVideoItem current) {
+		if (current != null) {
+			if (current.isFavoriteItem()) {
+				b.addItem(me.aap.fermata.R.id.favorites_remove, me.aap.fermata.R.drawable.favorite_filled,
+						me.aap.fermata.R.string.favorites_remove).setHandler(i -> {
+					favorites.removeItem(current);
+					return true;
+				});
+			} else {
+				b.addItem(me.aap.fermata.R.id.favorites_add, me.aap.fermata.R.drawable.favorite,
+						me.aap.fermata.R.string.favorites_add).setHandler(i -> {
+					favorites.addItem(current);
+					return true;
+				});
+			}
 		}
 
-		List<MediaLib.PlayableItem> selection = Collections.singletonList(item);
-		a.addPlaylistMenu(b, completed(selection));
+		return favorites.getUnsortedChildren().main().then(list -> {
+			int i = 0;
+			for (MediaLib.Item it : list) {
+				if (it instanceof MediaLib.ExternallyPlayableItem) {
+					b.addItem(UiUtils.getArrayItemId(i++), it.getName()).setData(it)
+							.setHandler(item -> favoriteItemSelected(item, favorites));
+				}
+			}
+			return completedVoid();
+		});
+	}
+
+	private boolean favoriteItemSelected(OverlayMenuItem item, MediaLib.Favorites favorites) {
+		MediaLib.Item it = item.getData();
+		if (item.isLongClick()) {
+			item.getMenu().show(sb -> sb.addItem(me.aap.fermata.R.id.favorites_remove,
+					me.aap.fermata.R.string.favorites_remove).setHandler(i -> {
+				favorites.removeItem((MediaLib.PlayableItem) it);
+				return true;
+			}));
+		} else if (it instanceof MediaLib.ExternallyPlayableItem ext) {
+			ext.loadInFragment(this);
+		}
+		return true;
+	}
+
+	private FutureSupplier<Void> playlistsMenu(OverlayMenu.Builder b, DefaultMediaLib lib,
+																							@Nullable YoutubeVideoItem current) {
+		if (current != null) {
+			List<MediaLib.PlayableItem> selection = Collections.singletonList(current);
+			MainActivityDelegate.get(requireContext()).addPlaylistMenu(b, completed(selection));
+		}
+
+		return lib.getPlaylists().getUnsortedChildren().main().then(list -> {
+			int i = 0;
+			for (MediaLib.Item it : list) {
+				if (it instanceof MediaLib.Playlist pl) {
+					b.addItem(UiUtils.getArrayItemId(i++), it.getName())
+							.setFutureSubmenu(sb -> playlistItemsMenu(sb, pl));
+				}
+			}
+			return completedVoid();
+		});
+	}
+
+	private FutureSupplier<Void> playlistItemsMenu(OverlayMenu.Builder b, MediaLib.Playlist playlist) {
+		return playlist.getUnsortedChildren().main().then(list -> {
+			for (int i = 0; i < list.size(); i++) {
+				MediaLib.Item it = list.get(i);
+				if (it instanceof MediaLib.ExternallyPlayableItem) {
+					int idx = i;
+					b.addItem(UiUtils.getArrayItemId(i), it.getName()).setData(it)
+							.setHandler(item -> playlistItemSelected(item, playlist, idx));
+				}
+			}
+			return completedVoid();
+		});
+	}
+
+	private boolean playlistItemSelected(OverlayMenuItem item, MediaLib.Playlist playlist, int idx) {
+		MediaLib.Item it = item.getData();
+		if (item.isLongClick()) {
+			item.getMenu().show(sb -> sb.addItem(me.aap.fermata.R.id.playlist_remove_item,
+					me.aap.fermata.R.string.playlist_remove_item).setHandler(i -> {
+				playlist.removeItem(idx);
+				return true;
+			}));
+		} else if (it instanceof MediaLib.ExternallyPlayableItem ext) {
+			ext.loadInFragment(this);
+		}
+		return true;
 	}
 
 	@Override
