@@ -580,6 +580,11 @@ public class MainActivityDelegate extends ActivityDelegate
 		return getPrefs().getTextIconSizePref(this);
 	}
 
+	@Override
+	public float getIconSize() {
+		return getPrefs().getIconSizePref(this);
+	}
+
 	public boolean isBarsHidden() {
 		return barsHidden;
 	}
@@ -1053,6 +1058,9 @@ public class MainActivityDelegate extends ActivityDelegate
 			if (navBar != null) navBar.setSize(getPrefs().getNavBarSizePref(this));
 		} else if (MainActivityPrefs.hasToolBarSizePref(this, prefs)) {
 			if (toolBar != null) toolBar.setSize(getPrefs().getToolBarSizePref(this));
+		} else if (MainActivityPrefs.hasIconSizePref(this, prefs)) {
+			if (navBar != null) navBar.setIconScale(getPrefs().getIconSizePref(this));
+			if (toolBar != null) toolBar.setIconScale(getPrefs().getIconSizePref(this));
 		} else if (MainActivityPrefs.hasFullscreenPref(this, prefs)) {
 			setSystemUiVisibility();
 		} else if (prefs.contains(CHANGE_BRIGHTNESS)) {

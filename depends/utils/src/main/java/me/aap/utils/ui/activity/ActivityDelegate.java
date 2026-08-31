@@ -342,6 +342,10 @@ public abstract class ActivityDelegate implements EventBroadcaster<ActivityListe
 		return 1F;
 	}
 
+	public float getIconSize() {
+		return 1F;
+	}
+
 	public int getActiveFragmentId() {
 		return activeFragmentId;
 	}

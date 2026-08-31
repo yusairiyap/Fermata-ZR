@@ -16,7 +16,7 @@
         <!-- List/Media items -->
         <item name="colorSecondary">?android:colorBackground</item>
         <item name="colorOnSecondary">?colorOnPrimary</item>
-        <item name="android:textColorSecondary">#030E26</item>
+        <item name="android:textColorSecondary">#FFFFFF</item>
         <item name="boxStrokeColor">#445D8F</item>
 
         <!-- Active media item -->

@@ -39,7 +39,7 @@
 
         <!-- Material 3 roles -->
         <item name="colorSurfaceVariant">#27394A</item>
-        <item name="colorOnSurfaceVariant">#095381</item>
+        <item name="colorOnSurfaceVariant">#bec2c8</item>
         <item name="colorOutline">#4B78AF</item>
         <item name="colorError">#FFB4AB</item>
         <item name="colorOnError">#690005</item>

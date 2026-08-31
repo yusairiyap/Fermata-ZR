@@ -87,6 +87,12 @@ public class NavButtonView extends LinearLayoutCompat {
 		getIcon().setImageDrawable(icon);
 	}
 
+	public void setIconScale(float scale) {
+		ImageView icon = getIcon();
+		icon.setScaleX(scale);
+		icon.setScaleY(scale);
+	}
+
 	public void setText(CharSequence text) {
 		TextView t = getText();
 		if (t != null) t.setText(text);

@@ -75,6 +75,7 @@
     <string name="tool_bar_size">Tool bar size</string>
     <string name="control_panel_size">Control panel size</string>
     <string name="text_icon_size">Text and icons size</string>
+    <string name="icon_size">Icon size</string>
     <string name="subtitles_size">Subtitles text size</string>
 
     <string name="key_bindings">Key bindings</string>

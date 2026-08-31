@@ -107,6 +107,13 @@ public class NavBarView extends LinearLayoutCompat implements ActivityListener {
 		setLayoutParams(lp);
 	}
 
+	public void setIconScale(float scale) {
+		for (int i = 0, n = getChildCount(); i < n; i++) {
+			View v = getChildAt(i);
+			if (v instanceof NavButtonView) ((NavButtonView) v).setIconScale(scale);
+		}
+	}
+
 	public boolean isBottom() {
 		return getPosition() == POSITION_BOTTOM;
 	}
@@ -145,6 +152,7 @@ public class NavBarView extends LinearLayoutCompat implements ActivityListener {
 			setSize(scale);
 		}
 
+		setIconScale(f.getActivityDelegate().getIconSize());
 		return true;
 	}
 

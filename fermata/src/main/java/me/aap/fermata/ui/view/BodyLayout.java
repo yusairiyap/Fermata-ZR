@@ -177,7 +177,7 @@ public class BodyLayout extends SplitLayout
 		startingPlayback.cancel();
 		MainActivityDelegate a = getActivity();
 
-		if (i.isVideo() && !getVideoView().isSurfaceCreated() &&
+		if (i.isVideo() && !i.isExternal() && !getVideoView().isSurfaceCreated() &&
 				!a.getMediaSessionCallback().hasCustomEngineProvider()) {
 			setMode(BodyLayout.Mode.VIDEO);
 			getVideoView().onSurfaceCreated(() -> playItem(i));

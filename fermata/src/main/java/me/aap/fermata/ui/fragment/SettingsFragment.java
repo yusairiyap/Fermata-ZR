@@ -309,7 +309,9 @@ public class SettingsFragment extends MainActivityFragment
 			}
 			addInterface(a, sub1, MainActivityPrefs.THEME_MAIN, MainActivityPrefs.HIDE_BARS,
 					MainActivityPrefs.FULLSCREEN, MainActivityPrefs.SHOW_PG_UP_DOWN, null,
-					MainActivityPrefs.NAV_BAR_POS, MainActivityPrefs.TEXT_ICON_SIZE);
+					MainActivityPrefs.NAV_BAR_POS, MainActivityPrefs.NAV_BAR_SIZE,
+					MainActivityPrefs.TOOL_BAR_SIZE, MainActivityPrefs.CONTROL_PANEL_SIZE,
+					MainActivityPrefs.TEXT_ICON_SIZE, MainActivityPrefs.ICON_SIZE);
 		}
 
 		sub1.addBooleanPref(o -> {
@@ -672,14 +674,18 @@ public class SettingsFragment extends MainActivityFragment
 			addInterface(a, ps, MainActivityPrefs.THEME_AA, MainActivityPrefs.HIDE_BARS_AA,
 					MainActivityPrefs.FULLSCREEN_AA, MainActivityPrefs.SHOW_PG_UP_DOWN_AA,
 					MainActivityPrefs.USE_DPAD_CURSOR, MainActivityPrefs.NAV_BAR_POS_AA,
-					MainActivityPrefs.TEXT_ICON_SIZE_AA);
+					MainActivityPrefs.NAV_BAR_SIZE_AA, MainActivityPrefs.TOOL_BAR_SIZE_AA,
+					MainActivityPrefs.CONTROL_PANEL_SIZE_AA, MainActivityPrefs.TEXT_ICON_SIZE_AA,
+					MainActivityPrefs.ICON_SIZE_AA);
 		}
 	}
 
 	private void addInterface(MainActivityDelegate a, PreferenceSet ps, Pref<IntSupplier> theme,
 														Pref<BooleanSupplier> hideBars, Pref<BooleanSupplier> fullScreen,
 														Pref<BooleanSupplier> pgUpDown, Pref<BooleanSupplier> dpadCursor,
-														Pref<IntSupplier> nbPos, Pref<DoubleSupplier> textIconSize) {
+														Pref<IntSupplier> nbPos, Pref<DoubleSupplier> nbSize,
+														Pref<DoubleSupplier> tbSize, Pref<DoubleSupplier> cpSize,
+														Pref<DoubleSupplier> textIconSize, Pref<DoubleSupplier> iconSize) {
 		ps.addListPref(o -> {
 			o.store = a.getPrefs();
 			o.pref = theme;
@@ -724,8 +730,40 @@ public class SettingsFragment extends MainActivityFragment
 		});
 		ps.addFloatPref(o -> {
 			o.store = a.getPrefs();
+			o.pref = nbSize;
+			o.title = R.string.nav_bar_size;
+			o.scale = 0.05f;
+			o.seekMin = 10;
+			o.seekMax = 40;
+		});
+		ps.addFloatPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = tbSize;
+			o.title = R.string.tool_bar_size;
+			o.scale = 0.05f;
+			o.seekMin = 10;
+			o.seekMax = 40;
+		});
+		ps.addFloatPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = cpSize;
+			o.title = R.string.control_panel_size;
+			o.scale = 0.05f;
+			o.seekMin = 10;
+			o.seekMax = 40;
+		});
+		ps.addFloatPref(o -> {
+			o.store = a.getPrefs();
 			o.pref = textIconSize;
 			o.title = R.string.text_icon_size;
+			o.scale = 0.05f;
+			o.seekMin = 10;
+			o.seekMax = 40;
+		});
+		ps.addFloatPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = iconSize;
+			o.title = R.string.icon_size;
 			o.scale = 0.05f;
 			o.seekMin = 10;
 			o.seekMax = 40;
