@@ -30,7 +30,7 @@
         <item name="android:textColor">@color/media_item_text_color</item>
         <item name="tint">@color/media_item_tint</item>
         <item name="indicatorColor">@color/media_item_tint</item>
-        <item name="elevation">1dp</item>
+        <item name="elevation">3dp</item>
     </style>
 
     <style name="AppTheme.ControlPanelStyle">

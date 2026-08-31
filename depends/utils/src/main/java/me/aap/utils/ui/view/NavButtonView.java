@@ -47,7 +47,7 @@ public class NavButtonView extends LinearLayoutCompat {
 		ImageView img = new AppCompatImageView(ctx);
 		boolean bottom = (navBar.getPosition() == POSITION_BOTTOM);
 		LayoutParams lp = new LayoutParams(MATCH_PARENT, MATCH_PARENT);
-		pad = toIntPx(ctx, 2);
+		pad = toIntPx(ctx, 8);
 		img.setPadding(0, pad, 0, pad);
 		lp.weight = 1;
 		lp.gravity = Gravity.CENTER;

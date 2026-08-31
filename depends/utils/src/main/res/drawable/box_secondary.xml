@@ -12,9 +12,6 @@
     <item android:id="@android:id/background">
         <shape>
             <solid android:color="?attr/colorSurfaceVariant" />
-            <stroke
-                android:width="?attr/boxStrokeWidth"
-                android:color="@color/box_stroke_color" />
             <corners android:radius="12dp" />
         </shape>
     </item>

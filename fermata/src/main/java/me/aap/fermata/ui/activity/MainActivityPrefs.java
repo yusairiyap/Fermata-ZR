@@ -43,9 +43,7 @@ public interface MainActivityPrefs
 	Pref<BooleanSupplier> SHOW_PG_UP_DOWN = Pref.b("SHOW_PG_UP_DOWN", true);
 	Pref<BooleanSupplier> USE_DPAD_CURSOR = AUTO ? Pref.b("USE_DPAD_CURSOR", true) : null;
 	Pref<IntSupplier> NAV_BAR_POS = Pref.i("NAV_BAR_POS", NavBarView.POSITION_BOTTOM);
-	Pref<DoubleSupplier> NAV_BAR_SIZE = Pref.f("NAV_BAR_SIZE", 1f);
-	Pref<DoubleSupplier> TOOL_BAR_SIZE = Pref.f("TOOL_BAR_SIZE", 1f);
-	Pref<DoubleSupplier> CONTROL_PANEL_SIZE = Pref.f("CONTROL_PANEL_SIZE", 1f);
+	// Shared "Icon size" slider for the nav bar, toolbar, control panel, and media grid/list icons.
 	Pref<DoubleSupplier> TEXT_ICON_SIZE = Pref.f("TEXT_ICON_SIZE", 1f);
 	Pref<BooleanSupplier> GRID_VIEW = Pref.b("GRID_VIEW", false);
 	Pref<DoubleSupplier> P_SPLIT_PERCENT = Pref.f("P_SPLIT_PERCENT", 0.6f);
@@ -74,10 +72,8 @@ public interface MainActivityPrefs
 	Pref<BooleanSupplier> SHOW_PG_UP_DOWN_AA = AUTO ? Pref.b("SHOW_PG_UP_DOWN_AA", true) : null;
 	Pref<IntSupplier> NAV_BAR_POS_AA =
 			AUTO ? Pref.i("NAV_BAR_POS_AA", NavBarView.POSITION_BOTTOM) : null;
-	Pref<DoubleSupplier> NAV_BAR_SIZE_AA = AUTO ? Pref.f("NAV_BAR_SIZE_AA", 1.1f) : null;
-	Pref<DoubleSupplier> TOOL_BAR_SIZE_AA = AUTO ? Pref.f("TOOL_BAR_SIZE_AA", 1.1f) : null;
-	Pref<DoubleSupplier> CONTROL_PANEL_SIZE_AA = AUTO ? Pref.f("CONTROL_PANEL_SIZE_AA", 1.1f) : null;
-	Pref<DoubleSupplier> TEXT_ICON_SIZE_AA = AUTO ? Pref.f("TEXT_ICON_SIZE_AA", 1f) : null;
+	// Shared "Icon size" slider for the nav bar, toolbar, control panel, and media grid/list icons.
+	Pref<DoubleSupplier> TEXT_ICON_SIZE_AA = AUTO ? Pref.f("TEXT_ICON_SIZE_AA", 1.1f) : null;
 	Pref<BooleanSupplier> GRID_VIEW_AA = AUTO ? Pref.b("GRID_VIEW_AA", false) : null;
 
 	static MainActivityPrefs get() {
@@ -150,34 +146,30 @@ public interface MainActivityPrefs
 		return getIntPref(NAV_BAR_POS);
 	}
 
+	// Navigation bar, toolbar, control panel, and media grid/list icons all share a single
+	// "Icon size" slider (per interface) so every icon in the app scales together.
 	static boolean hasNavBarSizePref(MainActivityDelegate a, List<Pref<?>> prefs) {
-		if (AUTO && a.isCarActivity()) return prefs.contains(NAV_BAR_SIZE_AA);
-		return prefs.contains(NAV_BAR_SIZE);
+		return hasTextIconSizePref(a, prefs);
 	}
 
 	default float getNavBarSizePref(MainActivityDelegate a) {
-		if (AUTO && a.isCarActivity()) return getFloatPref(NAV_BAR_SIZE_AA);
-		return getFloatPref(NAV_BAR_SIZE);
+		return getTextIconSizePref(a);
 	}
 
 	static boolean hasToolBarSizePref(MainActivityDelegate a, List<Pref<?>> prefs) {
-		if (AUTO && a.isCarActivity()) return prefs.contains(TOOL_BAR_SIZE_AA);
-		return prefs.contains(TOOL_BAR_SIZE);
+		return hasTextIconSizePref(a, prefs);
 	}
 
 	default float getToolBarSizePref(MainActivityDelegate a) {
-		if (AUTO && a.isCarActivity()) return getFloatPref(TOOL_BAR_SIZE_AA);
-		return getFloatPref(TOOL_BAR_SIZE);
+		return getTextIconSizePref(a);
 	}
 
 	static boolean hasControlPanelSizePref(MainActivityDelegate a, List<Pref<?>> prefs) {
-		if (AUTO && a.isCarActivity()) return prefs.contains(CONTROL_PANEL_SIZE_AA);
-		return prefs.contains(CONTROL_PANEL_SIZE);
+		return hasTextIconSizePref(a, prefs);
 	}
 
 	default float getControlPanelSizePref(MainActivityDelegate a) {
-		if (AUTO && a.isCarActivity()) return getFloatPref(CONTROL_PANEL_SIZE_AA);
-		return getFloatPref(CONTROL_PANEL_SIZE);
+		return getTextIconSizePref(a);
 	}
 
 	static boolean hasTextIconSizePref(MainActivityDelegate a, List<Pref<?>> prefs) {

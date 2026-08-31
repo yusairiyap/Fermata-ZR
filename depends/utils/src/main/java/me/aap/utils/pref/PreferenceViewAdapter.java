@@ -46,6 +46,7 @@ public class PreferenceViewAdapter extends RecyclerView.Adapter<PreferenceViewAd
 		v.setPadding(paddingH, paddingV, paddingH, paddingV);
 		v.setFocusable(true);
 		v.setBackgroundResource(R.drawable.box_secondary);
+		v.setElevation(UiUtils.toPx(ctx, 3));
 		return new PrefViewHolder(v);
 	}
 

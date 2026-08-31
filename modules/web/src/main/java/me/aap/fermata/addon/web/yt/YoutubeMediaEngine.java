@@ -112,6 +112,13 @@ class YoutubeMediaEngine implements MediaEngine, OverlayMenu.SelectionHandler {
 	}
 
 	@Override
+	public boolean isVideoModeRequired() {
+		// YouTube renders into its own WebView, not the app's native VideoView surface -- forcing
+		// video mode would just show an empty black VideoView on top of the real content.
+		return false;
+	}
+
+	@Override
 	public void prepare(PlayableItem source) {
 		if (source == next) {
 			web.next();
