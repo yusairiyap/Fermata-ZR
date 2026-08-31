@@ -39,6 +39,15 @@
         <item name="colorControlNormal">#262A33</item>
         <item name="colorControlActivated">?colorOnPrimary</item>
 
+        <!-- Material 3 roles -->
+        <item name="colorSurfaceVariant">?colorPrimaryDark</item>
+        <item name="colorOnSurfaceVariant">?colorOnPrimary</item>
+        <item name="colorOutline">?colorPrimaryDark</item>
+        <item name="colorError">#BA1A1A</item>
+        <item name="colorOnError">#FFFFFF</item>
+        <item name="colorErrorContainer">#FFDAD6</item>
+        <item name="colorOnErrorContainer">#410002</item>
+
     </style>
 
     <style name="AppTheme.Light.PopupMenuStyle" parent="Theme.Utils.Base.PopupMenuStyle">

@@ -262,8 +262,9 @@ public class NavBarMediator extends PrefNavBarMediator
 			f.setContentProvider(g -> {
 				Context ctx = g.getContext();
 				ScalableTextView v = new ScalableTextView(ctx);
-				String url = "https://github.com/AndreyPavlenko/Fermata";
-				String html = ctx.getString(R.string.about_html, VERSION_NAME, VERSION_CODE, url);
+				String url = "https://github.com/yusairiyap/Fermata-ZR";
+				String html = ctx.getString(R.string.about_html, VERSION_NAME, VERSION_CODE, url)
+						+ ctx.getString(R.string.about_fork_html);
 				int pad = UiUtils.toIntPx(ctx, 10);
 				v.setPadding(pad, pad, pad, pad);
 				v.setText(HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY));

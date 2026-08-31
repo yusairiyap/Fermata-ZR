@@ -634,6 +634,13 @@ public abstract class MediaLibFragment extends MainActivityFragment implements M
 
 		private void onClick(PlayableItem i) {
 			var a = getMainActivity();
+
+			if (i instanceof MediaLib.ExternallyPlayableItem ext) {
+				var f = a.showFragment(ext.getPlayerFragmentId());
+				if (f != null) ext.loadInFragment(f);
+				return;
+			}
+
 			var cur = a.getCurrentPlayable();
 			if (Objects.equals(cur, i)) return;
 			a.getBody().playItem(i);

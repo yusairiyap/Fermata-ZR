@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--Material You dynamic color theme. Standard M3 color role attrs (colorPrimary,
+    colorSurface, colorSurfaceVariant, colorOutline, colorTertiary, etc.) are left unset here so
+    that com.google.android.material.color.DynamicColors can inject the device wallpaper's
+    palette into them at runtime (API 31+); on older devices they fall back to the M3 base
+    theme's default baseline palette. The app's own legacy attrs are mapped onto those roles so
+    every screen follows the dynamic palette consistently.-->
+    <style name="AppTheme.Dynamic" parent="AppTheme">
+        <item name="android:colorBackground">?attr/colorSurface</item>
+        <item name="colorPrimaryDark">?attr/colorPrimary</item>
+        <item name="colorPrimarySurface">?attr/colorSurfaceVariant</item>
+        <item name="colorOnPrimarySurface">?attr/colorOnSurfaceVariant</item>
+        <item name="colorSecondaryVariant">?attr/colorTertiary</item>
+        <item name="colorAccent">?attr/colorTertiary</item>
+        <item name="boxStrokeColor">?attr/colorOutline</item>
+        <item name="colorControlNormal">?attr/colorOutline</item>
+        <item name="colorControlActivated">?attr/colorPrimary</item>
+        <item name="android:textColorPrimary">?attr/colorOnSurface</item>
+        <item name="android:textColorSecondary">?attr/colorOnSurfaceVariant</item>
+        <item name="android:textColorTertiary">?attr/colorOnSurface</item>
+        <item name="android:textColorHint">?attr/colorOnSurfaceVariant</item>
+        <item name="alpha">1</item>
+        <item name="rippleColor">?attr/colorPrimary</item>
+    </style>
+
+</resources>

@@ -1,5 +1,9 @@
 package me.aap.fermata.addon.web.yt;
 
+import static me.aap.fermata.addon.web.FermataWebClient.isYoutubeUri;
+import static me.aap.utils.async.Completed.completed;
+
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,7 +14,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import me.aap.fermata.BuildConfig;
@@ -21,6 +27,7 @@ import me.aap.fermata.addon.web.R;
 import me.aap.fermata.addon.web.WebBrowserAddon;
 import me.aap.fermata.addon.web.WebBrowserFragment;
 import me.aap.fermata.media.engine.MediaEngine;
+import me.aap.fermata.media.lib.DefaultMediaLib;
 import me.aap.fermata.media.lib.MediaLib;
 import me.aap.fermata.media.service.FermataServiceUiBinder;
 import me.aap.fermata.media.service.MediaSessionCallback;
@@ -30,6 +37,7 @@ import me.aap.utils.function.LongSupplier;
 import me.aap.utils.pref.PreferenceStore;
 import me.aap.utils.pref.PreferenceStore.Pref;
 import me.aap.utils.pref.SharedPreferenceStore;
+import me.aap.utils.ui.menu.OverlayMenu;
 import me.aap.utils.ui.view.ToolBarView;
 
 /**
@@ -38,7 +46,7 @@ import me.aap.utils.ui.view.ToolBarView;
 @Keep
 @SuppressWarnings("unused")
 public class YoutubeFragment extends WebBrowserFragment implements FermataServiceUiBinder.Listener {
-	private static final String DEFAULT_URL = "https://m.youtube.com";
+	static final String DEFAULT_URL = "https://m.youtube.com";
 	private static final Set<String> DEFAULT_URLS = new HashSet<>(Arrays.asList(DEFAULT_URL, DEFAULT_URL + '/'));
 	private static final Pref<LongSupplier> RESUME_POS = Pref.l("YT_RESUME_POS", 0L);
 	private boolean playOnResume;
@@ -188,7 +196,7 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 
 	@Override
 	public ToolBarView.Mediator getToolBarMediator() {
-		return ToolBarView.Mediator.Invisible.instance;
+		return YoutubeToolBarMediator.getInstance();
 	}
 
 	@Override
@@ -212,6 +220,64 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 
 	protected boolean isDesktopVersionSupported() {
 		return false;
+	}
+
+	@Nullable
+	String getCurrentVideoId() {
+		FermataWebView v = getWebView();
+		if (v == null) return null;
+		String url = v.getUrl();
+		if (url == null) return null;
+
+		Uri u = Uri.parse(url);
+		if (!isYoutubeUri(u)) return null;
+
+		String id = u.getQueryParameter("v");
+		if ((id != null) && !id.isEmpty()) return id;
+
+		String path = u.getPath();
+		if (path != null && path.startsWith("/shorts/")) {
+			String[] seg = path.split("/");
+			if (seg.length >= 3 && !seg[2].isEmpty()) return seg[2];
+		}
+
+		return null;
+	}
+
+	@Override
+	public void contributeToNavBarMenu(OverlayMenu.Builder b) {
+		super.contributeToNavBarMenu(b);
+
+		String videoId = getCurrentVideoId();
+		if (videoId == null) return;
+
+		YoutubeAddon addon = (YoutubeAddon) getAddon();
+		FermataWebView v = getWebView();
+		if ((addon == null) || (v == null)) return;
+
+		String title = v.getTitle();
+		addon.cacheVideoTitle(videoId, ((title == null) || title.isEmpty()) ? videoId : title);
+
+		MainActivityDelegate a = MainActivityDelegate.get(requireContext());
+		DefaultMediaLib lib = (DefaultMediaLib) a.getLib();
+		YoutubeVideoItem item = new YoutubeVideoItem(videoId, addon.getRootItem(lib));
+
+		if (item.isFavoriteItem()) {
+			b.addItem(me.aap.fermata.R.id.favorites_remove, me.aap.fermata.R.drawable.favorite_filled,
+					me.aap.fermata.R.string.favorites_remove).setHandler(i -> {
+				lib.getFavorites().removeItem(item);
+				return true;
+			});
+		} else {
+			b.addItem(me.aap.fermata.R.id.favorites_add, me.aap.fermata.R.drawable.favorite,
+					me.aap.fermata.R.string.favorites_add).setHandler(i -> {
+				lib.getFavorites().addItem(item);
+				return true;
+			});
+		}
+
+		List<MediaLib.PlayableItem> selection = Collections.singletonList(item);
+		a.addPlaylistMenu(b, completed(selection));
 	}
 
 	@Override

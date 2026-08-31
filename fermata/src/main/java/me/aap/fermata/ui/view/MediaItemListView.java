@@ -56,7 +56,8 @@ public class MediaItemListView extends RecyclerView implements PreferenceStore.L
 
 			if (grid) {
 				float scale = prefs.getTextIconSizePref(a);
-				int span = (int) Math.max(cfg.screenWidthDp / (128 * scale), 2);
+				int cellDp = a.isCarActivity() ? 176 : 128;
+				int span = (int) Math.max(cfg.screenWidthDp / (cellDp * scale), 2);
 				setLayoutManager(new GridLayoutManager(ctx, span));
 			} else {
 				setLayoutManager(new LinearLayoutManager(ctx));

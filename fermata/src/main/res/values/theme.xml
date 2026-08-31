@@ -30,7 +30,7 @@
         <item name="android:textColor">@color/media_item_text_color</item>
         <item name="tint">@color/media_item_tint</item>
         <item name="indicatorColor">@color/media_item_tint</item>
-        <item name="elevation">20dp</item>
+        <item name="elevation">1dp</item>
     </style>
 
     <style name="AppTheme.ControlPanelStyle">
@@ -40,7 +40,7 @@
         <item name="textAppearance">@style/AppTheme.ControlPanelTextAppearance</item>
     </style>
 
-    <style name="AppTheme.ControlPanelTextAppearance" parent="TextAppearance.MaterialComponents.Body1">
+    <style name="AppTheme.ControlPanelTextAppearance" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
 

@@ -20,6 +20,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat.QueueItem;
 
 import androidx.annotation.DrawableRes;
+import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.media.MediaBrowserServiceCompat;
@@ -51,6 +52,7 @@ import me.aap.utils.function.Consumer;
 import me.aap.utils.function.Function;
 import me.aap.utils.function.Predicate;
 import me.aap.utils.holder.IntHolder;
+import me.aap.utils.ui.fragment.ActivityFragment;
 import me.aap.utils.vfs.VirtualFileSystem;
 import me.aap.utils.vfs.VirtualFolder;
 import me.aap.utils.vfs.VirtualResource;
@@ -495,6 +497,18 @@ public interface MediaLib {
 		default FutureSupplier<Iterator<PlayableItem>> getShuffleIterator() {
 			return completed(Collections.emptyIterator());
 		}
+	}
+
+	/**
+	 * Marker for playable items that cannot go through the normal {@link MediaEngine} pipeline
+	 * (e.g. they require a specific addon UI surface such as a WebView) and must instead be
+	 * activated by navigating to their owning fragment.
+	 */
+	interface ExternallyPlayableItem extends PlayableItem {
+		@IdRes
+		int getPlayerFragmentId();
+
+		void loadInFragment(ActivityFragment fragment);
 	}
 
 	interface EpgItem extends Item, Comparable<EpgItem> {
