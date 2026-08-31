@@ -333,7 +333,8 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 			MainActivityDelegate.get(requireContext()).addPlaylistMenu(b, completed(selection));
 		}
 
-		return lib.getPlaylists().getUnsortedChildren().main().then(list -> {
+		MediaLib.Playlists playlists = lib.getPlaylists();
+		return playlists.getUnsortedChildren().main().then(list -> {
 			int i = 0;
 			for (MediaLib.Item it : list) {
 				if (it instanceof MediaLib.Playlist pl) {
