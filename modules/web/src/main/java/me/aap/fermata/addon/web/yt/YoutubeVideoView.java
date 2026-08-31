@@ -26,6 +26,10 @@ public class YoutubeVideoView extends VideoView {
 	protected void init(Context context) {
 		addView(new FrameLayout(context), new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
 		addInfoView(context);
+		// YouTube's own page already shows the video title; Fermata's native info bar is
+		// redundant here (and would otherwise show the internal placeholder item's class name
+		// as a bogus "parent" description), so keep it permanently hidden for this video view.
+		getVideoInfoView().setVisibility(GONE);
 	}
 
 	@NonNull

@@ -25,5 +25,9 @@ public class YoutubeToolBarMediator extends WebToolBarMediator {
 		YoutubeFragment yt = (YoutubeFragment) f;
 		addButton(tb, R.drawable.browser_home, v -> yt.loadUrl(YoutubeFragment.DEFAULT_URL),
 				R.id.browser_home, RIGHT);
+		addButton(tb, me.aap.fermata.R.drawable.favorite, v -> yt.showFavoritesMenu(),
+				me.aap.fermata.R.id.favorites, RIGHT);
+		addButton(tb, me.aap.fermata.R.drawable.playlist, v -> yt.showPlaylistsMenu(),
+				me.aap.fermata.R.id.playlists, RIGHT);
 	}
 }

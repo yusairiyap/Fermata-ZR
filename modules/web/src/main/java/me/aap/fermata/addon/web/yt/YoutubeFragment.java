@@ -268,6 +268,21 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 				.setFutureSubmenu(sb -> playlistsMenu(sb, lib, current));
 	}
 
+	void showFavoritesMenu() {
+		MainActivityDelegate a = MainActivityDelegate.get(requireContext());
+		DefaultMediaLib lib = (DefaultMediaLib) a.getLib();
+		MediaLib.Favorites favorites = lib.getFavorites();
+		YoutubeVideoItem current = getCurrentVideoItem(lib);
+		a.getToolBarMenu().showFuture(sb -> favoritesMenu(sb, favorites, current));
+	}
+
+	void showPlaylistsMenu() {
+		MainActivityDelegate a = MainActivityDelegate.get(requireContext());
+		DefaultMediaLib lib = (DefaultMediaLib) a.getLib();
+		YoutubeVideoItem current = getCurrentVideoItem(lib);
+		a.getToolBarMenu().showFuture(sb -> playlistsMenu(sb, lib, current));
+	}
+
 	@Nullable
 	private YoutubeVideoItem getCurrentVideoItem(DefaultMediaLib lib) {
 		String videoId = getCurrentVideoId();
