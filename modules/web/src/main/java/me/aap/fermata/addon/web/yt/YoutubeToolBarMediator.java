@@ -23,7 +23,7 @@ public class YoutubeToolBarMediator extends WebToolBarMediator {
 	public void enable(ToolBarView tb, ActivityFragment f) {
 		super.enable(tb, f);
 		YoutubeFragment yt = (YoutubeFragment) f;
-		addButton(tb, R.drawable.home, v -> yt.loadUrl(YoutubeFragment.DEFAULT_URL), R.id.browser_home,
-				RIGHT);
+		addButton(tb, R.drawable.browser_home, v -> yt.loadUrl(YoutubeFragment.DEFAULT_URL),
+				R.id.browser_home, RIGHT);
 	}
 }
