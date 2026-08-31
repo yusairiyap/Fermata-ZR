@@ -154,7 +154,7 @@
         <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
-    <style name="Theme.Utils.Base.AlertDialog.Checked.Text" parent="Widget.AppCompat.CheckedTextView">
+    <style name="Theme.Utils.Base.AlertDialog.Checked.Text" parent="Widget.MaterialComponents.CheckedTextView">
         <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
