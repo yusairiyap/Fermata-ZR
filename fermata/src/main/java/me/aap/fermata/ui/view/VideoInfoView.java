@@ -70,7 +70,7 @@ public class VideoInfoView extends ConstraintLayout
 
 	@Override
 	public void onPlayableChanged(PlayableItem oldItem, PlayableItem newItem) {
-		if ((newItem == null) || !newItem.isVideo()) {
+		if ((newItem == null) || !newItem.isVideo() || newItem.isExternal()) {
 			setVisibility(GONE);
 			return;
 		}

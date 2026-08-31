@@ -69,11 +69,20 @@ public class YoutubeVideoItem extends ExtPlayable implements MediaLib.Externally
 
 	@NonNull
 	@Override
-	protected FutureSupplier<MediaMetadataCompat> loadMeta() {
+	public String getName() {
+		return cachedTitle();
+	}
+
+	private String cachedTitle() {
 		YoutubeAddon addon = me.aap.fermata.addon.AddonManager.get().getAddon(YoutubeAddon.class);
-		String title = (addon != null) ? addon.getVideoTitle(videoId) : videoId;
+		return (addon != null) ? addon.getVideoTitle(videoId) : videoId;
+	}
+
+	@NonNull
+	@Override
+	protected FutureSupplier<MediaMetadataCompat> loadMeta() {
 		MediaMetadataCompat.Builder b = new MediaMetadataCompat.Builder();
-		b.putString(METADATA_KEY_TITLE, title);
+		b.putString(METADATA_KEY_TITLE, cachedTitle());
 		b.putString(METADATA_KEY_ALBUM_ART_URI,
 				"https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg");
 		return completed(b.build());

@@ -389,15 +389,15 @@ public class ControlPanelView extends ConstraintLayout
 		View fb = a.getFloatingButton();
 
 		if (getVisibility() == VISIBLE) {
-			super.setVisibility(GONE);
-			fb.setVisibility(GONE);
+			fadeOut(this, true);
+			fadeOut(fb, false);
 			if (a.getPrefs().getSysBarsOnVideoTouchPref()) a.setFullScreen(true);
-			if (info != null) info.setVisibility(GONE);
+			if (info != null) fadeOut(info, false);
 		} else {
-			super.setVisibility(VISIBLE);
-			fb.setVisibility(VISIBLE);
+			fadeIn(this, true);
+			fadeIn(fb, false);
 			if (a.getPrefs().getSysBarsOnVideoTouchPref()) a.setFullScreen(false);
-			if (info != null) info.setVisibility(VISIBLE);
+			if (info != null) fadeIn(info, false);
 			clearFocus();
 			hideTimer = new HideTimer(a, delay, false, info, fb);
 			a.postDelayed(hideTimer, delay);
@@ -405,6 +405,24 @@ public class ControlPanelView extends ConstraintLayout
 
 		checkPlaybackTimer(a);
 		return true;
+	}
+
+	private static final long FADE_DURATION = 200L;
+
+	private void fadeOut(View v, boolean self) {
+		v.animate().cancel();
+		v.animate().alpha(0f).setDuration(FADE_DURATION).withEndAction(() -> {
+			if (self) super.setVisibility(GONE);
+			else v.setVisibility(GONE);
+		}).start();
+	}
+
+	private void fadeIn(View v, boolean self) {
+		v.animate().cancel();
+		v.setAlpha(0f);
+		if (self) super.setVisibility(VISIBLE);
+		else v.setVisibility(VISIBLE);
+		v.animate().alpha(1f).setDuration(FADE_DURATION).start();
 	}
 
 	public void onVideoViewTouch(VideoView view, MotionEvent e) {
