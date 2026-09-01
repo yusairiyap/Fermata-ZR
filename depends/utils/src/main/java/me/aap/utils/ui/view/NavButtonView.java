@@ -57,13 +57,7 @@ public class NavButtonView extends LinearLayoutCompat {
 		super.setSelected(selected);
 		ImageView i = getIcon();
 
-		if (selected) {
-			i.setAlpha(1f);
-			i.setPadding(0, 0, 0, 0);
-		} else {
-			i.setAlpha(0.5f);
-			i.setPadding(pad, pad, pad, pad);
-		}
+		i.setAlpha(selected ? 1f : 0.5f);
 		TextView t = getText();
 		if (t != null) t.setVisibility(selected ? VISIBLE : GONE);
 	}
