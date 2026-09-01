@@ -126,18 +126,9 @@ public class VideoView extends FrameLayout
 			}
 		});
 
-		addInfoView(context);
 		addOnLayoutChangeListener(this);
 		setLayoutParams(new CircularRevealFrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
 		setFocusable(true);
-	}
-
-	protected void addInfoView(Context context) {
-		VideoInfoView d = new VideoInfoView(context, null);
-		FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT);
-		lp.gravity = Gravity.CENTER_HORIZONTAL | Gravity.TOP;
-		d.setLayoutParams(lp);
-		addView(d);
 	}
 
 	@Override
@@ -190,20 +181,13 @@ public class VideoView extends FrameLayout
 		clock.setLayoutParams(lp);
 	}
 
-	@Nullable
-	public VideoInfoView getVideoInfoView() {
-		return (VideoInfoView) getChildAt(2);
-	}
-
-	public void showVideo(boolean hideTitle) {
+	public void showVideo() {
 		createSurface.onSuccess(v -> {
 			MainActivityDelegate a = getActivity().peek();
 			if (a == null) return;
 			MediaSessionCallback cb = a.getMediaSessionCallback();
 			MediaEngine eng = cb.getEngine();
 			if (eng != null) setSurfaceSize(eng);
-			VideoInfoView info = getVideoInfoView();
-			if (hideTitle && (info != null)) info.setVisibility(GONE);
 		});
 	}
 

@@ -235,7 +235,7 @@ public class ControlPanelView extends ConstraintLayout
 		checkPlaybackTimer(a);
 	}
 
-	public void enableVideoMode(@Nullable VideoView v) {
+	public void enableVideoMode() {
 		MainActivityDelegate a = getActivity();
 		hideTimer = null;
 		mask |= MASK_VIDEO_MODE;
@@ -243,19 +243,16 @@ public class ControlPanelView extends ConstraintLayout
 		a.setBarsHidden(true);
 		setShowHideBarsIcon(a);
 
-		View info = (v != null) ? v.getVideoInfoView() : null;
 		View fb = a.getFloatingButton();
 		int delay = getStartDelay();
 
 		if (delay == 0) {
 			fb.setVisibility(GONE);
-			if (info != null) info.setVisibility(GONE);
 			super.setVisibility(GONE);
 		} else {
 			fb.setVisibility(VISIBLE);
-			if (info != null) info.setVisibility(VISIBLE);
 			super.setVisibility(VISIBLE);
-			hideTimer = new HideTimer(a, delay, false, info, fb);
+			hideTimer = new HideTimer(a, delay, false, fb);
 			a.postDelayed(hideTimer, delay);
 		}
 
@@ -385,21 +382,18 @@ public class ControlPanelView extends ConstraintLayout
 		int delay = getTouchDelay();
 		if (delay == 0) return false;
 
-		View info = video.getVideoInfoView();
 		View fb = a.getFloatingButton();
 
 		if (getVisibility() == VISIBLE) {
 			fadeOut(this, true);
 			fadeOut(fb, false);
 			if (a.getPrefs().getSysBarsOnVideoTouchPref()) a.setFullScreen(true);
-			if (info != null) fadeOut(info, false);
 		} else {
 			fadeIn(this, true);
 			fadeIn(fb, false);
 			if (a.getPrefs().getSysBarsOnVideoTouchPref()) a.setFullScreen(false);
-			if (info != null) fadeIn(info, false);
 			clearFocus();
-			hideTimer = new HideTimer(a, delay, false, info, fb);
+			hideTimer = new HideTimer(a, delay, false, fb);
 			a.postDelayed(hideTimer, delay);
 		}
 
@@ -439,14 +433,12 @@ public class ControlPanelView extends ConstraintLayout
 			else return;
 		}
 
-		View info = vv.getVideoInfoView();
 		View fb = a.getFloatingButton();
 		int delay = getSeekDelay();
 		super.setVisibility(VISIBLE);
 		fb.setVisibility(VISIBLE);
-		if (info != null) info.setVisibility(VISIBLE);
 		clearFocus();
-		hideTimer = new HideTimer(a, delay, true, info, fb);
+		hideTimer = new HideTimer(a, delay, true, fb);
 		a.postDelayed(hideTimer, delay);
 		checkPlaybackTimer(a);
 	}

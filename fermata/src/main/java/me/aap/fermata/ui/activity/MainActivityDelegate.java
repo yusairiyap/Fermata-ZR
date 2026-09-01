@@ -612,7 +612,7 @@ public class MainActivityDelegate extends ActivityDelegate
 			this.videoMode = true;
 			setSystemUiVisibility();
 			keepScreenOn(true);
-			cp.enableVideoMode(v);
+			cp.enableVideoMode();
 		} else {
 			this.videoMode = false;
 			setSystemUiVisibility();

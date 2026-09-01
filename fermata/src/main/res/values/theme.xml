@@ -6,7 +6,6 @@
     <attr name="appSeekBarStyle" format="reference" />
     <attr name="appEqualizerStyle" format="reference" />
     <attr name="appStreamProgressStyle" format="reference" />
-    <attr name="appVideoInfoStyle" format="reference" />
 
     <style name="AppTheme" parent="Theme.Utils.Base">
         <item name="android:forceDarkAllowed" tools:targetApi="q">true</item>
@@ -18,7 +17,6 @@
         <item name="appSeekBarStyle">@style/AppTheme.SeekBarStyle</item>
         <item name="appEqualizerStyle">@style/AppTheme.EqualizerStyle</item>
         <item name="appStreamProgressStyle">@style/AppTheme.StreamProgressStyle</item>
-        <item name="appVideoInfoStyle">@style/AppTheme.VideoInfoStyle</item>
         <item name="cornerRadius">5dp</item>
     </style>
 
@@ -54,10 +52,6 @@
     <style name="AppTheme.EqualizerStyle">
         <item name="android:textColor">?android:attr/textColorSecondary</item>
         <item name="tint">?attr/colorOnSecondary</item>
-    </style>
-
-    <style name="AppTheme.VideoInfoStyle">
-        <item name="android:textColor">#FFFFFF</item>
     </style>
 
     <style name="AppTheme.StreamProgressStyle">

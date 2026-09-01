@@ -109,7 +109,7 @@ public class BodyLayout extends SplitLayout
 				getSplitHandle().setVisibility(GONE);
 				getSwipeRefresh().setVisibility(GONE);
 				lp.guidePercent = isPortrait() ? 1f : 0f;
-				vv.showVideo(true);
+				vv.showVideo();
 				a.setVideoMode(true, vv);
 				App.get().getHandler().post(vv::requestFocus);
 			}
@@ -119,7 +119,7 @@ public class BodyLayout extends SplitLayout
 				getSplitHandle().setVisibility(VISIBLE);
 				getSwipeRefresh().setVisibility(VISIBLE);
 				lp.guidePercent = a.getPrefs().getFloatPref(getSplitPercentPref(isPortrait()));
-				vv.showVideo(true);
+				vv.showVideo();
 				a.setVideoMode(true, vv);
 				MediaItemListView.focusActive(getContext(), vv);
 			}
@@ -208,7 +208,7 @@ public class BodyLayout extends SplitLayout
 		} else {
 			if (!eng.isVideoModeRequired()) setMode(Mode.FRAME);
 			else if (isFrameMode()) setMode(Mode.VIDEO);
-			else getVideoView().showVideo(false);
+			else getVideoView().showVideo();
 		}
 
 		if ((eng != null) && (newItem != null) && !newItem.isVideo() && (getMode() == Mode.FRAME)) {
