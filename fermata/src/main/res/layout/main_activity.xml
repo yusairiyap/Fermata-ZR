@@ -34,6 +34,7 @@
         android:layout_height="wrap_content"
         android:paddingTop="4dp"
         android:paddingBottom="4dp"
+        android:elevation="10dp"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/nav_bar"
         app:layout_constraintEnd_toEndOf="parent"

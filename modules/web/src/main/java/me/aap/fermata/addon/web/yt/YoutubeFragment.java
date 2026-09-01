@@ -147,7 +147,9 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 		YoutubeVideoView v = new YoutubeVideoView(root.getContext(), null);
 		v.setTag(YT_VIDEO_VIEW_TAG);
 		v.setVisibility(View.GONE);
-		v.setElevation(UiUtils.toPx(root.getContext(), 20));
+		// Below control_panel/floating_button/menus (elevation 10dp) so they still show over the
+		// video, but above the rest of the app chrome (toolbar/nav bar/body, elevation 0).
+		v.setElevation(UiUtils.toPx(root.getContext(), 5));
 
 		ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(0, 0);
 		lp.topToTop = ConstraintLayout.LayoutParams.PARENT_ID;

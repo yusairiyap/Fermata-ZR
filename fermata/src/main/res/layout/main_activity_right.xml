@@ -49,6 +49,7 @@
         android:id="@+id/control_panel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:elevation="10dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/nav_bar"
