@@ -43,7 +43,7 @@ public class NavButtonView extends LinearLayoutCompat {
 		ImageView img = new AppCompatImageView(ctx);
 		LayoutParams lp = new LayoutParams(MATCH_PARENT, MATCH_PARENT);
 		pad = toIntPx(ctx, 8);
-		img.setPadding(0, pad, 0, pad);
+		img.setPadding(pad, pad, pad, pad);
 		lp.weight = 1;
 		lp.gravity = Gravity.CENTER;
 		img.setLayoutParams(lp);
@@ -62,7 +62,7 @@ public class NavButtonView extends LinearLayoutCompat {
 			i.setPadding(0, 0, 0, 0);
 		} else {
 			i.setAlpha(0.5f);
-			i.setPadding(0, pad, 0, pad);
+			i.setPadding(pad, pad, pad, pad);
 		}
 		TextView t = getText();
 		if (t != null) t.setVisibility(selected ? VISIBLE : GONE);
