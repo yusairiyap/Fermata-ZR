@@ -2,10 +2,8 @@ package me.aap.utils.ui.view;
 
 import static android.util.TypedValue.COMPLEX_UNIT_PX;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static me.aap.utils.ui.UiUtils.toIntPx;
 import static me.aap.utils.ui.UiUtils.toPx;
-import static me.aap.utils.ui.view.NavBarView.POSITION_BOTTOM;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -23,8 +21,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.widget.ImageViewCompat;
-
-import com.google.android.material.textview.MaterialTextView;
 
 import me.aap.utils.ui.UiUtils;
 
@@ -45,7 +41,6 @@ public class NavButtonView extends LinearLayoutCompat {
 
 		Context ctx = navBar.getContext();
 		ImageView img = new AppCompatImageView(ctx);
-		boolean bottom = (navBar.getPosition() == POSITION_BOTTOM);
 		LayoutParams lp = new LayoutParams(MATCH_PARENT, MATCH_PARENT);
 		pad = toIntPx(ctx, 8);
 		img.setPadding(0, pad, 0, pad);
@@ -55,16 +50,6 @@ public class NavButtonView extends LinearLayoutCompat {
 		img.setAlpha(0.5f);
 		ImageViewCompat.setImageTintList(img, ColorStateList.valueOf(navBar.getTint()));
 		addView(img);
-
-		if (bottom) {
-			TextView t = new MaterialTextView(ctx);
-			lp = new LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
-			lp.gravity = Gravity.CENTER;
-			t.setLayoutParams(lp);
-			t.setTextAppearance(navBar.textAppearance);
-			t.setVisibility(GONE);
-			addView(t);
-		}
 	}
 
 	@Override
