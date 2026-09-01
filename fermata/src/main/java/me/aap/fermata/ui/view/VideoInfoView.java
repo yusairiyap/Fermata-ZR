@@ -52,12 +52,24 @@ public class VideoInfoView extends ConstraintLayout
 	@Override
 	public void setVisibility(int visibility) {
 		if (visibility == VISIBLE) {
-			getActivity().onSuccess(a -> {
+			MainActivityDelegate a = getActivity().peek();
+			PlayableItem cur = (a != null) ? a.getCurrentPlayable() : null;
+
+			// The control panel's tap-to-show/hide and initial-reveal logic call setVisibility(VISIBLE)
+			// unconditionally on any VideoInfoView it's given, regardless of whether that item's engine
+			// already opted out of this overlay (e.g. YouTube, whose own page shows its own title).
+			if ((cur != null) && cur.isExternal()) {
+				super.setVisibility(GONE);
+				return;
+			}
+
+			if (a != null) {
 				MediaEngine eng = a.getMediaServiceBinder().getCurrentEngine();
-				if (eng == null) return;
-				PlayableItem i = eng.getSource();
-				if ((i instanceof StreamItem) && !(eng instanceof StreamEngine)) onPlayableChanged(i, i);
-			});
+				if (eng != null) {
+					PlayableItem i = eng.getSource();
+					if ((i instanceof StreamItem) && !(eng instanceof StreamEngine)) onPlayableChanged(i, i);
+				}
+			}
 		}
 
 		super.setVisibility(visibility);

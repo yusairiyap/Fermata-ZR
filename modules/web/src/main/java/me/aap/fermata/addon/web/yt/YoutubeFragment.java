@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,6 +54,7 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 	static final String DEFAULT_URL = "https://m.youtube.com";
 	private static final Set<String> DEFAULT_URLS = new HashSet<>(Arrays.asList(DEFAULT_URL, DEFAULT_URL + '/'));
 	private static final Pref<LongSupplier> RESUME_POS = Pref.l("YT_RESUME_POS", 0L);
+	private static final String YT_VIDEO_VIEW_TAG = "yt_video_view_overlay";
 	private boolean playOnResume;
 
 	@Override
@@ -84,7 +86,7 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 
 		MainActivityDelegate.getActivityDelegate(view.getContext()).onSuccess(a -> {
 			YoutubeWebView webView = a.findViewById(R.id.ytWebView);
-			VideoView videoView = a.findViewById(R.id.ytVideoView);
+			VideoView videoView = getOrCreateVideoViewOverlay(a);
 			YoutubeWebClient webClient = new YoutubeWebClient();
 			YoutubeChromeClient chromeClient = new YoutubeChromeClient(webView, videoView);
 			webView.init(addon, webClient, chromeClient);
@@ -129,7 +131,39 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 	@Override
 	public void onDestroyView() {
 		unregisterListeners(MainActivityDelegate.get(requireContext()));
+		removeVideoViewOverlay(MainActivityDelegate.get(requireContext()));
 		super.onDestroyView();
+	}
+
+	// YouTube's fullscreen custom view used to live nested inside this fragment's own layout, so
+	// showing the app's control panel (which shrinks the fragment's container to make room for it)
+	// also shrank the video, letterboxing it. Host the video as a full-window overlay directly on
+	// the activity's root instead, so it keeps its own size regardless of the control panel/bars.
+	private VideoView getOrCreateVideoViewOverlay(MainActivityDelegate a) {
+		ConstraintLayout root = a.findViewById(me.aap.fermata.R.id.main_activity);
+		View existing = root.findViewWithTag(YT_VIDEO_VIEW_TAG);
+		if (existing instanceof VideoView) return (VideoView) existing;
+
+		YoutubeVideoView v = new YoutubeVideoView(root.getContext(), null);
+		v.setTag(YT_VIDEO_VIEW_TAG);
+		v.setVisibility(View.GONE);
+		v.setElevation(UiUtils.toPx(root.getContext(), 20));
+
+		ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(0, 0);
+		lp.topToTop = ConstraintLayout.LayoutParams.PARENT_ID;
+		lp.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID;
+		lp.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
+		lp.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
+		root.addView(v, lp);
+		return v;
+	}
+
+	private void removeVideoViewOverlay(MainActivityDelegate a) {
+		if (a == null) return;
+		ConstraintLayout root = a.findViewById(me.aap.fermata.R.id.main_activity);
+		if (root == null) return;
+		View v = root.findViewWithTag(YT_VIDEO_VIEW_TAG);
+		if (v != null) root.removeView(v);
 	}
 
 	@Override

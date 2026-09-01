@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!--Material You dynamic color theme. Every M3 color role below has a static, high-contrast
     fallback (reusing the Dark theme's palette) so the theme looks correct wherever
@@ -12,16 +12,17 @@
     app's own legacy attrs are mapped onto these roles so every screen follows along.-->
     <style name="AppTheme.Dynamic" parent="AppTheme">
 
-        <!-- Static fallback palette (reused from AppTheme.Dark) -->
+        <!-- Static fallback palette for system dark mode. Kept whitish rather than blue-tinted,
+        since that's what Material You's own dynamic dark tonal palettes actually look like. -->
         <item name="colorPrimary">#1C1B1F</item>
-        <item name="colorOnPrimary">#4E6AA2</item>
+        <item name="colorOnPrimary">#F5F5F5</item>
         <item name="colorSecondary">#0F1012</item>
-        <item name="colorOnSecondary">#4E6AA2</item>
+        <item name="colorOnSecondary">#F5F5F5</item>
         <item name="colorSurface">#1C1B1F</item>
-        <item name="colorOnSurface">#4E6AA2</item>
+        <item name="colorOnSurface">#F5F5F5</item>
         <item name="colorSurfaceVariant">#1C1B1F</item>
-        <item name="colorOnSurfaceVariant">#4E6AA2</item>
-        <item name="colorOutline">#4E6AA2</item>
+        <item name="colorOnSurfaceVariant">#F5F5F5</item>
+        <item name="colorOutline">#F5F5F5</item>
         <item name="colorTertiary">#A11477</item>
         <item name="colorOnTertiary">#FFFFFF</item>
         <item name="colorError">#FFB4AB</item>
@@ -45,6 +46,24 @@
         <item name="android:textColorHint">?attr/colorOnSurfaceVariant</item>
         <item name="alpha">1</item>
         <item name="rippleColor">?attr/colorPrimary</item>
+    </style>
+
+    <!-- Same idea, but for when the system is in light mode: MainActivityDelegate.setTheme()
+    picks between this and AppTheme.Dynamic based on Configuration.UI_MODE_NIGHT_MASK, the same
+    way it already does for the "System" theme, so Material You follows the system's light/dark
+    setting even where DynamicColors itself can't inject the real wallpaper palette. -->
+    <style name="AppTheme.DynamicLight" parent="AppTheme.Dynamic">
+        <item name="colorPrimary">#445D8F</item>
+        <item name="colorOnPrimary">#F5F5F5</item>
+        <item name="colorSecondary">#FFFFFF</item>
+        <item name="colorOnSecondary">#F5F5F5</item>
+        <item name="colorSurface">#445D8F</item>
+        <item name="colorOnSurface">#F5F5F5</item>
+        <item name="colorSurfaceVariant">#445D8F</item>
+        <item name="colorOnSurfaceVariant">#FFFFFF</item>
+        <item name="colorOutline">#445D8F</item>
+        <item name="android:colorBackground">#FFFFFF</item>
+        <item name="android:isLightTheme" tools:targetApi="q">true</item>
     </style>
 
 </resources>

@@ -10,7 +10,7 @@
 
         <!-- Tool/Nav bars -->
         <item name="colorPrimary">?colorPrimaryDark</item>
-        <item name="colorOnPrimary">#4E6AA2</item>
+        <item name="colorOnPrimary">#8AB4F8</item>
         <item name="android:textColorPrimary">?colorOnPrimary</item>
 
         <!-- List/Media items -->

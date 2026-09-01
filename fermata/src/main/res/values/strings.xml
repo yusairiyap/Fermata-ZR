@@ -54,7 +54,7 @@
     <string name="theme_black">Black</string>
     <string name="theme_star_wars">Star Wars</string>
     <string name="theme_purple">Purple</string>
-    <string name="theme_classic">Classic</string>
+    <string name="theme_classic">Modern</string>
     <string name="theme_dynamic">Dynamic (Material You)</string>
 
     <string name="nav_bar_pos">Navigation bar position</string>
@@ -74,7 +74,7 @@
     <string name="nav_bar_size">Navigation bar size</string>
     <string name="tool_bar_size">Tool bar size</string>
     <string name="control_panel_size">Control panel size</string>
-    <string name="text_icon_size">Text and icons size</string>
+    <string name="text_icon_size">Text size</string>
     <string name="icon_size">Icon size</string>
     <string name="subtitles_size">Subtitles text size</string>
 
