@@ -22,6 +22,7 @@ import android.widget.LinearLayout;
 import androidx.annotation.IdRes;
 import androidx.annotation.Nullable;
 import androidx.core.text.HtmlCompat;
+import androidx.core.widget.NestedScrollView;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -285,7 +286,11 @@ public class NavBarMediator extends PrefNavBarMediator
 				v.setOnClickListener(t -> openUrl(t.getContext(), url));
 				container.addView(v);
 
-				g.addView(container);
+				NestedScrollView scroll = new NestedScrollView(ctx);
+				scroll.setLayoutParams(new LinearLayout.LayoutParams(
+						LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+				scroll.addView(container);
+				g.addView(scroll);
 			});
 			return true;
 		} else if (itemId == R.id.settings_fragment) {
