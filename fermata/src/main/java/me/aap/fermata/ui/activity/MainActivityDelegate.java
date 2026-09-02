@@ -439,8 +439,8 @@ public class MainActivityDelegate extends ActivityDelegate
 
 	@NonNull
 	@Override
-	public FermataActivity getAppActivity() {
-		return (FermataActivity) super.getAppActivity();
+	public ZrAutoActivity getAppActivity() {
+		return (ZrAutoActivity) super.getAppActivity();
 	}
 
 	public boolean isCarActivity() {
@@ -491,7 +491,7 @@ public class MainActivityDelegate extends ActivityDelegate
 	@Override
 	public boolean interceptTouchEvent(MotionEvent e, Function<MotionEvent, Boolean> view) {
 		if (AUTO && (e.getAction() == MotionEvent.ACTION_DOWN)) {
-			FermataActivity a = getAppActivity();
+			ZrAutoActivity a = getAppActivity();
 
 			if (a.isInputActive()) {
 				a.stopInput();
@@ -998,7 +998,7 @@ public class MainActivityDelegate extends ActivityDelegate
 	}
 
 	private void init() {
-		FermataActivity a = getAppActivity();
+		ZrAutoActivity a = getAppActivity();
 		a.setContentView(getLayout());
 		toolBar = a.findViewById(R.id.tool_bar);
 		progressBar = a.findViewById(R.id.content_loading_progress);

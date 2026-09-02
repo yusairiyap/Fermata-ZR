@@ -14,11 +14,15 @@ import static me.aap.utils.ui.view.NavBarView.POSITION_LEFT;
 import static me.aap.utils.ui.view.NavBarView.POSITION_RIGHT;
 
 import android.content.Context;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.Nullable;
 import androidx.core.text.HtmlCompat;
+import androidx.core.widget.NestedScrollView;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,6 +65,7 @@ import me.aap.utils.ui.view.ToolBarView;
  */
 public class NavBarMediator extends PrefNavBarMediator
 		implements AddonManager.Listener, OverlayMenu.SelectionHandler {
+	private static final String UPSTREAM_FERMATA_VERSION = "1.0.0 (268)";
 	private static final Pref<Supplier<String[]>> PREF_B =
 			Pref.sa("NAV_BAR_ITEMS_B", (String[]) null);
 	private static final Pref<Supplier<String[]>> PREF_L =
@@ -258,15 +263,34 @@ public class NavBarMediator extends PrefNavBarMediator
 			f.setTitle(item.getContext().getString(R.string.about));
 			f.setContentProvider(g -> {
 				Context ctx = g.getContext();
+				LinearLayout container = new LinearLayout(ctx);
+				container.setOrientation(LinearLayout.VERTICAL);
+				container.setGravity(Gravity.CENTER_HORIZONTAL);
+
+				ImageView icon = new ImageView(ctx);
+				icon.setImageResource(R.drawable.launcher);
+				int iconSize = UiUtils.toIntPx(ctx, 96);
+				LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSize, iconSize);
+				int iconPad = UiUtils.toIntPx(ctx, 16);
+				iconParams.setMargins(0, iconPad, 0, iconPad);
+				icon.setLayoutParams(iconParams);
+				container.addView(icon);
+
 				ScalableTextView v = new ScalableTextView(ctx);
-				String url = "https://github.com/yusairiyap/Fermata-ZR";
+				String url = "https://github.com/yusairiyap/zrAuto";
 				String html = ctx.getString(R.string.about_html, VERSION_NAME, VERSION_CODE, url)
-						+ ctx.getString(R.string.about_fork_html);
+						+ ctx.getString(R.string.about_fork_html, UPSTREAM_FERMATA_VERSION);
 				int pad = UiUtils.toIntPx(ctx, 10);
 				v.setPadding(pad, pad, pad, pad);
 				v.setText(HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY));
 				v.setOnClickListener(t -> openUrl(t.getContext(), url));
-				g.addView(v);
+				container.addView(v);
+
+				NestedScrollView scroll = new NestedScrollView(ctx);
+				scroll.setLayoutParams(new LinearLayout.LayoutParams(
+						LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+				scroll.addView(container);
+				g.addView(scroll);
 			});
 			return true;
 		} else if (itemId == R.id.settings_fragment) {

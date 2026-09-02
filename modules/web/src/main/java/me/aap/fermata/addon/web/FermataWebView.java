@@ -37,7 +37,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.aap.fermata.BuildConfig;
-import me.aap.fermata.ui.activity.FermataActivity;
+import me.aap.fermata.ui.activity.ZrAutoActivity;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
 import me.aap.fermata.ui.activity.MainActivityListener;
 import me.aap.utils.async.FutureSupplier;
@@ -329,7 +329,7 @@ public class FermataWebView extends WebView
 	private boolean isKeyboardActive() {
 		if (!BuildConfig.AUTO) return false;
 
-		FermataActivity a = getActivity().map(MainActivityDelegate::getAppActivity).peek();
+		ZrAutoActivity a = getActivity().map(MainActivityDelegate::getAppActivity).peek();
 		return (a != null) && a.isInputActive();
 	}
 
@@ -360,7 +360,7 @@ public class FermataWebView extends WebView
 		if ((chrome != null) && chrome.isFullScreen()) {
 			chrome.onTouchEvent(this, ev);
 		} else if (BuildConfig.AUTO) {
-			FermataActivity a = getActivity().map(MainActivityDelegate::getAppActivity).peek();
+			ZrAutoActivity a = getActivity().map(MainActivityDelegate::getAppActivity).peek();
 
 			if ((a != null) && a.isInputActive()) {
 				a.stopInput();

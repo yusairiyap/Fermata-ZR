@@ -1,69 +1,59 @@
 ## !!!Be aware of scam!!! The sites like https :// fermata-auto . com  are 100% scam. This app is free and opensource!
 
 
-## Fermata Media Player
-[<img alt="Get it on Google Play" height="60" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png">](https://play.google.com/store/apps/details?id=me.aap.fermata)
+## zrAuto
+zrAuto is a free, open source media player built for Android Auto, made by [Yusairi Yap](https://github.com/yusairiyap). It's simple, easy to use, and gets you playing your music, videos, and playlists in the car without any fuss.
 
-## About
-Fermata Media Player is a free, open source audio, video and TV player with a simple and intuitive interface. It is focused on playing media files organized in folders and playlists.
+[Download the latest release](https://github.com/yusairiyap/zrAuto/releases/latest)
 
-Supported features:
+## What makes zrAuto different
+zrAuto is built on top of the original Fermata Auto, with a few changes to make it nicer to use:
 
-* Play media files organized in folders
-* IPTV addon with support for XMLTV EPG and Catchup
-* Remembers the last played track and position for each folder
-* Support for favorites and playlists
-* Support for CUE and M3U playlists
-* Support for bookmarks
-* Audio effects: Equalizer, Bass/Volume Boost and Virtualizer
-* Configure audio effects for individual tracks and folders
-* Configure playback speed for individual tracks and folders
-* Customizable titles and subtitles
-* Support for Android Auto
-* Support for Android TV
-* Show favorites and playlists on Android TV home screen
-* Pluggable media engines: MediaPlayer, ExoPlayer and VLC
-* Video player with support for subtitles and audio streams (VLC Engine only)
+* **A fresher look** — redesigned menus with a cleaner, card-style layout
+* **Bigger, easier-to-tap controls** — the toolbar, navigation bar, and control panel are sized with driving in mind, so you're not squinting or fumbling for buttons on the road
+* **YouTube in your Favorites and Playlists** — save YouTube videos alongside your other media, not just browse them live
+* **No donation nagging** — the app doesn't interrupt you asking for money
+* **Its own update channel** — zrAuto checks for and installs its own updates, so you're always running the latest zrAuto build
 
-## Building the project
-* Download and install the latest Android SDK or Android Studio from https://developer.android.com/studio/
-* Set the environment variable ANDROID_SDK_ROOT pointing to the SDK directory
-```bash
-export ANDROID_SDK_ROOT=<path to android SDK>
-```
+## What zrAuto can do
+* Play your media files, organized by folders — just like browsing files normally
+* Remembers where you left off, for every folder
+* Save your favorite tracks and folders, and build playlists
+* Works with CUE and M3U playlists
+* Bookmark spots in a track or video to jump back to later
+* Built-in audio effects — Equalizer, Bass/Volume Boost, and Virtualizer — that you can tune per track or folder
+* Adjust playback speed per track or folder
+* Customize how titles and subtitles look
+* IPTV support, with EPG and catch-up TV
+* Works great on Android Auto and Android TV
+* Show your favorites and playlists right on the Android TV home screen
+* Choice of playback engines (MediaPlayer, ExoPlayer, VLC) depending on what works best for your files
+* Video playback with subtitle and audio-track support (when using the VLC engine)
 
-### Clone the repository
-```bash
-git clone --recurse-submodules https://github.com/AndreyPavlenko/Fermata.git
-cd Fermata
-```
+## Getting the app
+The easiest way is to grab the latest APK from the [Releases page](https://github.com/yusairiyap/zrAuto/releases/latest) and install it on your phone. zrAuto will let you know in-app whenever a new version is available.
 
-### Build AAB
-```bash
-./gradlew bundleAutoRelease -PAPP_ID_SFX=.type.your.pkg.sfx.here
-find $PWD -name *.aab
-```
+## Building it yourself
+If you'd rather build zrAuto from source:
 
-### Build APK
-```bash
-./gradlew bundleAutoRelease -PAPP_ID_SFX=.type.your.pkg.sfx.here
-find $PWD -name *.apk
-```
+1. Install [Android Studio](https://developer.android.com/studio) (or just the Android SDK).
+2. Point the `ANDROID_SDK_ROOT` environment variable at your SDK folder:
+   ```bash
+   export ANDROID_SDK_ROOT=<path to your Android SDK>
+   ```
+3. Clone the project:
+   ```bash
+   git clone --recurse-submodules https://github.com/yusairiyap/zrAuto.git
+   cd zrAuto
+   ```
+4. Build it:
+   ```bash
+   ./gradlew bundleAutoRelease
+   ```
+   The finished app package will show up under the project's build output folders.
 
-### Building in docker
-```bash
-docker run -ti --name Fermata andreypavlenko/fermata
-```
-Enter the requested key alias and password, when prompted.
-Build the required package using the above commands.
-To copy the built package to the host machine, open a new terminal and run:
-```bash
-docker cp Fermata:/home/mobiledevops/Fermata/fermata/build/outputs/bundle/autoRelease/ .
-```
-
-
-## Donation
-If you like the application, please consider making a donation:
+## Supporting the project
+zrAuto is free and doesn't ask for donations, but it's built on the excellent work of Andrey Pavlenko's original Fermata Media Player. If you'd like to say thanks, you can support him directly:
 
 [PayPal](https://www.paypal.com/donate/?hosted_button_id=NP5Q3YDSCJ98N)
 

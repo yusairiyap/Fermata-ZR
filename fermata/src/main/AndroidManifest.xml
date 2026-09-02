@@ -105,7 +105,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
 
-                <data android:scheme="fermata" />
+                <data android:scheme="zrauto" />
                 <data android:host="open" />
                 <data android:host="play" />
             </intent-filter>

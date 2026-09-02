@@ -91,7 +91,7 @@ public class FermataMediaService extends MediaBrowserServiceCompat {
 	private static final String EXTRA_MEDIA_SEARCH_SUPPORTED =
 			"android.media.browse.SEARCH_SUPPORTED";
 	private static final int NOTIF_ID = 1;
-	private static final String NOTIF_CHANNEL_ID = "Fermata";
+	private static final String NOTIF_CHANNEL_ID = "zrAuto";
 	private DefaultMediaLib lib;
 	private MediaSessionCompat session;
 	MediaSessionCallback callback;

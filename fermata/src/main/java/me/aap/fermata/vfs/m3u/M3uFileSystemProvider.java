@@ -60,7 +60,7 @@ public class M3uFileSystemProvider extends VfsProviderBase {
 			o.store = ps;
 			o.pref = AGENT;
 			o.title = R.string.m3u_playlist_agent;
-			o.stringHint = "Fermata/" + BuildConfig.VERSION_NAME;
+			o.stringHint = "zrAuto/" + BuildConfig.VERSION_NAME;
 		});
 		prefs.addBooleanPref(o -> {
 			o.store = ps;

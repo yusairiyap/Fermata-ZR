@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name_mobile_release" translatable="false">Fermata</string>
-    <string name="app_name_auto_release" translatable="false">Fermata ZR</string>
-    <string name="app_name_mobile_debug" translatable="false">Debug Fermata</string>
-    <string name="app_name_auto_debug" translatable="false">Debug Fermata ZR</string>
-    <string name="mirror_service_name_release" translatable="false">Fermata Mirror</string>
-    <string name="mirror_service_name_debug" translatable="false">Debug Fermata Mirror</string>
-    <string name="mirror_fs_service_name_release" translatable="false">FS Fermata Mirror</string>
-    <string name="mirror_fs_service_name_debug" translatable="false">Debug FS Fermata Mirror</string>
+    <string name="app_name_mobile_release" translatable="false">zrAuto</string>
+    <string name="app_name_auto_release" translatable="false">zrAuto</string>
+    <string name="app_name_mobile_debug" translatable="false">Debug zrAuto</string>
+    <string name="app_name_auto_debug" translatable="false">Debug zrAuto</string>
+    <string name="mirror_service_name_release" translatable="false">zrAuto Mirror</string>
+    <string name="mirror_service_name_debug" translatable="false">Debug zrAuto Mirror</string>
+    <string name="mirror_fs_service_name_release" translatable="false">FS zrAuto Mirror</string>
+    <string name="mirror_fs_service_name_debug" translatable="false">Debug FS zrAuto Mirror</string>
     <string name="media_service_name_mobile_release" translatable="false">@string/app_name_mobile_release</string>
-    <string name="media_service_name_auto_release" translatable="false">Fermata Media Service</string>
+    <string name="media_service_name_auto_release" translatable="false">zrAuto Media Service</string>
     <string name="media_service_name_mobile_debug" translatable="false">@string/app_name_mobile_debug</string>
-    <string name="media_service_name_auto_debug" translatable="false">Debug Fermata Media Service</string>
+    <string name="media_service_name_auto_debug" translatable="false">Debug zrAuto Media Service</string>
     <string name="engine_mp_name" translatable="false">MediaPlayer</string>
     <string name="engine_exo_name" translatable="false">ExoPlayer</string>
     <string name="engine_vlc_name" translatable="false">VLC</string>
@@ -369,20 +369,20 @@
     <string name="open_log">Open log file</string>
     <string name="unlock_phone_and_grant">Unlock the phone and grant the requested permissions.</string>
     <string name="screen_capture_rejected">Screen capture request rejected.</string>
-    <string name="accessibility_dsc">The accessibility service is used by Fermata Mirror to simulate touch screen events.</string>
+    <string name="accessibility_dsc">The accessibility service is used by zrAuto Mirror to simulate touch screen events.</string>
     <string name="media_projection_action_text">Start now</string>
 
     <string name="about">About</string>
-    <string name="about_html"><![CDATA[<H1 align="center">Fermata Media Player</H1>
-        <p>Fermata Media Player is a free, open source audio and video player with a simple and
+    <string name="about_html"><![CDATA[<H1 align="center">zrAuto</H1>
+        <p>zrAuto is a free, open source media player for Android Auto with a simple and
         intuitive interface.</p>
-        <p><b>Author:</b> Andrey Pavlenko</p>
         <p><b>Version:</b> %1$s (%2$d)</p>
         <p><b>Home page:</b> <a href="%3$s">%3$s</a></p>
         ]]></string>
     <string name="about_fork_html" translatable="false"><![CDATA[
-        <p><b>This fork developed by:</b> Yusairi Yap</p>
-        <p>Forked from the original Fermata Media Player by Andrey Pavlenko.</p>
+        <p><b>Developed by:</b> Yusairi Yap</p>
+        <p>Modded from the original <b>Fermata Media Player</b> by Andrey Pavlenko
+        (upstream version at fork time: %1$s).</p>
         ]]></string>
 
     <string name="err_failed_to_play">Failed to play %s</string>

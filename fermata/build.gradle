@@ -3,10 +3,10 @@ if (gradle.ext.enableGoogleServices) apply plugin: 'com.google.gms.google-servic
 android {
     defaultConfig {
         namespace = 'me.aap.fermata'
-        applicationId project.getProperties().getOrDefault('APP_ID', 'me.aap.fermata')
+        applicationId project.getProperties().getOrDefault('APP_ID', 'com.yusairiyap.zrauto')
         versionCode VERSION_CODE
         versionName VERSION_NAME
-        base.archivesName = "fermata-$versionName"
+        base.archivesName = "zrauto-$versionName"
 
         ndk {
             //noinspection ChromeOsAbiSupport

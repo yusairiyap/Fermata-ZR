@@ -785,7 +785,7 @@ public class SettingsFragment extends MainActivityFragment
 
 	private void exportPrefs(MainActivityDelegate a) {
 		SimpleDateFormat fmt = new SimpleDateFormat("ddMMyy", Locale.getDefault());
-		String pattern = "Fermata_prefs_" + fmt.format(new Date());
+		String pattern = "zrAuto_prefs_" + fmt.format(new Date());
 
 		if (Utils.isSafSupported(a)) {
 			a.startActivityForResult(() -> new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))

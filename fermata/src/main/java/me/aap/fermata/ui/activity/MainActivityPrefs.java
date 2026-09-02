@@ -37,6 +37,14 @@ public interface MainActivityPrefs
 	int CLOCK_POS_RIGHT = 2;
 	int CLOCK_POS_CENTER = 3;
 
+	// Hidden baseline multipliers applied on top of the user-facing size-slider preferences below,
+	// so a slider showing "1.0" renders at the intended default size rather than the raw
+	// 40dp/70dp view base. Moving a slider away from 1.0 scales relative to this baseline.
+	float TOOL_BAR_SIZE_BASE_MOBILE = 1.3f;
+	float NAV_BAR_SIZE_BASE_AUTO = 1.05f;
+	float TOOL_BAR_SIZE_BASE_AUTO = 1.5f;
+	float CONTROL_PANEL_SIZE_BASE_AUTO = 1.3f;
+
 	Pref<IntSupplier> THEME_MAIN = Pref.i("THEME_MAIN", THEME_CLASSIC);
 	Pref<BooleanSupplier> HIDE_BARS = Pref.b("HIDE_BARS", false);
 	Pref<BooleanSupplier> FULLSCREEN = Pref.b("FULLSCREEN", false);
@@ -77,9 +85,9 @@ public interface MainActivityPrefs
 	Pref<BooleanSupplier> SHOW_PG_UP_DOWN_AA = AUTO ? Pref.b("SHOW_PG_UP_DOWN_AA", true) : null;
 	Pref<IntSupplier> NAV_BAR_POS_AA =
 			AUTO ? Pref.i("NAV_BAR_POS_AA", NavBarView.POSITION_BOTTOM) : null;
-	Pref<DoubleSupplier> NAV_BAR_SIZE_AA = AUTO ? Pref.f("NAV_BAR_SIZE_AA", 1.05f) : null;
-	Pref<DoubleSupplier> TOOL_BAR_SIZE_AA = AUTO ? Pref.f("TOOL_BAR_SIZE_AA", 1.5f) : null;
-	Pref<DoubleSupplier> CONTROL_PANEL_SIZE_AA = AUTO ? Pref.f("CONTROL_PANEL_SIZE_AA", 1.3f) : null;
+	Pref<DoubleSupplier> NAV_BAR_SIZE_AA = AUTO ? Pref.f("NAV_BAR_SIZE_AA", 1f) : null;
+	Pref<DoubleSupplier> TOOL_BAR_SIZE_AA = AUTO ? Pref.f("TOOL_BAR_SIZE_AA", 1f) : null;
+	Pref<DoubleSupplier> CONTROL_PANEL_SIZE_AA = AUTO ? Pref.f("CONTROL_PANEL_SIZE_AA", 1f) : null;
 	Pref<DoubleSupplier> TEXT_ICON_SIZE_AA = AUTO ? Pref.f("TEXT_ICON_SIZE_AA", 1f) : null;
 	Pref<DoubleSupplier> ICON_SIZE_AA = AUTO ? Pref.f("ICON_SIZE_AA", 1f) : null;
 	Pref<BooleanSupplier> GRID_VIEW_AA = AUTO ? Pref.b("GRID_VIEW_AA", false) : null;
@@ -160,7 +168,7 @@ public interface MainActivityPrefs
 	}
 
 	default float getNavBarSizePref(MainActivityDelegate a) {
-		if (AUTO && a.isCarActivity()) return getFloatPref(NAV_BAR_SIZE_AA);
+		if (AUTO && a.isCarActivity()) return getFloatPref(NAV_BAR_SIZE_AA) * NAV_BAR_SIZE_BASE_AUTO;
 		return getFloatPref(NAV_BAR_SIZE);
 	}
 
@@ -170,8 +178,8 @@ public interface MainActivityPrefs
 	}
 
 	default float getToolBarSizePref(MainActivityDelegate a) {
-		if (AUTO && a.isCarActivity()) return getFloatPref(TOOL_BAR_SIZE_AA);
-		return getFloatPref(TOOL_BAR_SIZE);
+		if (AUTO && a.isCarActivity()) return getFloatPref(TOOL_BAR_SIZE_AA) * TOOL_BAR_SIZE_BASE_AUTO;
+		return getFloatPref(TOOL_BAR_SIZE) * TOOL_BAR_SIZE_BASE_MOBILE;
 	}
 
 	static boolean hasControlPanelSizePref(MainActivityDelegate a, List<Pref<?>> prefs) {
@@ -180,7 +188,8 @@ public interface MainActivityPrefs
 	}
 
 	default float getControlPanelSizePref(MainActivityDelegate a) {
-		if (AUTO && a.isCarActivity()) return getFloatPref(CONTROL_PANEL_SIZE_AA);
+		if (AUTO && a.isCarActivity())
+			return getFloatPref(CONTROL_PANEL_SIZE_AA) * CONTROL_PANEL_SIZE_BASE_AUTO;
 		return getFloatPref(CONTROL_PANEL_SIZE);
 	}
 

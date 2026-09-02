@@ -118,7 +118,7 @@ public class FermataApplication extends NetSplitCompatApp {
 	public File getLogFile() {
 		File dir = getExternalFilesDir(null);
 		if (dir == null) dir = getFilesDir();
-		return new File(dir, "Fermata.log");
+		return new File(dir, "zrAuto.log");
 	}
 
 	@Nullable

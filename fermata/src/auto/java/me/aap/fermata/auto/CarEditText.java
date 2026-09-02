@@ -10,7 +10,7 @@ import android.view.inputmethod.EditorInfo;
 import com.google.android.gms.car.input.CarEditable;
 import com.google.android.gms.car.input.CarEditableListener;
 
-import me.aap.fermata.ui.activity.FermataActivity;
+import me.aap.fermata.ui.activity.ZrAutoActivity;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
 
 /**
@@ -49,7 +49,7 @@ public class CarEditText extends CarRestrictedEditText implements CarEditable {
 							KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
 							KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE | KeyEvent.FLAG_EDITOR_ACTION);
 					keyListener.onKey(this, KeyEvent.KEYCODE_ENTER, e);
-					FermataActivity a = MainActivityDelegate.get(getContext()).getAppActivity();
+					ZrAutoActivity a = MainActivityDelegate.get(getContext()).getAppActivity();
 					if (a instanceof MainCarActivity) a.stopInput();
 					return;
 			}
