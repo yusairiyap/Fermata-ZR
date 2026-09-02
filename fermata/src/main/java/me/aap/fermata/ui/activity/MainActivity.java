@@ -64,7 +64,7 @@ import me.aap.utils.ui.activity.AppActivity;
 import me.aap.utils.ui.activity.SplitCompatActivityBase;
 
 public class MainActivity extends SplitCompatActivityBase
-		implements FermataActivity, AddonManager.Listener {
+		implements ZrAutoActivity, AddonManager.Listener {
 	private static FermataMediaServiceConnection service;
 	private static MainActivity activeInstance;
 
@@ -204,7 +204,7 @@ public class MainActivity extends SplitCompatActivityBase
 			}, 1, MINUTES);
 		}
 
-		String reqUrl = "https://api.github.com/repos/AndreyPavlenko/Fermata/releases/latest";
+		String reqUrl = "https://api.github.com/repos/yusairiyap/zrAuto/releases/latest";
 		HttpConnection.connect(o -> o.url(reqUrl), (resp, err) -> {
 			if (err != null) {
 				Log.e(err, "Failed to check updates");
@@ -316,7 +316,7 @@ public class MainActivity extends SplitCompatActivityBase
 	private static File createTempFile(File dir) {
 		try {
 			if (dir == null) return null;
-			return File.createTempFile("Fermata-", ".apk", dir);
+			return File.createTempFile("zrAuto-", ".apk", dir);
 		} catch (Exception ex) {
 			Log.e(ex, "Failed to create a temporary file in the directory ", dir);
 			return null;

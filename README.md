@@ -1,11 +1,26 @@
 ## !!!Be aware of scam!!! The sites like https :// fermata-auto . com  are 100% scam. This app is free and opensource!
 
 
-## Fermata Media Player
-[<img alt="Get it on Google Play" height="60" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png">](https://play.google.com/store/apps/details?id=me.aap.fermata)
+## zrAuto
+zrAuto is a modded, Android-Auto-focused fork of [Fermata Media Player](https://github.com/AndreyPavlenko/Fermata), rebranded and enhanced by [Yusairi Yap](https://github.com/yusairiyap).
+
+[Download the latest release](https://github.com/yusairiyap/zrAuto/releases/latest)
+
+## What's different from upstream Fermata
+This fork isn't just a re-skin — since forking from upstream, it has picked up its own UI work and identity changes:
+
+* **Rebranded identity** — new app name, icon, Android Auto media-service name, and application ID (`com.yusairiyap.zrauto`), independent from the original app.
+* **Material 3 redesign** — migrated theming to Material 3 with a card-based UI, new "Modern"/"Classic" theme naming, configurable nav bar/control panel icon-size sliders, and numerous visual-contrast fixes.
+* **YouTube videos in Favourites/Playlists** — YouTube items can now be saved to and shown in Favourites and Playlists, not just browsed live, with an animated video-info overlay and several UX fixes from real-device testing.
+* **Android Auto-tuned UI defaults** — nav bar, tool bar, and control panel sizing now default specifically for the car form factor.
+* **Donate menu removed** from the in-app UI (see the [Donation](#donation) section below for how to still support the original author).
+* **Self-hosted update checker** — the in-app "check for updates" feature now checks this repository's own GitHub Releases instead of upstream's, so you get zrAuto updates, not upstream Fermata ones.
+* **Own CI/release pipeline** — GitHub Actions builds installable Android Auto APKs for every push/PR, and publishes tagged releases automatically (see [Building the project](#building-the-project)).
+
+Everything else — the media engines, addons, and general feature set below — is inherited from upstream Fermata, not original to this fork.
 
 ## About
-Fermata Media Player is a free, open source audio, video and TV player with a simple and intuitive interface. It is focused on playing media files organized in folders and playlists.
+zrAuto (based on Fermata Media Player) is a free, open source audio, video and TV player with a simple and intuitive interface. It is focused on playing media files organized in folders and playlists.
 
 Supported features:
 
@@ -34,8 +49,8 @@ export ANDROID_SDK_ROOT=<path to android SDK>
 
 ### Clone the repository
 ```bash
-git clone --recurse-submodules https://github.com/AndreyPavlenko/Fermata.git
-cd Fermata
+git clone --recurse-submodules https://github.com/yusairiyap/zrAuto.git
+cd zrAuto
 ```
 
 ### Build AAB
@@ -50,20 +65,10 @@ find $PWD -name *.aab
 find $PWD -name *.apk
 ```
 
-### Building in docker
-```bash
-docker run -ti --name Fermata andreypavlenko/fermata
-```
-Enter the requested key alias and password, when prompted.
-Build the required package using the above commands.
-To copy the built package to the host machine, open a new terminal and run:
-```bash
-docker cp Fermata:/home/mobiledevops/Fermata/fermata/build/outputs/bundle/autoRelease/ .
-```
-
+The default application ID is `com.yusairiyap.zrauto` (Android Auto builds get a `.auto` suffix). Override it with `-PAPP_ID=your.own.id` if you need a different identity for your own build.
 
 ## Donation
-If you like the application, please consider making a donation:
+zrAuto itself does not solicit donations, but it's built on top of Andrey Pavlenko's original Fermata Media Player. If you'd like to support the original author, here are his donation links:
 
 [PayPal](https://www.paypal.com/donate/?hosted_button_id=NP5Q3YDSCJ98N)
 

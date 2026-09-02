@@ -12,7 +12,7 @@ import com.google.android.gms.cast.framework.media.CastMediaOptions;
 
 import java.util.List;
 
-import me.aap.fermata.ui.activity.FermataActivity;
+import me.aap.fermata.ui.activity.ZrAutoActivity;
 
 /**
  * @author Andrey Pavlenko
@@ -22,7 +22,7 @@ public class CastOptionsProvider implements OptionsProvider {
 	public CastOptions getCastOptions(Context context) {
 		CastMediaOptions mediaOpts =
 				new CastMediaOptions.Builder().setExpandedControllerActivityClassName(
-						FermataActivity.class.getName()).build();
+						ZrAutoActivity.class.getName()).build();
 		LaunchOptions launchOpts =
 				new LaunchOptions.Builder().setAndroidReceiverCompatible(true).build();
 		return new CastOptions.Builder().setLaunchOptions(launchOpts)

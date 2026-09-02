@@ -39,7 +39,7 @@ calendar.set(2025, Calendar.JANUARY, 1, 0, 0, 0)
 def startDate = calendar.time
 calendar.set(2125, Calendar.JANUARY, 1, 0, 0, 0)
 def endDate = calendar.time
-def subjectDN = new X500Principal("CN=Fermata")
+def subjectDN = new X500Principal("CN=zrAuto")
 def signer = new JcaContentSignerBuilder("SHA256withRSA")
         .setProvider("BC").build(keyPair.private)
 def certBuilder = new JcaX509v3CertificateBuilder(subjectDN, new BigInteger(64, rnd),

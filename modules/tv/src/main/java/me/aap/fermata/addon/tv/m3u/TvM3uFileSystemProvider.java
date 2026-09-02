@@ -171,7 +171,7 @@ public class TvM3uFileSystemProvider extends M3uFileSystemProvider {
 			o.store = ps;
 			o.pref = AGENT;
 			o.title = me.aap.fermata.R.string.m3u_playlist_agent;
-			o.stringHint = "Fermata/" + BuildConfig.VERSION_NAME;
+			o.stringHint = "zrAuto/" + BuildConfig.VERSION_NAME;
 		});
 		sub.addIntPref(o -> {
 			o.store = ps;

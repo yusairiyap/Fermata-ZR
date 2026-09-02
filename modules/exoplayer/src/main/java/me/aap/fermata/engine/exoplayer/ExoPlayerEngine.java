@@ -80,7 +80,7 @@ public class ExoPlayerEngine extends MediaEngineBase implements Player.Listener 
 		CronetEngine cre;
 		try {
 			cre = CronetUtil.buildCronetEngine(FermataApplication.get(),
-					"Fermata/" + BuildConfig.VERSION_NAME, true);
+					"zrAuto/" + BuildConfig.VERSION_NAME, true);
 		} catch (Throwable ex) {
 			Log.e(ex, "Failed to build Cronet engine, falling back to DefaultHttpDataSource");
 			cre = null;

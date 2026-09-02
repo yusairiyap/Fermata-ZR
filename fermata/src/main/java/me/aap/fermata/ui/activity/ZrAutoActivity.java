@@ -10,7 +10,7 @@ import me.aap.utils.ui.activity.AppActivity;
 /**
  * @author Andrey Pavlenko
  */
-public interface FermataActivity extends AppActivity {
+public interface ZrAutoActivity extends AppActivity {
 
 
 	boolean isCarActivity();

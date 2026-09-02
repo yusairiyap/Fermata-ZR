@@ -48,7 +48,7 @@ import com.google.android.apps.auto.sdk.CarUiController;
 
 import me.aap.fermata.R;
 import me.aap.fermata.media.service.FermataMediaServiceConnection;
-import me.aap.fermata.ui.activity.FermataActivity;
+import me.aap.fermata.ui.activity.ZrAutoActivity;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
 import me.aap.fermata.ui.view.MediaItemListView;
 import me.aap.fermata.ui.view.VideoView;
@@ -63,7 +63,7 @@ import me.aap.utils.ui.menu.OverlayMenu;
 /**
  * @author Andrey Pavlenko
  */
-public class MainCarActivity extends CarActivity implements FermataActivity {
+public class MainCarActivity extends CarActivity implements ZrAutoActivity {
 	static FermataMediaServiceConnection service;
 	@SuppressWarnings("unchecked")
 	@NonNull

@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+env:
+  JAVA_VERSION: '17'
+  JAVA_DISTRIBUTION: 'temurin'
+
+jobs:
+  release:
+    name: Build and publish zrAuto release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Derive version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          ver_file=gradle/libs.versions.toml
+          sed -ri "s/appVersionName.+/appVersionName = \"$VERSION\"/" $ver_file
+          echo "APP_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Create keystore and local.properties
+        run: |
+          [ -z "${{ secrets.CI_KEYSTORE }}" ] && exit 0
+          echo "${{ secrets.CI_KEYSTORE }}" | base64 -d > keystore.jks
+
+          cat > local.properties <<EOF
+          storeFile=$(pwd)/keystore.jks
+          keyAlias=${{ secrets.CI_ALIAS }}
+          keyPassword=${{ secrets.CI_KEY_PWD }}
+          storePassword=${{ secrets.CI_KEYSTORE_PWD }}
+          EOF
+
+      - name: Build release APKs
+        env:
+          NO_GS: true
+        run: |
+          out=fermata/build/outputs/apk_from_bundle/autoRelease
+          mkdir -p dist
+          ./gradlew fermata:packageAutoReleaseUniversalApk -PABI=arm64-v8a --build-cache -PAPP_NAME=zrAuto
+          mv "$out"/*.apk "dist/zrauto-${APP_VERSION}-arm64.apk"
+          ./gradlew fermata:packageAutoReleaseUniversalApk -PABI=armeabi-v7a --build-cache -PAPP_NAME=zrAuto
+          mv "$out"/*.apk "dist/zrauto-${APP_VERSION}-arm.apk"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.APP_VERSION }}
+          name: zrAuto ${{ env.APP_VERSION }}
+          files: |
+            dist/zrauto-${{ env.APP_VERSION }}-arm64.apk
+            dist/zrauto-${{ env.APP_VERSION }}-arm.apk
+          generate_release_notes: true
