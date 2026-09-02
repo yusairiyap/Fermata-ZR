@@ -700,7 +700,7 @@ public class MainActivityDelegate extends ActivityDelegate
 		(videoMode ? videoOverlayConstraints : normalConstraints).applyTo(layout);
 
 		ToolBarView tb = getToolBar();
-		int c = MaterialColors.getColor(getContext(), com.google.android.material.R.attr.colorPrimary,
+		int c = MaterialColors.getColor(getContext(), androidx.appcompat.R.attr.colorPrimary,
 				Color.BLACK);
 		if (videoMode) tb.setBackground(ControlPanelView.buildScrimGradient(c, false));
 		else tb.setBackgroundColor(c);
