@@ -39,6 +39,15 @@
         <item name="colorControlNormal">#FFFFFF</item>
         <item name="colorControlActivated">#FFFFFF</item>
 
+        <!-- Material 3 roles -->
+        <item name="colorSurfaceVariant">#242424</item>
+        <item name="colorOnSurfaceVariant">#FFFFFF</item>
+        <item name="colorOutline">#FFFFFF</item>
+        <item name="colorError">#FFB4AB</item>
+        <item name="colorOnError">#690005</item>
+        <item name="colorErrorContainer">#93000A</item>
+        <item name="colorOnErrorContainer">#FFDAD6</item>
+
     </style>
 
 </resources>

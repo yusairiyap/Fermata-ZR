@@ -60,9 +60,11 @@
 
     <item name="programme_guide" type="id" />
 
+    <item name="favorites" type="id" />
     <item name="favorites_add" type="id" />
     <item name="favorites_remove" type="id" />
 
+    <item name="playlists" type="id" />
     <item name="playlist_add" type="id" />
     <item name="playlist_create" type="id" />
     <item name="playlist_remove" type="id" />

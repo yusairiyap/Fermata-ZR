@@ -103,8 +103,13 @@ public class MainActivity extends SplitCompatActivityBase
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		MainActivityDelegate.setTheme(this,
-				isCarActivity() || FermataApplication.get().isMirroringMode());
+		boolean auto = isCarActivity() || FermataApplication.get().isMirroringMode();
+		MainActivityDelegate.setTheme(this, auto);
+		if ((SDK_INT >= Build.VERSION_CODES.S)
+				&& (MainActivityDelegate.Prefs.instance.getThemePref(auto)
+						== MainActivityPrefs.THEME_DYNAMIC)) {
+			com.google.android.material.color.DynamicColors.applyToActivityIfAvailable(this);
+		}
 		AddonManager.get().addBroadcastListener(this);
 		getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
 			@Override

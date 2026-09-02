@@ -37,6 +37,7 @@ import me.aap.fermata.media.lib.FolderItem;
 import me.aap.fermata.media.lib.M3uItem;
 import me.aap.fermata.media.lib.MediaLib.ArchiveItem;
 import me.aap.fermata.media.lib.MediaLib.BrowsableItem;
+import me.aap.fermata.media.lib.MediaLib.ExternallyPlayableItem;
 import me.aap.fermata.media.lib.MediaLib.Favorites;
 import me.aap.fermata.media.lib.MediaLib.Folders;
 import me.aap.fermata.media.lib.MediaLib.Item;
@@ -135,7 +136,7 @@ public class MediaItemMenuHandler implements OverlayMenu.SelectionHandler {
 
 	protected void buildPlayableMenu(MainActivityDelegate a, OverlayMenu.Builder b, PlayableItem pi,
 																	 boolean initRepeat) {
-		if (!pi.isExternal()) {
+		if (!pi.isExternal() || (pi instanceof ExternallyPlayableItem)) {
 			if (initRepeat) {
 				if (pi.isRepeatItemEnabled()) {
 					b.addItem(R.id.repeat_disable, R.drawable.repeat_filled, R.string.repeat_disable);

@@ -25,13 +25,10 @@ import me.aap.fermata.media.lib.MediaLib.ArchiveItem;
 import me.aap.fermata.media.lib.MediaLib.PlayableItem;
 import me.aap.fermata.media.lib.MediaLib.StreamItem;
 import me.aap.fermata.media.lib.PlayableItemWrapper;
-import me.aap.fermata.ui.view.VideoInfoView;
 import me.aap.fermata.ui.view.VideoView;
 import me.aap.utils.app.App;
 import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.function.Cancellable;
-import me.aap.utils.text.SharedTextBuilder;
-import me.aap.utils.text.TextUtils;
 import me.aap.utils.ui.menu.OverlayMenu;
 
 /**
@@ -118,8 +115,6 @@ public class StreamEngine implements MediaEngine, MediaEngine.Listener {
 					lag = lg;
 					position = 0;
 					state = STATE_PLAYING;
-					VideoInfoView vi = (videoView != null) ? videoView.getVideoInfoView() : null;
-					if (vi != null) vi.onPlayableChanged(src, src);
 				});
 			} else {
 				((StreamItem) src).getEpg(startTime + position() + 1000).onSuccess(e -> {
@@ -129,30 +124,6 @@ public class StreamEngine implements MediaEngine, MediaEngine.Listener {
 					endTime = e.getEndTime();
 					position = 0;
 					startStamp = System.currentTimeMillis();
-					VideoInfoView vi = (videoView != null) ? videoView.getVideoInfoView() : null;
-					if (vi != null) {
-						src.getMediaDescription().main().and(e.getMediaDescription().main(), (sd, ed) -> {
-							if ((source != src) || !isPlaying()) return;
-							MediaDescriptionCompat.Builder dsc = new MediaDescriptionCompat.Builder();
-							CharSequence sub = ed.getTitle();
-							Uri icon = ed.getIconUri();
-							dsc.setTitle(sd.getTitle());
-							dsc.setDescription(ed.getSubtitle());
-							dsc.setIconUri((icon != null) ? icon : sd.getIconUri());
-
-							if (sub != null) {
-								try (SharedTextBuilder b = SharedTextBuilder.get()) {
-									b.append(sub).append(". ");
-									TextUtils.dateToTimeString(b, startTime, false);
-									b.append(" - ");
-									TextUtils.dateToTimeString(b, endTime, false);
-									dsc.setSubtitle(b.toString());
-								}
-							}
-
-							vi.setDescription(src, dsc.build());
-						});
-					}
 				});
 			}
 		}

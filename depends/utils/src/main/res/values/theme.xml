@@ -3,7 +3,7 @@
 
     <attr name="fileListViewStyle" format="reference" />
 
-    <style name="Theme.Utils.Base" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Theme.Utils.Base" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:background">@android:color/transparent</item>
         <item name="colorBackgroundFloating">?attr/colorSurface</item>
 
@@ -14,6 +14,7 @@
         <item name="fileListViewStyle">@style/Theme.Utils.Base.FileListViewStyle</item>
         <item name="floatingActionButtonStyle">@style/Theme.Utils.Base.FloatingButtonStyle</item>
         <item name="materialAlertDialogTheme">@style/Theme.Utils.Base.AlertDialog</item>
+        <item name="checkboxStyle">@style/Theme.Utils.Base.CheckBoxStyle</item>
 
         <item name="rippleColor">#FFFFFF</item>
         <item name="boxStrokeColor">?attr/colorPrimaryDark</item>
@@ -21,28 +22,20 @@
         <item name="cornerRadius">5dp</item>
         <item name="thumbTint">@color/thumb_color</item>
 
-        <!--Text appearance-->
-        <item name="textAppearanceHeadline1">@style/TextAppearance.MaterialComponents.Headline1
-        </item>
-        <item name="textAppearanceHeadline2">@style/TextAppearance.MaterialComponents.Headline2
-        </item>
-        <item name="textAppearanceHeadline3">@style/TextAppearance.MaterialComponents.Headline3
-        </item>
-        <item name="textAppearanceHeadline4">@style/TextAppearance.MaterialComponents.Headline4
-        </item>
-        <item name="textAppearanceHeadline5">@style/TextAppearance.MaterialComponents.Headline5
-        </item>
-        <item name="textAppearanceHeadline6">@style/TextAppearance.MaterialComponents.Headline6
-        </item>
-        <item name="textAppearanceSubtitle1">@style/TextAppearance.MaterialComponents.Subtitle1
-        </item>
-        <item name="textAppearanceSubtitle2">@style/TextAppearance.MaterialComponents.Subtitle2
-        </item>
-        <item name="textAppearanceBody1">@style/TextAppearance.MaterialComponents.Body1</item>
-        <item name="textAppearanceBody2">@style/TextAppearance.MaterialComponents.Body2</item>
-        <item name="textAppearanceButton">@style/TextAppearance.MaterialComponents.Button</item>
-        <item name="textAppearanceCaption">@style/TextAppearance.MaterialComponents.Caption</item>
-        <item name="textAppearanceOverline">@style/TextAppearance.MaterialComponents.Overline</item>
+        <!--Text appearance (Material 3 type scale; see https://m3.material.io/styles/typography)-->
+        <item name="textAppearanceHeadline1">@style/TextAppearance.Material3.DisplayLarge</item>
+        <item name="textAppearanceHeadline2">@style/TextAppearance.Material3.DisplayMedium</item>
+        <item name="textAppearanceHeadline3">@style/TextAppearance.Material3.DisplaySmall</item>
+        <item name="textAppearanceHeadline4">@style/TextAppearance.Material3.HeadlineMedium</item>
+        <item name="textAppearanceHeadline5">@style/TextAppearance.Material3.HeadlineSmall</item>
+        <item name="textAppearanceHeadline6">@style/TextAppearance.Material3.TitleLarge</item>
+        <item name="textAppearanceSubtitle1">@style/TextAppearance.Material3.TitleMedium</item>
+        <item name="textAppearanceSubtitle2">@style/TextAppearance.Material3.TitleSmall</item>
+        <item name="textAppearanceBody1">@style/TextAppearance.Material3.BodyLarge</item>
+        <item name="textAppearanceBody2">@style/TextAppearance.Material3.BodyMedium</item>
+        <item name="textAppearanceButton">@style/TextAppearance.Material3.LabelLarge</item>
+        <item name="textAppearanceCaption">@style/TextAppearance.Material3.BodySmall</item>
+        <item name="textAppearanceOverline">@style/TextAppearance.Material3.LabelSmall</item>
         <item name="textAppearanceListItem">@style/TextAppearance.Utils.ListItem</item>
     </style>
 
@@ -62,24 +55,24 @@
         <item name="editTextAppearance">@style/Theme.Utils.Base.ToolBarEditTextAppearance</item>
     </style>
 
-    <style name="Theme.Utils.Base.ToolBarTextAppearance" parent="TextAppearance.MaterialComponents.Body1">
+    <style name="Theme.Utils.Base.ToolBarTextAppearance" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:textSize">18sp</item>
         <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
 
-    <style name="Theme.Utils.Base.ToolBarEditTextAppearance" parent="TextAppearance.MaterialComponents.Body1">
+    <style name="Theme.Utils.Base.ToolBarEditTextAppearance" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:textSize">16sp</item>
         <item name="android:textColor">?attr/editTextColor</item>
     </style>
 
     <style name="Theme.Utils.Base.NavBarStyle">
-        <item name="size">40dp</item>
+        <item name="size">70dp</item>
         <item name="tint">?attr/colorOnPrimary</item>
         <item name="android:colorBackground">?attr/colorPrimary</item>
         <item name="textAppearance">@style/Theme.Utils.Base.NavBarTextAppearance</item>
     </style>
 
-    <style name="Theme.Utils.Base.NavBarTextAppearance" parent="TextAppearance.MaterialComponents.Body1">
+    <style name="Theme.Utils.Base.NavBarTextAppearance" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
@@ -101,7 +94,8 @@
         <item name="background">@drawable/focusable_shape_transparent</item>
     </style>
 
-    <style name="Theme.Utils.Base.FloatingButtonStyle" parent="Widget.MaterialComponents.FloatingActionButton">
+    <style name="Theme.Utils.Base.FloatingButtonStyle" parent="Widget.Material3.FloatingActionButton.Primary">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Utils.FloatingButton</item>
         <item name="borderWidth">2dp</item>
         <item name="borderColor">?attr/colorOnPrimary</item>
         <item name="borderFocusColor">?attr/colorAccent</item>
@@ -110,12 +104,20 @@
         <item name="rippleColor">?colorAccent</item>
     </style>
 
+    <style name="ShapeAppearanceOverlay.Utils.FloatingButton" parent="">
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="Theme.Utils.Base.CheckBoxStyle" parent="Widget.Material3.CompoundButton.CheckBox">
+        <item name="buttonTint">?attr/colorControlActivated</item>
+    </style>
+
     <declare-styleable name="AlertDialog">
         <attr name="listLayout" format="reference" />
         <attr name="singleChoiceItemLayout" format="reference" />
     </declare-styleable>
 
-    <style name="Theme.Utils.Base.AlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+    <style name="Theme.Utils.Base.AlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
 
         <item name="alertDialogStyle">@style/Theme.Utils.Base.AlertDialog.Style</item>
 
@@ -142,23 +144,23 @@
         <item name="buttonBarNeutralButtonStyle">@style/Theme.Utils.Base.AlertDialog.Button</item>
     </style>
 
-    <style name="Theme.Utils.Base.AlertDialog.Style" parent="MaterialAlertDialog.MaterialComponents">
+    <style name="Theme.Utils.Base.AlertDialog.Style" parent="MaterialAlertDialog.Material3">
         <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
-    <style name="Theme.Utils.Base.AlertDialog.Title.Panel" parent="MaterialAlertDialog.MaterialComponents.Title.Panel">
+    <style name="Theme.Utils.Base.AlertDialog.Title.Panel" parent="MaterialAlertDialog.Material3.Title.Panel">
         <item name="android:background">@null</item>
     </style>
 
-    <style name="Theme.Utils.Base.AlertDialog.Title.Icon" parent="MaterialAlertDialog.MaterialComponents.Title.Icon">
+    <style name="Theme.Utils.Base.AlertDialog.Title.Icon" parent="MaterialAlertDialog.Material3.Title.Icon">
         <item name="android:tint">?attr/colorOnSurface</item>
     </style>
 
-    <style name="Theme.Utils.Base.AlertDialog.Title.Text" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
+    <style name="Theme.Utils.Base.AlertDialog.Title.Text" parent="MaterialAlertDialog.Material3.Title.Text">
         <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
-    <style name="Theme.Utils.Base.AlertDialog.Body.Text" parent="MaterialAlertDialog.MaterialComponents.Body.Text">
+    <style name="Theme.Utils.Base.AlertDialog.Body.Text" parent="MaterialAlertDialog.Material3.Body.Text">
         <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
@@ -166,7 +168,7 @@
         <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
-    <style name="Theme.Utils.Base.AlertDialog.Button" parent="Widget.MaterialComponents.Button.OutlinedButton">
+    <style name="Theme.Utils.Base.AlertDialog.Button" parent="Widget.Material3.Button.OutlinedButton">
         <item name="strokeColor">?attr/colorOnSurface</item>
         <item name="android:strokeColor">?attr/colorOnSurface</item>
         <item name="android:textColor">?attr/colorOnSurface</item>
@@ -174,7 +176,7 @@
         <item name="android:textSize">14sp</item>
     </style>
 
-    <style name="TextAppearance.Utils.ListItem" parent="@style/TextAppearance.MaterialComponents.Headline6">
+    <style name="TextAppearance.Utils.ListItem" parent="@style/TextAppearance.Material3.TitleLarge">
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">normal</item>
     </style>

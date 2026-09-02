@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--Material You dynamic color theme. Every M3 color role below has a static, high-contrast
+    fallback (reusing the Dark theme's palette) so the theme looks correct wherever
+    com.google.android.material.color.DynamicColors can't inject the device wallpaper's palette
+    at runtime, e.g. API &lt;31 devices, or the Android Auto mirrored car Activity, which never
+    calls DynamicColors.applyToActivityIfAvailable since it isn't the phone's own MainActivity.
+    On a supporting phone Activity, DynamicColors' theme overlay still overrides these same role
+    attrs unconditionally with the wallpaper palette, so the static fallback below never blocks
+    the actual dynamic look, it only guarantees a sane, readable theme everywhere else. The
+    app's own legacy attrs are mapped onto these roles so every screen follows along.-->
+    <style name="AppTheme.Dynamic" parent="AppTheme">
+
+        <!-- Static fallback palette for system dark mode. Kept whitish rather than blue-tinted,
+        since that's what Material You's own dynamic dark tonal palettes actually look like. -->
+        <item name="colorPrimary">#1C1B1F</item>
+        <item name="colorOnPrimary">#F5F5F5</item>
+        <item name="colorSecondary">#0F1012</item>
+        <item name="colorOnSecondary">#F5F5F5</item>
+        <item name="colorSurface">#1C1B1F</item>
+        <item name="colorOnSurface">#F5F5F5</item>
+        <item name="colorSurfaceVariant">#1C1B1F</item>
+        <item name="colorOnSurfaceVariant">#F5F5F5</item>
+        <item name="colorOutline">#F5F5F5</item>
+        <item name="colorTertiary">#A11477</item>
+        <item name="colorOnTertiary">#FFFFFF</item>
+        <item name="colorError">#FFB4AB</item>
+        <item name="colorOnError">#690005</item>
+        <item name="colorErrorContainer">#93000A</item>
+        <item name="colorOnErrorContainer">#FFDAD6</item>
+
+        <!-- Legacy app attrs, mapped onto the roles above so they follow the dynamic palette too -->
+        <item name="android:colorBackground">?attr/colorSurface</item>
+        <item name="colorPrimaryDark">?attr/colorPrimary</item>
+        <item name="colorPrimarySurface">?attr/colorSurfaceVariant</item>
+        <item name="colorOnPrimarySurface">?attr/colorOnSurfaceVariant</item>
+        <item name="colorSecondaryVariant">?attr/colorTertiary</item>
+        <item name="colorAccent">?attr/colorTertiary</item>
+        <item name="boxStrokeColor">?attr/colorOutline</item>
+        <item name="colorControlNormal">?attr/colorOutline</item>
+        <item name="colorControlActivated">?attr/colorPrimary</item>
+        <item name="android:textColorPrimary">?attr/colorOnSurface</item>
+        <item name="android:textColorSecondary">?attr/colorOnSurfaceVariant</item>
+        <item name="android:textColorTertiary">?attr/colorOnSurface</item>
+        <item name="android:textColorHint">?attr/colorOnSurfaceVariant</item>
+        <item name="alpha">1</item>
+        <item name="rippleColor">?attr/colorPrimary</item>
+    </style>
+
+    <!-- Same idea, but for when the system is in light mode: MainActivityDelegate.setTheme()
+    picks between this and AppTheme.Dynamic based on Configuration.UI_MODE_NIGHT_MASK, the same
+    way it already does for the "System" theme, so Material You follows the system's light/dark
+    setting even where DynamicColors itself can't inject the real wallpaper palette. -->
+    <style name="AppTheme.DynamicLight" parent="AppTheme.Dynamic">
+        <item name="colorPrimary">#445D8F</item>
+        <item name="colorOnPrimary">#F5F5F5</item>
+        <item name="colorSecondary">#FFFFFF</item>
+        <item name="colorOnSecondary">#F5F5F5</item>
+        <item name="colorSurface">#445D8F</item>
+        <item name="colorOnSurface">#F5F5F5</item>
+        <item name="colorSurfaceVariant">#445D8F</item>
+        <item name="colorOnSurfaceVariant">#FFFFFF</item>
+        <item name="colorOutline">#445D8F</item>
+        <item name="android:colorBackground">#FFFFFF</item>
+        <item name="android:isLightTheme" tools:targetApi="q">true</item>
+    </style>
+
+</resources>

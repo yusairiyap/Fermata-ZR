@@ -7,10 +7,8 @@ import android.util.AttributeSet;
 import android.view.SurfaceView;
 import android.widget.FrameLayout;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import me.aap.fermata.ui.view.VideoInfoView;
 import me.aap.fermata.ui.view.VideoView;
 
 /**
@@ -25,13 +23,6 @@ public class YoutubeVideoView extends VideoView {
 	@Override
 	protected void init(Context context) {
 		addView(new FrameLayout(context), new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
-		addInfoView(context);
-	}
-
-	@NonNull
-	@Override
-	public VideoInfoView getVideoInfoView() {
-		return (VideoInfoView) getChildAt(1);
 	}
 
 	@Nullable

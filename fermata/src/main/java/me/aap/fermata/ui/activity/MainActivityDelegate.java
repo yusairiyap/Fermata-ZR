@@ -474,6 +474,12 @@ public class MainActivityDelegate extends ActivityDelegate
 			case MainActivityPrefs.THEME_STAR_WARS -> R.style.AppTheme_BlackStarWars;
 			case MainActivityPrefs.THEME_PURPLE -> R.style.AppTheme_Purple;
 			case MainActivityPrefs.THEME_CLASSIC -> R.style.AppTheme_Classic;
+			case MainActivityPrefs.THEME_DYNAMIC -> {
+				if ((ctx.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) ==
+						Configuration.UI_MODE_NIGHT_YES)
+					yield R.style.AppTheme_Dynamic;
+				else yield R.style.AppTheme_DynamicLight;
+			}
 			default -> R.style.AppTheme_Dark;
 		};
 		ctx.setTheme(theme);
@@ -579,6 +585,11 @@ public class MainActivityDelegate extends ActivityDelegate
 		return getPrefs().getTextIconSizePref(this);
 	}
 
+	@Override
+	public float getIconSize() {
+		return getPrefs().getIconSizePref(this);
+	}
+
 	public boolean isBarsHidden() {
 		return barsHidden;
 	}
@@ -601,7 +612,7 @@ public class MainActivityDelegate extends ActivityDelegate
 			this.videoMode = true;
 			setSystemUiVisibility();
 			keepScreenOn(true);
-			cp.enableVideoMode(v);
+			cp.enableVideoMode();
 		} else {
 			this.videoMode = false;
 			setSystemUiVisibility();
@@ -1052,6 +1063,9 @@ public class MainActivityDelegate extends ActivityDelegate
 			if (navBar != null) navBar.setSize(getPrefs().getNavBarSizePref(this));
 		} else if (MainActivityPrefs.hasToolBarSizePref(this, prefs)) {
 			if (toolBar != null) toolBar.setSize(getPrefs().getToolBarSizePref(this));
+		} else if (MainActivityPrefs.hasIconSizePref(this, prefs)) {
+			if (navBar != null) navBar.setIconScale(getPrefs().getIconSizePref(this));
+			if (toolBar != null) toolBar.setIconScale(getPrefs().getIconSizePref(this));
 		} else if (MainActivityPrefs.hasFullscreenPref(this, prefs)) {
 			setSystemUiVisibility();
 		} else if (prefs.contains(CHANGE_BRIGHTNESS)) {

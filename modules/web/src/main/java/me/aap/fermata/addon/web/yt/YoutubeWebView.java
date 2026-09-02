@@ -94,6 +94,7 @@ public class YoutubeWebView extends FermataWebView {
 	protected void pageLoaded(String uri) {
 		attachListeners();
 		injectSponsorBlock();
+		hideAppPromoBanners();
 		addFocusHighlight();
 		CookieManager.getInstance().flush();
 	}
@@ -114,9 +115,10 @@ public class YoutubeWebView extends FermataWebView {
 		String scale = getAddon().getScale().prefName();
 		loadUrl("javascript:\n" +
 				"function attachVideoListeners(v) {\n" +
+				"  v.muted = false;\n" +
 				"  if (v.getAttribute('FermataAttached') === 'true') return;\n" +
 				"  v.setAttribute('FermataAttached', 'true');\n" +
-				"  v.setAttribute('style', 'object-fit:" + scale + "');\n" + debug +
+				"  v.style.objectFit = '" + scale + "';\n" + debug +
 				"  if ((v.currentTime > 0) && !v.paused && !v.ended) " + JS_EVENT + "(" + JS_VIDEO_PLAYING +
 				", v.currentSrc);\n" +
 				"  v.addEventListener('playing', function(e) {" + JS_EVENT + "(" + JS_VIDEO_PLAYING +
@@ -143,6 +145,21 @@ public class YoutubeWebView extends FermataWebView {
 	private void configureSponsorBlock() {
 		evaluateJavascript("if (window.FermataSponsorBlock) window.FermataSponsorBlock.configure(" +
 				YoutubeSponsorBlock.getConfigJson(getAddon().getPreferenceStore()) + ");", null);
+	}
+
+	private void hideAppPromoBanners() {
+		loadUrl("javascript:\n" +
+				"function fermataHideBanners() {\n" +
+				"  ['ytm-mealbar-promo-renderer', 'ytm-app-promo-renderer', 'ytm-you-there-renderer']" +
+				".forEach(function(t) {\n" +
+				"    document.querySelectorAll(t).forEach(function(el) { el.style.display = 'none'; });\n" +
+				"  });\n" +
+				"}\n" +
+				"fermataHideBanners();\n" +
+				"if (!window.__fermataBannerObserver) {\n" +
+				"  window.__fermataBannerObserver = new MutationObserver(fermataHideBanners);\n" +
+				"  window.__fermataBannerObserver.observe(document.body, {childList: true, subtree: true});\n" +
+				"}");
 	}
 
 	protected boolean requestFullScreen() {
@@ -364,6 +381,6 @@ public class YoutubeWebView extends FermataWebView {
 		String p = scale.prefName();
 		loadUrl("javascript:" +
 				"document.querySelectorAll('video')" +
-				".forEach(v=> v.setAttribute('style', 'object-fit:" + p + "'));");
+				".forEach(v=> v.style.objectFit = '" + p + "');");
 	}
 }

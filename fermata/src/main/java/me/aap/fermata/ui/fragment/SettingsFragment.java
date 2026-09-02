@@ -311,7 +311,7 @@ public class SettingsFragment extends MainActivityFragment
 					MainActivityPrefs.FULLSCREEN, MainActivityPrefs.SHOW_PG_UP_DOWN, null,
 					MainActivityPrefs.NAV_BAR_POS, MainActivityPrefs.NAV_BAR_SIZE,
 					MainActivityPrefs.TOOL_BAR_SIZE, MainActivityPrefs.CONTROL_PANEL_SIZE,
-					MainActivityPrefs.TEXT_ICON_SIZE);
+					MainActivityPrefs.TEXT_ICON_SIZE, MainActivityPrefs.ICON_SIZE);
 		}
 
 		sub1.addBooleanPref(o -> {
@@ -675,7 +675,8 @@ public class SettingsFragment extends MainActivityFragment
 					MainActivityPrefs.FULLSCREEN_AA, MainActivityPrefs.SHOW_PG_UP_DOWN_AA,
 					MainActivityPrefs.USE_DPAD_CURSOR, MainActivityPrefs.NAV_BAR_POS_AA,
 					MainActivityPrefs.NAV_BAR_SIZE_AA, MainActivityPrefs.TOOL_BAR_SIZE_AA,
-					MainActivityPrefs.CONTROL_PANEL_SIZE_AA, MainActivityPrefs.TEXT_ICON_SIZE_AA);
+					MainActivityPrefs.CONTROL_PANEL_SIZE_AA, MainActivityPrefs.TEXT_ICON_SIZE_AA,
+					MainActivityPrefs.ICON_SIZE_AA);
 		}
 	}
 
@@ -684,7 +685,7 @@ public class SettingsFragment extends MainActivityFragment
 														Pref<BooleanSupplier> pgUpDown, Pref<BooleanSupplier> dpadCursor,
 														Pref<IntSupplier> nbPos, Pref<DoubleSupplier> nbSize,
 														Pref<DoubleSupplier> tbSize, Pref<DoubleSupplier> cpSize,
-														Pref<DoubleSupplier> textIconSize) {
+														Pref<DoubleSupplier> textIconSize, Pref<DoubleSupplier> iconSize) {
 		ps.addListPref(o -> {
 			o.store = a.getPrefs();
 			o.pref = theme;
@@ -693,7 +694,7 @@ public class SettingsFragment extends MainActivityFragment
 			o.formatSubtitle = true;
 			o.values = new int[]{R.string.theme_dark, R.string.theme_light, R.string.theme_system,
 					R.string.theme_black, R.string.theme_star_wars, R.string.theme_purple,
-					R.string.theme_classic};
+					R.string.theme_classic, R.string.theme_dynamic};
 		});
 		ps.addBooleanPref(o -> {
 			o.store = a.getPrefs();
@@ -755,6 +756,14 @@ public class SettingsFragment extends MainActivityFragment
 			o.store = a.getPrefs();
 			o.pref = textIconSize;
 			o.title = R.string.text_icon_size;
+			o.scale = 0.05f;
+			o.seekMin = 10;
+			o.seekMax = 40;
+		});
+		ps.addFloatPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = iconSize;
+			o.title = R.string.icon_size;
 			o.scale = 0.05f;
 			o.seekMin = 10;
 			o.seekMax = 40;

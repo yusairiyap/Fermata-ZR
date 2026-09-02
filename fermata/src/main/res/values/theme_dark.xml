@@ -10,7 +10,7 @@
 
         <!-- Tool/Nav bars -->
         <item name="colorPrimary">?colorPrimaryDark</item>
-        <item name="colorOnPrimary">#4E6AA2</item>
+        <item name="colorOnPrimary">#8AB4F8</item>
         <item name="android:textColorPrimary">?colorOnPrimary</item>
 
         <!-- List/Media items -->
@@ -37,6 +37,15 @@
 
         <item name="colorControlNormal">?boxStrokeColor</item>
         <item name="colorControlActivated">?colorOnPrimary</item>
+
+        <!-- Material 3 roles -->
+        <item name="colorSurfaceVariant">?colorPrimaryDark</item>
+        <item name="colorOnSurfaceVariant">?colorOnPrimary</item>
+        <item name="colorOutline">?colorOnPrimary</item>
+        <item name="colorError">#FFB4AB</item>
+        <item name="colorOnError">#690005</item>
+        <item name="colorErrorContainer">#93000A</item>
+        <item name="colorOnErrorContainer">#FFDAD6</item>
 
     </style>
 

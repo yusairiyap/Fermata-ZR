@@ -1,21 +1,29 @@
 package me.aap.fermata.addon.web.yt;
 
 import static me.aap.fermata.BuildConfig.AUTO;
+import static me.aap.utils.async.Completed.completed;
 
 import android.content.Context;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import me.aap.fermata.FermataApplication;
 import me.aap.fermata.addon.AddonInfo;
 import me.aap.fermata.addon.FermataAddon;
+import me.aap.fermata.addon.MediaLibAddon;
 import me.aap.fermata.addon.web.R;
 import me.aap.fermata.addon.web.WebBrowserAddon;
+import me.aap.fermata.media.lib.DefaultMediaLib;
+import me.aap.fermata.media.lib.MediaLib.Item;
 import me.aap.fermata.ui.activity.MainActivityPrefs;
+import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.function.BooleanSupplier;
 import me.aap.utils.function.IntSupplier;
 import me.aap.utils.function.Supplier;
@@ -29,7 +37,8 @@ import me.aap.utils.ui.fragment.ActivityFragment;
  */
 @Keep
 @SuppressWarnings("unused")
-public class YoutubeAddon extends WebBrowserAddon implements PreferenceStore.Listener {
+public class YoutubeAddon extends WebBrowserAddon
+		implements PreferenceStore.Listener, MediaLibAddon {
 	@NonNull
 	private static final AddonInfo info = FermataAddon.findAddonInfo(YoutubeAddon.class.getName());
 	public static final int YT_DARK_MODE_DISABLED = 0;
@@ -43,7 +52,9 @@ public class YoutubeAddon extends WebBrowserAddon implements PreferenceStore.Lis
 	private static final Pref<BooleanSupplier> YT_AUTO_HIGHEST_QUALITY =
 			Pref.b("YT_AUTO_HIGHEST_QUALITY", false);
 	private static final Pref<BooleanSupplier> YT_SKIP_ADD = AUTO ? Pref.b("YT_SKIP_ADD", true) : null;
+	private static final Pref<Supplier<String[]>> YT_VIDEO_TITLES = Pref.sa("YT_VIDEO_TITLES");
 	private boolean ignorePrefChange;
+	private YoutubeRootItem root;
 
 	@IdRes
 	@Override
@@ -79,6 +90,50 @@ public class YoutubeAddon extends WebBrowserAddon implements PreferenceStore.Lis
 
 	boolean skipAd() {
 		return AUTO && getPreferenceStore().getBooleanPref(YT_SKIP_ADD);
+	}
+
+	@NonNull
+	String getVideoTitle(String videoId) {
+		String[] p = getPreferenceStore().getStringArrayPref(YT_VIDEO_TITLES);
+		for (int i = 0; i < p.length - 1; i += 2) {
+			if (p[i].equals(videoId)) return p[i + 1];
+		}
+		return videoId;
+	}
+
+	void cacheVideoTitle(String videoId, String title) {
+		String[] p = getPreferenceStore().getStringArrayPref(YT_VIDEO_TITLES);
+		Map<String, String> m = new LinkedHashMap<>(p.length / 2 + 1);
+		for (int i = 0; i < p.length - 1; i += 2) m.put(p[i], p[i + 1]);
+		m.put(videoId, title);
+
+		String[] a = new String[m.size() * 2];
+		int i = 0;
+		for (Map.Entry<String, String> e : m.entrySet()) {
+			a[i++] = e.getKey();
+			a[i++] = e.getValue();
+		}
+		getPreferenceStore().applyStringArrayPref(YT_VIDEO_TITLES, a);
+	}
+
+	@Override
+	public boolean isSupportedItem(Item i) {
+		return (i instanceof YoutubeVideoItem);
+	}
+
+	@NonNull
+	public YoutubeRootItem getRootItem(DefaultMediaLib lib) {
+		if ((root == null) || (root.getLib() != lib)) root = new YoutubeRootItem(lib);
+		return root;
+	}
+
+	@Nullable
+	@Override
+	public FutureSupplier<? extends Item> getItem(DefaultMediaLib lib, @Nullable String scheme,
+																								 String id) {
+		if (!"youtube".equals(scheme)) return null;
+		String videoId = id.substring(id.indexOf(':') + 1);
+		return completed(new YoutubeVideoItem(videoId, getRootItem(lib)));
 	}
 
 	@Override

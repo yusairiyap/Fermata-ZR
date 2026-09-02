@@ -99,6 +99,16 @@ public class ToolBarView extends ConstraintLayout implements ActivityListener,
 		}
 	}
 
+	public void setIconScale(float scale) {
+		for (int i = 0, n = getChildCount(); i < n; i++) {
+			View v = getChildAt(i);
+			if (v instanceof ImageView) {
+				v.setScaleX(scale);
+				v.setScaleY(scale);
+			}
+		}
+	}
+
 	public Mediator getMediator() {
 		return mediator;
 	}
@@ -114,6 +124,7 @@ public class ToolBarView extends ConstraintLayout implements ActivityListener,
 		float scale = f.getActivityDelegate().getToolBarSize();
 		if (scale != 1F) setSize(scale);
 		else getLayoutParams().height = size;
+		setIconScale(f.getActivityDelegate().getIconSize());
 		return true;
 	}
 
@@ -309,7 +320,8 @@ public class ToolBarView extends ConstraintLayout implements ActivityListener,
 		}
 
 		default void setButtonPadding(View v) {
-			int pad = toIntPx(v.getContext(), 6);
+			float scale = ActivityDelegate.get(v.getContext()).getToolBarSize();
+			int pad = toIntPx(v.getContext(), Math.round(10 * scale));
 			v.setPadding(pad, pad, pad, pad);
 		}
 

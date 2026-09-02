@@ -17,6 +17,7 @@ import java.util.List;
 
 import me.aap.fermata.media.engine.MetadataBuilder;
 import me.aap.fermata.media.lib.MediaLib.BrowsableItem;
+import me.aap.fermata.media.lib.MediaLib.ExternallyPlayableItem;
 import me.aap.fermata.media.lib.MediaLib.Item;
 import me.aap.fermata.media.lib.MediaLib.PlayableItem;
 import me.aap.fermata.media.lib.MediaLib.StreamItem;
@@ -25,6 +26,7 @@ import me.aap.fermata.media.pref.PlayableItemPrefs;
 import me.aap.fermata.media.pref.StreamItemPrefs;
 import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.text.SharedTextBuilder;
+import me.aap.utils.ui.fragment.ActivityFragment;
 import me.aap.utils.vfs.VirtualResource;
 
 /**
@@ -52,6 +54,8 @@ public class ExportedItem extends PlayableItemBase {
 				return ex;
 			} else if (orig instanceof StreamItem) {
 				return new ExportedStreamItem(orig, exportId, parent);
+			} else if (orig instanceof ExternallyPlayableItem) {
+				return new ExportedExternallyPlayableItem(orig, exportId, parent);
 			} else {
 				return new ExportedItem(orig, exportId, parent);
 			}
@@ -282,6 +286,29 @@ public class ExportedItem extends PlayableItemBase {
 
 		private StreamItem getStream() {
 			return (StreamItem) getOrig();
+		}
+	}
+
+	private static final class ExportedExternallyPlayableItem extends ExportedItem
+			implements ExternallyPlayableItem {
+
+		private ExportedExternallyPlayableItem(PlayableItemBase orig, String exportId,
+																						BrowsableItem parent) {
+			super(orig, exportId, parent);
+		}
+
+		@Override
+		public int getPlayerFragmentId() {
+			return getExt().getPlayerFragmentId();
+		}
+
+		@Override
+		public void loadInFragment(ActivityFragment fragment) {
+			getExt().loadInFragment(fragment);
+		}
+
+		private ExternallyPlayableItem getExt() {
+			return (ExternallyPlayableItem) getOrig();
 		}
 	}
 

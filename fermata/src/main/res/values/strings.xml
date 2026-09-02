@@ -54,7 +54,8 @@
     <string name="theme_black">Black</string>
     <string name="theme_star_wars">Star Wars</string>
     <string name="theme_purple">Purple</string>
-    <string name="theme_classic">Classic</string>
+    <string name="theme_classic">Modern</string>
+    <string name="theme_dynamic">Dynamic (Material You)</string>
 
     <string name="nav_bar_pos">Navigation bar position</string>
     <string name="nav_bar_pos_sub">Current position: %1$s</string>
@@ -73,7 +74,8 @@
     <string name="nav_bar_size">Navigation bar size</string>
     <string name="tool_bar_size">Tool bar size</string>
     <string name="control_panel_size">Control panel size</string>
-    <string name="text_icon_size">Text and icons size</string>
+    <string name="text_icon_size">Text size</string>
+    <string name="icon_size">Icon size</string>
     <string name="subtitles_size">Subtitles text size</string>
 
     <string name="key_bindings">Key bindings</string>
@@ -377,6 +379,10 @@
         <p><b>Author:</b> Andrey Pavlenko</p>
         <p><b>Version:</b> %1$s (%2$d)</p>
         <p><b>Home page:</b> <a href="%3$s">%3$s</a></p>
+        ]]></string>
+    <string name="about_fork_html" translatable="false"><![CDATA[
+        <p><b>This fork developed by:</b> Yusairi Yap</p>
+        <p>Forked from the original Fermata Media Player by Andrey Pavlenko.</p>
         ]]></string>
 
     <string name="err_failed_to_play">Failed to play %s</string>
