@@ -10,6 +10,7 @@ import static me.aap.utils.ui.UiUtils.toIntPx;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
@@ -81,6 +82,7 @@ public class ControlPanelView extends ConstraintLayout
 	private View gestureSource;
 	private TextView playbackTimer;
 	private long scrollStamp;
+	private final int flatBackgroundColor;
 
 	public ControlPanelView(Context context, AttributeSet attrs) {
 		super(context, attrs, R.attr.appControlPanelStyle);
@@ -91,7 +93,8 @@ public class ControlPanelView extends ConstraintLayout
 				R.attr.appControlPanelStyle, R.style.AppTheme_ControlPanelStyle);
 		size = ta.getLayoutDimension(R.styleable.ControlPanelView_size, 0);
 		textAppearance = ta.getResourceId(R.styleable.ControlPanelView_textAppearance, 0);
-		setBackgroundColor(ta.getColor(R.styleable.ControlPanelView_android_colorBackground, 0));
+		flatBackgroundColor = ta.getColor(R.styleable.ControlPanelView_android_colorBackground, 0);
+		setBackgroundColor(flatBackgroundColor);
 		ta.recycle();
 
 		MainActivityDelegate a = getActivity();
@@ -104,6 +107,17 @@ public class ControlPanelView extends ConstraintLayout
 		g = findViewById(R.id.control_menu_button);
 		g.setOnClickListener(this::showMenu);
 		setShowHideBarsIcon(a);
+	}
+
+	/**
+	 * Builds a vertical scrim gradient that fades between {@code color} (opaque) and the same
+	 * RGB at alpha 0 (rather than a fully transparent black), to avoid a black-fringing artifact
+	 * as the alpha ramps down.
+	 */
+	public static GradientDrawable buildScrimGradient(int color, boolean fadeTowardBottom) {
+		int transparent = color & 0x00FFFFFF;
+		int[] stops = fadeTowardBottom ? new int[]{transparent, color} : new int[]{color, transparent};
+		return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, stops);
 	}
 
 	@Nullable
@@ -240,6 +254,7 @@ public class ControlPanelView extends ConstraintLayout
 		hideTimer = null;
 		mask |= MASK_VIDEO_MODE;
 
+		setBackground(buildScrimGradient(flatBackgroundColor, true));
 		a.setBarsHidden(true);
 		setShowHideBarsIcon(a);
 
@@ -263,6 +278,7 @@ public class ControlPanelView extends ConstraintLayout
 		MainActivityDelegate a = getActivity();
 		hideTimer = null;
 		mask &= ~MASK_VIDEO_MODE;
+		setBackgroundColor(flatBackgroundColor);
 		a.getFloatingButton().setVisibility(VISIBLE);
 
 		if ((mask & MASK_VISIBLE) == 0) {
@@ -691,6 +707,11 @@ public class ControlPanelView extends ConstraintLayout
 			MediaEngine eng = a.getMediaSessionCallback().getEngine();
 			if (eng == null) return;
 
+			if (pi.isVideo()) {
+				b.addItem(R.id.dim_toggle, R.drawable.dim_screen, R.string.dim_screen)
+						.setChecked(a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED));
+			}
+
 			boolean stream = (pi.isStream());
 			eng.contributeToMenu(b);
 
@@ -751,6 +772,10 @@ public class ControlPanelView extends ConstraintLayout
 			} else if (id == R.id.shuffle_enable || id == R.id.shuffle_disable) {
 				pi = (PlayableItem) getItem();
 				pi.getParent().getPrefs().setShufflePref(id == R.id.shuffle_enable);
+				return true;
+			} else if (id == R.id.dim_toggle) {
+				MainActivityPrefs p = getActivity().getPrefs();
+				p.applyBooleanPref(MainActivityPrefs.DIM_ENABLED, !p.getBooleanPref(MainActivityPrefs.DIM_ENABLED));
 				return true;
 			}
 

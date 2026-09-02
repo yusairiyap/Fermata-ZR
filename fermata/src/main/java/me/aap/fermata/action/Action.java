@@ -21,6 +21,7 @@ import me.aap.fermata.BuildConfig;
 import me.aap.fermata.R;
 import me.aap.fermata.media.service.MediaSessionCallback;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
+import me.aap.fermata.ui.activity.MainActivityPrefs;
 import me.aap.utils.app.App;
 import me.aap.utils.log.Log;
 import me.aap.utils.ui.activity.ActivityDelegate;
@@ -45,6 +46,11 @@ public enum Action {
 	VOLUME_UP(R.string.action_vol_up, new VolumeHandler(ADJUST_RAISE)),
 	VOLUME_DOWN(R.string.action_vol_down, new VolumeHandler(ADJUST_LOWER)),
 	VOLUME_MUTE_UNMUTE(R.string.action_vol_mute_unmute, new VolumeHandler(ADJUST_TOGGLE_MUTE)),
+	FULLSCREEN_TOGGLE(R.string.action_fullscreen_toggle, a(a ->
+			a.getPrefs().setFullscreenPref(a, !a.getPrefs().getFullscreenPref(a)))),
+	DIM_TOGGLE(R.string.action_dim_toggle, a(a ->
+			a.getPrefs().applyBooleanPref(MainActivityPrefs.DIM_ENABLED,
+					!a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED)))),
 	ACTIVATE_VOICE_CTRL(R.string.action_activate_voice_ctrl,
 			m(cb -> cb.getAssistant().startVoiceAssistant())),
 	MENU(R.string.action_menu, a(a -> a.getNavBarMediator().showMenu(a))),

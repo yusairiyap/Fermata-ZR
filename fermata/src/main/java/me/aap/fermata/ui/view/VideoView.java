@@ -89,6 +89,7 @@ public class VideoView extends FrameLayout
 					MediaPrefs.SUB_DELAY));
 	private SubDrawer subDrawer;
 	private FutureSupplier<?> createSurface = new Promise<>();
+	private View dimOverlay;
 
 	public VideoView(Context context) {
 		this(context, null);
@@ -126,9 +127,28 @@ public class VideoView extends FrameLayout
 			}
 		});
 
+		dimOverlay = new View(context);
+		dimOverlay.setLayoutParams(new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+		dimOverlay.setVisibility(GONE);
+		dimOverlay.setClickable(false);
+		dimOverlay.setFocusable(false);
+		addView(dimOverlay);
+
 		addOnLayoutChangeListener(this);
 		setLayoutParams(new CircularRevealFrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
 		setFocusable(true);
+	}
+
+	/**
+	 * Shows/hides the night-driving dim overlay. {@code opacityPercent} is 0-100,
+	 * {@code rgbColor} is an opaque RGB color whose alpha channel is ignored.
+	 */
+	public void setDimOverlay(boolean show, int opacityPercent, int rgbColor) {
+		if (show) {
+			int alpha = Math.round(opacityPercent * 255 / 100f);
+			dimOverlay.setBackgroundColor((alpha << 24) | (rgbColor & 0x00FFFFFF));
+		}
+		dimOverlay.setVisibility(show ? VISIBLE : GONE);
 	}
 
 	@Override

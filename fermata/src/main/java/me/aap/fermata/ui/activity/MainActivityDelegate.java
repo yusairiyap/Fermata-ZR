@@ -20,6 +20,14 @@ import static me.aap.fermata.action.KeyEventHandler.handleKeyEvent;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.BRIGHTNESS;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.CHANGE_BRIGHTNESS;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.CLOCK_POS;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_COLOR_CUSTOM_B;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_COLOR_CUSTOM_G;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_COLOR_CUSTOM_R;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_COLOR_PRESET;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_ENABLED;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_OPACITY;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB2_ACTION;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB2_ENABLED;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.LOCALE;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROL_SUBST;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROl_ENABLED;
@@ -39,6 +47,7 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
@@ -71,11 +80,13 @@ import androidx.annotation.StyleRes;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.ContentLoadingProgressBar;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.io.IOException;
@@ -122,6 +133,7 @@ import me.aap.fermata.ui.fragment.SettingsFragment;
 import me.aap.fermata.ui.fragment.SubtitlesFragment;
 import me.aap.fermata.ui.view.BodyLayout;
 import me.aap.fermata.ui.view.ControlPanelView;
+import me.aap.fermata.ui.view.SecondaryFloatingButton;
 import me.aap.fermata.ui.view.VideoView;
 import me.aap.utils.app.App;
 import me.aap.utils.async.FutureSupplier;
@@ -163,11 +175,14 @@ public class MainActivityDelegate extends ActivityDelegate
 	private BodyLayout body;
 	private ControlPanelView controlPanel;
 	private FloatingButton floatingButton;
+	private SecondaryFloatingButton floatingButton2;
 	private ContentLoadingProgressBar progressBar;
 	private FutureSupplier<?> contentLoading;
 	private boolean barsHidden;
 	private boolean videoMode;
 	private int brightness = 255;
+	private ConstraintSet normalConstraints;
+	private ConstraintSet videoOverlayConstraints;
 	private SpeechListener speechListener;
 	private VoiceCommandHandler voiceCommandHandler;
 
@@ -640,7 +655,55 @@ public class MainActivityDelegate extends ActivityDelegate
 			}
 		}
 
+		if (v != null) {
+			MainActivityPrefs p = getPrefs();
+			v.setDimOverlay(videoMode && p.getBooleanPref(DIM_ENABLED), p.getIntPref(DIM_OPACITY),
+					p.resolveDimColor());
+		}
+
+		applyVideoOverlayLayout(videoMode);
+		updateSecondaryFabVisibility();
 		fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
+	}
+
+	private void applyVideoOverlayLayout(boolean videoMode) {
+		ConstraintLayout layout = findViewById(R.id.main_activity);
+
+		if (videoOverlayConstraints == null) {
+			normalConstraints = new ConstraintSet();
+			normalConstraints.clone(layout);
+
+			videoOverlayConstraints = new ConstraintSet();
+			videoOverlayConstraints.clone(normalConstraints);
+
+			videoOverlayConstraints.clear(R.id.body_layout, ConstraintSet.TOP);
+			videoOverlayConstraints.connect(R.id.body_layout, ConstraintSet.TOP,
+					ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+			videoOverlayConstraints.clear(R.id.body_layout, ConstraintSet.BOTTOM);
+			videoOverlayConstraints.connect(R.id.body_layout, ConstraintSet.BOTTOM,
+					ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+
+			videoOverlayConstraints.clear(R.id.tool_bar, ConstraintSet.BOTTOM);
+
+			videoOverlayConstraints.clear(R.id.control_panel, ConstraintSet.TOP);
+			videoOverlayConstraints.clear(R.id.control_panel, ConstraintSet.BOTTOM);
+			videoOverlayConstraints.connect(R.id.control_panel, ConstraintSet.BOTTOM,
+					ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+
+			// nav_bar is intentionally left untouched: in the bottom-nav layout its existing
+			// top_toBottomOf(control_panel) constraint still resolves fine (control_panel's bottom no
+			// longer depends on nav_bar at all, so there's no cycle), while in the left/right side-nav
+			// layouts nav_bar is a wholly independent column already anchored top+bottom to its own
+			// parent edges - clearing either side there would collapse its 0dp/weighted height.
+		}
+
+		(videoMode ? videoOverlayConstraints : normalConstraints).applyTo(layout);
+
+		ToolBarView tb = getToolBar();
+		int c = MaterialColors.getColor(getContext(), com.google.android.material.R.attr.colorPrimary,
+				Color.BLACK);
+		if (videoMode) tb.setBackground(ControlPanelView.buildScrimGradient(c, false));
+		else tb.setBackgroundColor(c);
 	}
 
 	private boolean checkMirroringMode(boolean clearFlags) {
@@ -1007,6 +1070,8 @@ public class MainActivityDelegate extends ActivityDelegate
 		controlPanel = a.findViewById(R.id.control_panel);
 		floatingButton = a.findViewById(R.id.floating_button);
 		floatingButton.setScale(getPrefs().getTextIconSizePref(this));
+		floatingButton2 = a.findViewById(R.id.floating_button2);
+		floatingButton2.setScale(getPrefs().getTextIconSizePref(this));
 		controlPanel.bind(getMediaServiceBinder());
 
 		if (VERSION.SDK_INT >= VERSION_CODES.VANILLA_ICE_CREAM && !a.isCarActivity()) {
@@ -1059,6 +1124,7 @@ public class MainActivityDelegate extends ActivityDelegate
 			recreate();
 		} else if (MainActivityPrefs.hasTextIconSizePref(this, prefs)) {
 			if (floatingButton != null) floatingButton.setScale(getPrefs().getTextIconSizePref(this));
+			if (floatingButton2 != null) floatingButton2.setScale(getPrefs().getTextIconSizePref(this));
 		} else if (MainActivityPrefs.hasNavBarSizePref(this, prefs)) {
 			if (navBar != null) navBar.setSize(getPrefs().getNavBarSizePref(this));
 		} else if (MainActivityPrefs.hasToolBarSizePref(this, prefs)) {
@@ -1095,7 +1161,25 @@ public class MainActivityDelegate extends ActivityDelegate
 			getBody().getVideoView().setClockPos(getPrefs().getClockPosPref());
 		} else if (prefs.contains(LOCALE)) {
 			recreate();
+		} else if (prefs.contains(DIM_ENABLED) || prefs.contains(DIM_OPACITY)
+				|| prefs.contains(DIM_COLOR_PRESET) || prefs.contains(DIM_COLOR_CUSTOM_R)
+				|| prefs.contains(DIM_COLOR_CUSTOM_G) || prefs.contains(DIM_COLOR_CUSTOM_B)) {
+			if (isVideoMode()) {
+				MainActivityPrefs p = getPrefs();
+				getBody().getVideoView().setDimOverlay(p.getBooleanPref(DIM_ENABLED),
+						p.getIntPref(DIM_OPACITY), p.resolveDimColor());
+			}
+		} else if (prefs.contains(FAB2_ENABLED)) {
+			updateSecondaryFabVisibility();
+		} else if (prefs.contains(FAB2_ACTION)) {
+			if (floatingButton2 != null) fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
 		}
+	}
+
+	private void updateSecondaryFabVisibility() {
+		if (floatingButton2 == null) return;
+		floatingButton2.setVisibility(
+				(isVideoMode() && getPrefs().getBooleanPref(FAB2_ENABLED)) ? VISIBLE : GONE);
 	}
 
 	@Override
