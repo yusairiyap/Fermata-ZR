@@ -2,73 +2,49 @@
 
 
 ## zrAuto
-zrAuto is a modded, Android-Auto-focused fork of [Fermata Media Player](https://github.com/AndreyPavlenko/Fermata), rebranded and enhanced by [Yusairi Yap](https://github.com/yusairiyap).
+zrAuto is a free, open source media player built for Android Auto, made by [Yusairi Yap](https://github.com/yusairiyap). It's simple, easy to use, and gets you playing your music, videos, and playlists in the car without any fuss.
 
 [Download the latest release](https://github.com/yusairiyap/zrAuto/releases/latest)
 
-## What's different from upstream Fermata
-This fork isn't just a re-skin — since forking from upstream, it has picked up its own UI work and identity changes:
+## What zrAuto can do
+* Play your media files, organized by folders — just like browsing files normally
+* Remembers where you left off, for every folder
+* Save your favorite tracks and folders, and build playlists
+* Works with CUE and M3U playlists
+* Bookmark spots in a track or video to jump back to later
+* Built-in audio effects — Equalizer, Bass/Volume Boost, and Virtualizer — that you can tune per track or folder
+* Adjust playback speed per track or folder
+* Customize how titles and subtitles look
+* IPTV support, with EPG and catch-up TV
+* Works great on Android Auto and Android TV
+* Show your favorites and playlists right on the Android TV home screen
+* Choice of playback engines (MediaPlayer, ExoPlayer, VLC) depending on what works best for your files
+* Video playback with subtitle and audio-track support (when using the VLC engine)
 
-* **Rebranded identity** — new app name, icon, Android Auto media-service name, and application ID (`com.yusairiyap.zrauto`), independent from the original app.
-* **Material 3 redesign** — migrated theming to Material 3 with a card-based UI, new "Modern"/"Classic" theme naming, configurable nav bar/control panel icon-size sliders, and numerous visual-contrast fixes.
-* **YouTube videos in Favourites/Playlists** — YouTube items can now be saved to and shown in Favourites and Playlists, not just browsed live, with an animated video-info overlay and several UX fixes from real-device testing.
-* **Android Auto-tuned UI defaults** — nav bar, tool bar, and control panel sizing now default specifically for the car form factor.
-* **Donate menu removed** from the in-app UI (see the [Donation](#donation) section below for how to still support the original author).
-* **Self-hosted update checker** — the in-app "check for updates" feature now checks this repository's own GitHub Releases instead of upstream's, so you get zrAuto updates, not upstream Fermata ones.
-* **Own CI/release pipeline** — GitHub Actions builds installable Android Auto APKs for every push/PR, and publishes tagged releases automatically (see [Building the project](#building-the-project)).
+## Getting the app
+The easiest way is to grab the latest APK from the [Releases page](https://github.com/yusairiyap/zrAuto/releases/latest) and install it on your phone. zrAuto will let you know in-app whenever a new version is available.
 
-Everything else — the media engines, addons, and general feature set below — is inherited from upstream Fermata, not original to this fork.
+## Building it yourself
+If you'd rather build zrAuto from source:
 
-## About
-zrAuto (based on Fermata Media Player) is a free, open source audio, video and TV player with a simple and intuitive interface. It is focused on playing media files organized in folders and playlists.
+1. Install [Android Studio](https://developer.android.com/studio) (or just the Android SDK).
+2. Point the `ANDROID_SDK_ROOT` environment variable at your SDK folder:
+   ```bash
+   export ANDROID_SDK_ROOT=<path to your Android SDK>
+   ```
+3. Clone the project:
+   ```bash
+   git clone --recurse-submodules https://github.com/yusairiyap/zrAuto.git
+   cd zrAuto
+   ```
+4. Build it:
+   ```bash
+   ./gradlew bundleAutoRelease
+   ```
+   The finished app package will show up under the project's build output folders.
 
-Supported features:
-
-* Play media files organized in folders
-* IPTV addon with support for XMLTV EPG and Catchup
-* Remembers the last played track and position for each folder
-* Support for favorites and playlists
-* Support for CUE and M3U playlists
-* Support for bookmarks
-* Audio effects: Equalizer, Bass/Volume Boost and Virtualizer
-* Configure audio effects for individual tracks and folders
-* Configure playback speed for individual tracks and folders
-* Customizable titles and subtitles
-* Support for Android Auto
-* Support for Android TV
-* Show favorites and playlists on Android TV home screen
-* Pluggable media engines: MediaPlayer, ExoPlayer and VLC
-* Video player with support for subtitles and audio streams (VLC Engine only)
-
-## Building the project
-* Download and install the latest Android SDK or Android Studio from https://developer.android.com/studio/
-* Set the environment variable ANDROID_SDK_ROOT pointing to the SDK directory
-```bash
-export ANDROID_SDK_ROOT=<path to android SDK>
-```
-
-### Clone the repository
-```bash
-git clone --recurse-submodules https://github.com/yusairiyap/zrAuto.git
-cd zrAuto
-```
-
-### Build AAB
-```bash
-./gradlew bundleAutoRelease -PAPP_ID_SFX=.type.your.pkg.sfx.here
-find $PWD -name *.aab
-```
-
-### Build APK
-```bash
-./gradlew bundleAutoRelease -PAPP_ID_SFX=.type.your.pkg.sfx.here
-find $PWD -name *.apk
-```
-
-The default application ID is `com.yusairiyap.zrauto` (Android Auto builds get a `.auto` suffix). Override it with `-PAPP_ID=your.own.id` if you need a different identity for your own build.
-
-## Donation
-zrAuto itself does not solicit donations, but it's built on top of Andrey Pavlenko's original Fermata Media Player. If you'd like to support the original author, here are his donation links:
+## Supporting the project
+zrAuto is free and doesn't ask for donations, but it's built on the excellent work of Andrey Pavlenko's original Fermata Media Player. If you'd like to say thanks, you can support him directly:
 
 [PayPal](https://www.paypal.com/donate/?hosted_button_id=NP5Q3YDSCJ98N)
 
