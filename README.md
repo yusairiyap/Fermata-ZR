@@ -6,6 +6,15 @@ zrAuto is a free, open source media player built for Android Auto, made by [Yusa
 
 [Download the latest release](https://github.com/yusairiyap/zrAuto/releases/latest)
 
+## What makes zrAuto different
+zrAuto is built on top of the original Fermata Auto, with a few changes to make it nicer to use:
+
+* **A fresher look** — redesigned menus with a cleaner, card-style layout
+* **Bigger, easier-to-tap controls** — the toolbar, navigation bar, and control panel are sized with driving in mind, so you're not squinting or fumbling for buttons on the road
+* **YouTube in your Favorites and Playlists** — save YouTube videos alongside your other media, not just browse them live
+* **No donation nagging** — the app doesn't interrupt you asking for money
+* **Its own update channel** — zrAuto checks for and installs its own updates, so you're always running the latest zrAuto build
+
 ## What zrAuto can do
 * Play your media files, organized by folders — just like browsing files normally
 * Remembers where you left off, for every folder
