@@ -601,6 +601,11 @@ public class MainActivityDelegate extends ActivityDelegate
 		return floatingButton2;
 	}
 
+	@Nullable
+	public VideoView getActiveVideoView() {
+		return activeVideoView;
+	}
+
 	@Override
 	public float getTextIconSize() {
 		return getPrefs().getTextIconSizePref(this);
@@ -1192,6 +1197,11 @@ public class MainActivityDelegate extends ActivityDelegate
 				activeVideoView.setDimOverlay(p.getBooleanPref(DIM_ENABLED), p.getIntPref(DIM_OPACITY),
 						p.resolveDimColor());
 			}
+			// Keeps FAB2's icon (when its configured action is "dim toggle") in sync with changes
+			// made from Settings or the video "more" menu, not just from FAB2 itself.
+			if (prefs.contains(DIM_ENABLED) && (floatingButton2 != null)) {
+				fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
+			}
 		} else if (prefs.contains(FAB2_ENABLED)) {
 			updateSecondaryFabVisibility();
 		} else if (prefs.contains(FAB2_ACTION)) {
@@ -1201,8 +1211,20 @@ public class MainActivityDelegate extends ActivityDelegate
 
 	private void updateSecondaryFabVisibility() {
 		if (floatingButton2 == null) return;
-		boolean show = getPrefs().getBooleanPref(FAB2_ENABLED) && (isVideoMode() || isWebBrowserActive());
-		floatingButton2.setVisibility(show ? VISIBLE : GONE);
+		if (!getPrefs().getBooleanPref(FAB2_ENABLED)) {
+			floatingButton2.setVisibility(GONE);
+			return;
+		}
+
+		if (isVideoMode()) {
+			// Mirror the primary FAB's actual current visibility rather than independently deriving
+			// it from isVideoMode() -- ControlPanelView.enableVideoMode() may have just hidden both
+			// FABs until the user taps the screen (getStartDelay() == 0), and recomputing visibility
+			// here from scratch would immediately clobber that, causing a brief flash on entry.
+			floatingButton2.setVisibility(floatingButton.getVisibility());
+		} else {
+			floatingButton2.setVisibility(isWebBrowserActive() ? VISIBLE : GONE);
+		}
 	}
 
 	// The web/YouTube browser addon is a video-adjacent context (fullscreen/mute/dim/play-pause

@@ -56,6 +56,7 @@ public interface MainActivityPrefs
 	// so a slider showing "1.0" renders at the intended default size rather than the raw
 	// 40dp/70dp view base. Moving a slider away from 1.0 scales relative to this baseline.
 	float TOOL_BAR_SIZE_BASE_MOBILE = 1.3f;
+	float CONTROL_PANEL_SIZE_BASE_MOBILE = 1.4f;
 	float NAV_BAR_SIZE_BASE_AUTO = 1.05f;
 	float TOOL_BAR_SIZE_BASE_AUTO = 1.5f;
 	float CONTROL_PANEL_SIZE_BASE_AUTO = 1.3f;
@@ -68,7 +69,7 @@ public interface MainActivityPrefs
 	Pref<IntSupplier> NAV_BAR_POS = Pref.i("NAV_BAR_POS", NavBarView.POSITION_BOTTOM);
 	Pref<DoubleSupplier> NAV_BAR_SIZE = Pref.f("NAV_BAR_SIZE", 1f);
 	Pref<DoubleSupplier> TOOL_BAR_SIZE = Pref.f("TOOL_BAR_SIZE", 1f);
-	Pref<DoubleSupplier> CONTROL_PANEL_SIZE = Pref.f("CONTROL_PANEL_SIZE", 1.4f);
+	Pref<DoubleSupplier> CONTROL_PANEL_SIZE = Pref.f("CONTROL_PANEL_SIZE", 1f);
 	Pref<DoubleSupplier> TEXT_ICON_SIZE = Pref.f("TEXT_ICON_SIZE", 1f);
 	// Scales icon graphics specifically (toolbar buttons, nav bar icons), independent of the
 	// bar-container size sliders above.
@@ -85,7 +86,7 @@ public interface MainActivityPrefs
 	Pref<BooleanSupplier> LANDSCAPE_VIDEO = Pref.b("LANDSCAPE_VIDEO", false);
 	Pref<BooleanSupplier> CHANGE_BRIGHTNESS = Pref.b("CHANGE_BRIGHTNESS", false);
 	Pref<IntSupplier> BRIGHTNESS = Pref.i("BRIGHTNESS", 255);
-	Pref<BooleanSupplier> FAB2_ENABLED = Pref.b("FAB2_ENABLED", false);
+	Pref<BooleanSupplier> FAB2_ENABLED = Pref.b("FAB2_ENABLED", true);
 	Pref<IntSupplier> FAB2_ACTION = Pref.i("FAB2_ACTION", Action.PLAY_PAUSE.ordinal());
 	Pref<BooleanSupplier> DIM_ENABLED = Pref.b("DIM_ENABLED", false);
 	Pref<IntSupplier> DIM_OPACITY = Pref.i("DIM_OPACITY", 50);
@@ -217,7 +218,7 @@ public interface MainActivityPrefs
 	default float getControlPanelSizePref(MainActivityDelegate a) {
 		if (AUTO && a.isCarActivity())
 			return getFloatPref(CONTROL_PANEL_SIZE_AA) * CONTROL_PANEL_SIZE_BASE_AUTO;
-		return getFloatPref(CONTROL_PANEL_SIZE);
+		return getFloatPref(CONTROL_PANEL_SIZE) * CONTROL_PANEL_SIZE_BASE_MOBILE;
 	}
 
 	static boolean hasTextIconSizePref(MainActivityDelegate a, List<Pref<?>> prefs) {

@@ -93,11 +93,31 @@ import me.aap.utils.vfs.local.LocalFileSystem;
  */
 public class SettingsFragment extends MainActivityFragment
 		implements MainActivityListener, PreferenceStore.Listener {
+	/** Pass to {@code showFragment(R.id.settings_fragment, SHOW_DIM_SETTINGS)} to jump straight to
+	 * the dim-screen settings subsection instead of landing on the settings root page. */
+	public static final Object SHOW_DIM_SETTINGS = "dim_settings";
+
 	private PreferenceViewAdapter adapter;
+	private PreferenceSet dimSettingsSet;
+	@Nullable
+	private Object pendingInput;
 
 	@Override
 	public int getFragmentId() {
 		return R.id.settings_fragment;
+	}
+
+	@Override
+	public void setInput(Object input) {
+		pendingInput = input;
+		if (adapter != null) applyPendingInput();
+	}
+
+	private void applyPendingInput() {
+		if ((pendingInput == SHOW_DIM_SETTINGS) && (dimSettingsSet != null)) {
+			adapter.setPreferenceSet(dimSettingsSet);
+		}
+		pendingInput = null;
 	}
 
 	@Override
@@ -141,6 +161,8 @@ public class SettingsFragment extends MainActivityFragment
 				PreferenceSet p = adapter.getPreferenceSet().find(state.getInt("id", ID_NULL));
 				if (p != null) adapter.setPreferenceSet(p);
 			}
+
+			applyPendingInput();
 		});
 	}
 
@@ -303,10 +325,12 @@ public class SettingsFragment extends MainActivityFragment
 
 		if (BuildConfig.AUTO && a.isCarActivityNotMirror()) {
 			addAAInterface(a, sub1);
+			addSecondaryFabPrefs(a, sub1.subSet(o -> o.title = R.string.secondary_fab_prefs));
 		} else {
 			if (BuildConfig.AUTO) {
 				addAAInterface(a, sub1.subSet(o -> o.title = R.string.interface_prefs_aa));
 			}
+			addSecondaryFabPrefs(a, sub1.subSet(o -> o.title = R.string.secondary_fab_prefs));
 			addInterface(a, sub1, MainActivityPrefs.THEME_MAIN, MainActivityPrefs.HIDE_BARS,
 					MainActivityPrefs.FULLSCREEN, MainActivityPrefs.SHOW_PG_UP_DOWN, null,
 					MainActivityPrefs.NAV_BAR_POS, MainActivityPrefs.NAV_BAR_SIZE,
@@ -628,7 +652,7 @@ public class SettingsFragment extends MainActivityFragment
 			o.seekScale = 5;
 		});
 
-		sub2 = sub1.subSet(o -> o.title = R.string.dim_prefs);
+		dimSettingsSet = sub2 = sub1.subSet(o -> o.title = R.string.dim_prefs);
 		sub2.addBooleanPref(o -> {
 			o.store = a.getPrefs();
 			o.pref = MainActivityPrefs.DIM_ENABLED;
@@ -681,33 +705,6 @@ public class SettingsFragment extends MainActivityFragment
 			o.visibility = dimCustomColorCond.copy();
 		});
 
-		var fab2Actions = new Action[]{Action.FULLSCREEN_TOGGLE, Action.VOLUME_MUTE_UNMUTE,
-				Action.PLAY_PAUSE, Action.DIM_TOGGLE};
-		var fab2ActionNames = new int[fab2Actions.length];
-		var fab2ActionOrdinals = new int[fab2Actions.length];
-		for (int i = 0; i < fab2Actions.length; i++) {
-			fab2ActionNames[i] = fab2Actions[i].getName();
-			fab2ActionOrdinals[i] = fab2Actions[i].ordinal();
-		}
-
-		sub1 = set.subSet(o -> o.title = R.string.secondary_fab_prefs);
-		sub1.addBooleanPref(o -> {
-			o.store = a.getPrefs();
-			o.pref = MainActivityPrefs.FAB2_ENABLED;
-			o.title = R.string.fab2_enable;
-		});
-		var fab2EnabledCond = PrefCondition.create(a.getPrefs(), MainActivityPrefs.FAB2_ENABLED);
-		sub1.addListPref(o -> {
-			o.store = a.getPrefs();
-			o.pref = MainActivityPrefs.FAB2_ACTION;
-			o.title = R.string.fab2_action;
-			o.subtitle = R.string.string_format;
-			o.formatSubtitle = true;
-			o.values = fab2ActionNames;
-			o.valuesMap = fab2ActionOrdinals;
-			o.visibility = fab2EnabledCond;
-		});
-
 		sub1 = set.subSet(o -> o.title = R.string.subtitles);
 		addSubtitlePrefs(a.getContext(), sub1, mediaPrefs, isCar);
 
@@ -747,6 +744,34 @@ public class SettingsFragment extends MainActivityFragment
 				a.fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
 			}
 		};
+	}
+
+	private void addSecondaryFabPrefs(MainActivityDelegate a, PreferenceSet ps) {
+		var fab2Actions = new Action[]{Action.FULLSCREEN_TOGGLE, Action.VOLUME_MUTE_UNMUTE,
+				Action.PLAY_PAUSE, Action.DIM_TOGGLE};
+		var fab2ActionNames = new int[fab2Actions.length];
+		var fab2ActionOrdinals = new int[fab2Actions.length];
+		for (int i = 0; i < fab2Actions.length; i++) {
+			fab2ActionNames[i] = fab2Actions[i].getName();
+			fab2ActionOrdinals[i] = fab2Actions[i].ordinal();
+		}
+
+		ps.addBooleanPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.FAB2_ENABLED;
+			o.title = R.string.fab2_enable;
+		});
+		var fab2EnabledCond = PrefCondition.create(a.getPrefs(), MainActivityPrefs.FAB2_ENABLED);
+		ps.addListPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.FAB2_ACTION;
+			o.title = R.string.fab2_action;
+			o.subtitle = R.string.string_format;
+			o.formatSubtitle = true;
+			o.values = fab2ActionNames;
+			o.valuesMap = fab2ActionOrdinals;
+			o.visibility = fab2EnabledCond;
+		});
 	}
 
 	private void addAAInterface(MainActivityDelegate a, PreferenceSet ps) {

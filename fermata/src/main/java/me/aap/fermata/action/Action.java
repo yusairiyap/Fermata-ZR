@@ -1,8 +1,10 @@
 package me.aap.fermata.action;
 
 import static android.media.AudioManager.ADJUST_LOWER;
+import static android.media.AudioManager.ADJUST_MUTE;
 import static android.media.AudioManager.ADJUST_RAISE;
 import static android.media.AudioManager.ADJUST_TOGGLE_MUTE;
+import static android.media.AudioManager.ADJUST_UNMUTE;
 import static android.media.AudioManager.FLAG_SHOW_UI;
 import static android.media.AudioManager.STREAM_MUSIC;
 import static android.os.SystemClock.uptimeMillis;
@@ -46,8 +48,11 @@ public enum Action {
 	VOLUME_UP(R.string.action_vol_up, new VolumeHandler(ADJUST_RAISE)),
 	VOLUME_DOWN(R.string.action_vol_down, new VolumeHandler(ADJUST_LOWER)),
 	VOLUME_MUTE_UNMUTE(R.string.action_vol_mute_unmute, new VolumeHandler(ADJUST_TOGGLE_MUTE)),
-	FULLSCREEN_TOGGLE(R.string.action_fullscreen_toggle, a(a ->
-			a.getPrefs().setFullscreenPref(a, !a.getPrefs().getFullscreenPref(a)))),
+	FULLSCREEN_TOGGLE(R.string.action_fullscreen_toggle, a(a -> {
+		var vv = a.getActiveVideoView();
+		if ((vv != null) && vv.toggleNativeFullscreen()) return;
+		a.getPrefs().setFullscreenPref(a, !a.getPrefs().getFullscreenPref(a));
+	})),
 	DIM_TOGGLE(R.string.action_dim_toggle, a(a ->
 			a.getPrefs().applyBooleanPref(MainActivityPrefs.DIM_ENABLED,
 					!a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED)))),
@@ -135,7 +140,21 @@ public enum Action {
 			if ((eng != null) && eng.adjustVolume(direction)) return;
 			var ctx = (a == null) ? App.get() : a.getContext();
 			var amgr = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
-			if (amgr != null) amgr.adjustStreamVolume(STREAM_MUSIC, direction, FLAG_SHOW_UI);
+			if (amgr == null) return;
+
+			if (direction == ADJUST_TOGGLE_MUTE) {
+				// Resolve against the stream's actual current mute state rather than relying on the
+				// OS's own toggle bookkeeping -- content played through a WebView (e.g. YouTube) never
+				// reports a MediaEngine here, so this is the only mute path for it, and it can be
+				// invoked from more than one UI entry point (FAB tap, its long-press quick menu) in
+				// quick succession; a blind ADJUST_TOGGLE_MUTE is one dispatch away from silently
+				// cancelling itself out, while explicitly setting the opposite of the current state
+				// is idempotent no matter how many times or where it's triggered from.
+				int explicit = amgr.isStreamMute(STREAM_MUSIC) ? ADJUST_UNMUTE : ADJUST_MUTE;
+				amgr.adjustStreamVolume(STREAM_MUSIC, explicit, FLAG_SHOW_UI);
+			} else {
+				amgr.adjustStreamVolume(STREAM_MUSIC, direction, FLAG_SHOW_UI);
+			}
 		}
 	}
 

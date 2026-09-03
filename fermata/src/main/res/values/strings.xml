@@ -365,6 +365,7 @@
     <string name="dim_color_g">Custom color: green</string>
     <string name="dim_color_b">Custom color: blue</string>
     <string name="dim_screen">Dim screen</string>
+    <string name="dim_settings">Dim screen settings</string>
     <string name="color_black">Black</string>
     <string name="color_red">Red</string>
     <string name="color_deep_red">Deep red</string>

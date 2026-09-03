@@ -46,6 +46,7 @@ import me.aap.fermata.media.service.MediaSessionCallback;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
 import me.aap.fermata.ui.activity.MainActivityListener;
 import me.aap.fermata.ui.activity.MainActivityPrefs;
+import me.aap.fermata.ui.fragment.SettingsFragment;
 import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.function.BooleanSupplier;
 import me.aap.utils.function.DoubleSupplier;
@@ -728,6 +729,7 @@ public class ControlPanelView extends ConstraintLayout
 			if (pi.isVideo()) {
 				b.addItem(R.id.dim_toggle, R.drawable.dim_screen, R.string.dim_screen)
 						.setChecked(a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED));
+				b.addItem(R.id.dim_settings, R.drawable.settings, R.string.dim_settings);
 			}
 
 			boolean stream = (pi.isStream());
@@ -794,6 +796,9 @@ public class ControlPanelView extends ConstraintLayout
 			} else if (id == R.id.dim_toggle) {
 				MainActivityPrefs p = getActivity().getPrefs();
 				p.applyBooleanPref(MainActivityPrefs.DIM_ENABLED, !p.getBooleanPref(MainActivityPrefs.DIM_ENABLED));
+				return true;
+			} else if (id == R.id.dim_settings) {
+				getActivity().showFragment(R.id.settings_fragment, SettingsFragment.SHOW_DIM_SETTINGS);
 				return true;
 			}
 

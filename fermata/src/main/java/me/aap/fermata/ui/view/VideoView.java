@@ -90,6 +90,8 @@ public class VideoView extends FrameLayout
 	private SubDrawer subDrawer;
 	private FutureSupplier<?> createSurface = new Promise<>();
 	private View dimOverlay;
+	@Nullable
+	private Runnable nativeFullscreenToggle;
 
 	public VideoView(Context context) {
 		this(context, null);
@@ -166,6 +168,24 @@ public class VideoView extends FrameLayout
 			dimOverlay.setBackgroundColor((alpha << 24) | (rgbColor & 0x00FFFFFF));
 		}
 		dimOverlay.setVisibility(show ? VISIBLE : GONE);
+	}
+
+	/**
+	 * Lets a video source with its own native fullscreen playback (e.g. a WebView-hosted YouTube
+	 * player, wired up by {@code modules/web}) register a hook here so that {@link
+	 * me.aap.fermata.action.Action#FULLSCREEN_TOGGLE} can defer to it instead of toggling the app's
+	 * own immersive-UI pref. This base module can't reference the feature module directly, so the
+	 * feature module reaches in and sets this instead -- same inversion as {@link #addDimOverlay}.
+	 */
+	public void setNativeFullscreenToggle(@Nullable Runnable toggle) {
+		nativeFullscreenToggle = toggle;
+	}
+
+	/** Returns {@code true} if a registered native fullscreen toggle handled the request. */
+	public boolean toggleNativeFullscreen() {
+		if (nativeFullscreenToggle == null) return false;
+		nativeFullscreenToggle.run();
+		return true;
 	}
 
 	@Override
