@@ -628,6 +628,59 @@ public class SettingsFragment extends MainActivityFragment
 			o.seekScale = 5;
 		});
 
+		sub2 = sub1.subSet(o -> o.title = R.string.dim_prefs);
+		sub2.addBooleanPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.DIM_ENABLED;
+			o.title = R.string.dim_enable;
+		});
+		var dimEnabledCond = PrefCondition.create(a.getPrefs(), MainActivityPrefs.DIM_ENABLED);
+		sub2.addIntPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.DIM_OPACITY;
+			o.title = R.string.dim_opacity;
+			o.seekMin = 0;
+			o.seekMax = 100;
+			o.visibility = dimEnabledCond.copy();
+		});
+		sub2.addListPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.DIM_COLOR_PRESET;
+			o.title = R.string.dim_color;
+			o.subtitle = R.string.string_format;
+			o.formatSubtitle = true;
+			o.values = new int[]{R.string.color_black, R.string.color_red, R.string.color_deep_red,
+					R.string.color_amber, R.string.color_yellow, R.string.color_custom};
+			o.visibility = dimEnabledCond.copy();
+		});
+		var dimCustomColorCond = new PrefCondition<>(a.getPrefs(), MainActivityPrefs.DIM_COLOR_PRESET,
+				p -> a.getPrefs().getIntPref(p) == MainActivityPrefs.DIM_COLOR_CUSTOM_IDX
+						&& a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED));
+		sub2.addIntPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.DIM_COLOR_CUSTOM_R;
+			o.title = R.string.dim_color_r;
+			o.seekMin = 0;
+			o.seekMax = 255;
+			o.visibility = dimCustomColorCond.copy();
+		});
+		sub2.addIntPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.DIM_COLOR_CUSTOM_G;
+			o.title = R.string.dim_color_g;
+			o.seekMin = 0;
+			o.seekMax = 255;
+			o.visibility = dimCustomColorCond.copy();
+		});
+		sub2.addIntPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.DIM_COLOR_CUSTOM_B;
+			o.title = R.string.dim_color_b;
+			o.seekMin = 0;
+			o.seekMax = 255;
+			o.visibility = dimCustomColorCond.copy();
+		});
+
 		var fab2Actions = new Action[]{Action.FULLSCREEN_TOGGLE, Action.VOLUME_MUTE_UNMUTE,
 				Action.PLAY_PAUSE, Action.DIM_TOGGLE};
 		var fab2ActionNames = new int[fab2Actions.length];
@@ -653,59 +706,6 @@ public class SettingsFragment extends MainActivityFragment
 			o.values = fab2ActionNames;
 			o.valuesMap = fab2ActionOrdinals;
 			o.visibility = fab2EnabledCond;
-		});
-
-		sub1 = set.subSet(o -> o.title = R.string.dim_prefs);
-		sub1.addBooleanPref(o -> {
-			o.store = a.getPrefs();
-			o.pref = MainActivityPrefs.DIM_ENABLED;
-			o.title = R.string.dim_enable;
-		});
-		var dimEnabledCond = PrefCondition.create(a.getPrefs(), MainActivityPrefs.DIM_ENABLED);
-		sub1.addIntPref(o -> {
-			o.store = a.getPrefs();
-			o.pref = MainActivityPrefs.DIM_OPACITY;
-			o.title = R.string.dim_opacity;
-			o.seekMin = 0;
-			o.seekMax = 100;
-			o.visibility = dimEnabledCond.copy();
-		});
-		sub1.addListPref(o -> {
-			o.store = a.getPrefs();
-			o.pref = MainActivityPrefs.DIM_COLOR_PRESET;
-			o.title = R.string.dim_color;
-			o.subtitle = R.string.string_format;
-			o.formatSubtitle = true;
-			o.values = new int[]{R.string.color_black, R.string.color_red, R.string.color_deep_red,
-					R.string.color_amber, R.string.color_yellow, R.string.color_custom};
-			o.visibility = dimEnabledCond.copy();
-		});
-		var dimCustomColorCond = new PrefCondition<>(a.getPrefs(), MainActivityPrefs.DIM_COLOR_PRESET,
-				p -> a.getPrefs().getIntPref(p) == MainActivityPrefs.DIM_COLOR_CUSTOM_IDX
-						&& a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED));
-		sub1.addIntPref(o -> {
-			o.store = a.getPrefs();
-			o.pref = MainActivityPrefs.DIM_COLOR_CUSTOM_R;
-			o.title = R.string.dim_color_r;
-			o.seekMin = 0;
-			o.seekMax = 255;
-			o.visibility = dimCustomColorCond.copy();
-		});
-		sub1.addIntPref(o -> {
-			o.store = a.getPrefs();
-			o.pref = MainActivityPrefs.DIM_COLOR_CUSTOM_G;
-			o.title = R.string.dim_color_g;
-			o.seekMin = 0;
-			o.seekMax = 255;
-			o.visibility = dimCustomColorCond.copy();
-		});
-		sub1.addIntPref(o -> {
-			o.store = a.getPrefs();
-			o.pref = MainActivityPrefs.DIM_COLOR_CUSTOM_B;
-			o.title = R.string.dim_color_b;
-			o.seekMin = 0;
-			o.seekMax = 255;
-			o.visibility = dimCustomColorCond.copy();
 		});
 
 		sub1 = set.subSet(o -> o.title = R.string.subtitles);

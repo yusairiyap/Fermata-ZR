@@ -259,19 +259,29 @@ public class ControlPanelView extends ConstraintLayout
 		setShowHideBarsIcon(a);
 
 		View fb = a.getFloatingButton();
+		View fb2 = fab2(a);
 		int delay = getStartDelay();
 
 		if (delay == 0) {
 			fb.setVisibility(GONE);
+			if (fb2 != null) fb2.setVisibility(GONE);
 			super.setVisibility(GONE);
 		} else {
 			fb.setVisibility(VISIBLE);
+			if (fb2 != null) fb2.setVisibility(VISIBLE);
 			super.setVisibility(VISIBLE);
-			hideTimer = new HideTimer(a, delay, false, fb);
+			hideTimer = new HideTimer(a, delay, false, fb, fb2);
 			a.postDelayed(hideTimer, delay);
 		}
 
 		checkPlaybackTimer(a);
+	}
+
+	/** The secondary FAB, if the user has it enabled -- null otherwise (shows/hides with fb). */
+	@Nullable
+	private View fab2(MainActivityDelegate a) {
+		return a.getPrefs().getBooleanPref(MainActivityPrefs.FAB2_ENABLED) ? a.getFloatingButton2() :
+				null;
 	}
 
 	public void disableVideoMode() {
@@ -399,17 +409,20 @@ public class ControlPanelView extends ConstraintLayout
 		if (delay == 0) return false;
 
 		View fb = a.getFloatingButton();
+		View fb2 = fab2(a);
 
 		if (getVisibility() == VISIBLE) {
 			fadeOut(this, true);
 			fadeOut(fb, false);
+			if (fb2 != null) fadeOut(fb2, false);
 			if (a.getPrefs().getSysBarsOnVideoTouchPref()) a.setFullScreen(true);
 		} else {
 			fadeIn(this, true);
 			fadeIn(fb, false);
+			if (fb2 != null) fadeIn(fb2, false);
 			if (a.getPrefs().getSysBarsOnVideoTouchPref()) a.setFullScreen(false);
 			clearFocus();
-			hideTimer = new HideTimer(a, delay, false, fb);
+			hideTimer = new HideTimer(a, delay, false, fb, fb2);
 			a.postDelayed(hideTimer, delay);
 		}
 
@@ -450,11 +463,13 @@ public class ControlPanelView extends ConstraintLayout
 		}
 
 		View fb = a.getFloatingButton();
+		View fb2 = fab2(a);
 		int delay = getSeekDelay();
 		super.setVisibility(VISIBLE);
 		fb.setVisibility(VISIBLE);
+		if (fb2 != null) fb2.setVisibility(VISIBLE);
 		clearFocus();
-		hideTimer = new HideTimer(a, delay, true, fb);
+		hideTimer = new HideTimer(a, delay, true, fb, fb2);
 		a.postDelayed(hideTimer, delay);
 		checkPlaybackTimer(a);
 	}

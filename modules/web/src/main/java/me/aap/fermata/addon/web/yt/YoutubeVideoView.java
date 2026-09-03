@@ -23,6 +23,7 @@ public class YoutubeVideoView extends VideoView {
 	@Override
 	protected void init(Context context) {
 		addView(new FrameLayout(context), new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+		addDimOverlay(context);
 	}
 
 	@Nullable

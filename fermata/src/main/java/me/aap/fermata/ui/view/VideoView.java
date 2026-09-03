@@ -127,16 +127,27 @@ public class VideoView extends FrameLayout
 			}
 		});
 
+		addDimOverlay(context);
+
+		addOnLayoutChangeListener(this);
+		setLayoutParams(new CircularRevealFrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+		setFocusable(true);
+	}
+
+	/**
+	 * Adds the night-driving dim overlay as the last child and returns it. Subclasses that
+	 * override {@link #init(Context)} without calling {@code super.init(context)} (e.g.
+	 * {@code YoutubeVideoView}, which builds its own child structure) must call this themselves to
+	 * support {@link #setDimOverlay}.
+	 */
+	protected View addDimOverlay(Context context) {
 		dimOverlay = new View(context);
 		dimOverlay.setLayoutParams(new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
 		dimOverlay.setVisibility(GONE);
 		dimOverlay.setClickable(false);
 		dimOverlay.setFocusable(false);
 		addView(dimOverlay);
-
-		addOnLayoutChangeListener(this);
-		setLayoutParams(new CircularRevealFrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
-		setFocusable(true);
+		return dimOverlay;
 	}
 
 	/**

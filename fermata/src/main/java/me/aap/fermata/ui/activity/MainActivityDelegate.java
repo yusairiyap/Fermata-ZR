@@ -181,6 +181,8 @@ public class MainActivityDelegate extends ActivityDelegate
 	private boolean barsHidden;
 	private boolean videoMode;
 	private int brightness = 255;
+	@Nullable
+	private VideoView activeVideoView;
 	private ConstraintSet normalConstraints;
 	private ConstraintSet videoOverlayConstraints;
 	private SpeechListener speechListener;
@@ -595,6 +597,10 @@ public class MainActivityDelegate extends ActivityDelegate
 		return floatingButton;
 	}
 
+	public SecondaryFloatingButton getFloatingButton2() {
+		return floatingButton2;
+	}
+
 	@Override
 	public float getTextIconSize() {
 		return getPrefs().getTextIconSizePref(this);
@@ -656,6 +662,7 @@ public class MainActivityDelegate extends ActivityDelegate
 		}
 
 		if (v != null) {
+			activeVideoView = v;
 			MainActivityPrefs p = getPrefs();
 			v.setDimOverlay(videoMode && p.getBooleanPref(DIM_ENABLED), p.getIntPref(DIM_OPACITY),
 					p.resolveDimColor());
@@ -793,7 +800,9 @@ public class MainActivityDelegate extends ActivityDelegate
 	public ActivityFragment showFragment(int id, Object input) {
 		BodyLayout b = getBody();
 		if (b.isVideoMode()) b.setMode(BodyLayout.Mode.BOTH);
-		return super.showFragment(id, input);
+		ActivityFragment f = super.showFragment(id, input);
+		updateSecondaryFabVisibility();
+		return f;
 	}
 
 	protected ActivityFragment createFragment(int id) {
@@ -1178,10 +1187,10 @@ public class MainActivityDelegate extends ActivityDelegate
 		} else if (prefs.contains(DIM_ENABLED) || prefs.contains(DIM_OPACITY)
 				|| prefs.contains(DIM_COLOR_PRESET) || prefs.contains(DIM_COLOR_CUSTOM_R)
 				|| prefs.contains(DIM_COLOR_CUSTOM_G) || prefs.contains(DIM_COLOR_CUSTOM_B)) {
-			if (isVideoMode()) {
+			if (isVideoMode() && (activeVideoView != null)) {
 				MainActivityPrefs p = getPrefs();
-				getBody().getVideoView().setDimOverlay(p.getBooleanPref(DIM_ENABLED),
-						p.getIntPref(DIM_OPACITY), p.resolveDimColor());
+				activeVideoView.setDimOverlay(p.getBooleanPref(DIM_ENABLED), p.getIntPref(DIM_OPACITY),
+						p.resolveDimColor());
 			}
 		} else if (prefs.contains(FAB2_ENABLED)) {
 			updateSecondaryFabVisibility();
@@ -1192,8 +1201,18 @@ public class MainActivityDelegate extends ActivityDelegate
 
 	private void updateSecondaryFabVisibility() {
 		if (floatingButton2 == null) return;
-		floatingButton2.setVisibility(
-				(isVideoMode() && getPrefs().getBooleanPref(FAB2_ENABLED)) ? VISIBLE : GONE);
+		boolean show = getPrefs().getBooleanPref(FAB2_ENABLED) && (isVideoMode() || isWebBrowserActive());
+		floatingButton2.setVisibility(show ? VISIBLE : GONE);
+	}
+
+	// The web/YouTube browser addon is a video-adjacent context (fullscreen/mute/dim/play-pause
+	// all make sense there) even before/without the app's own isVideoMode() becoming true, e.g.
+	// while just browsing YouTube, not yet playing a video.
+	private boolean isWebBrowserActive() {
+		ActivityFragment f = getActiveFragment();
+		if (f == null) return false;
+		int id = f.getFragmentId();
+		return (id == R.id.youtube_fragment) || (id == R.id.web_browser_fragment);
 	}
 
 	@Override
