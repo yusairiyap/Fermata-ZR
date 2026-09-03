@@ -77,6 +77,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 
 import androidx.annotation.LayoutRes;
@@ -86,6 +87,8 @@ import androidx.annotation.StyleRes;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.transition.ChangeBounds;
+import androidx.transition.TransitionManager;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.ContentLoadingProgressBar;
@@ -732,6 +735,16 @@ public class MainActivityDelegate extends ActivityDelegate
 			normalAnchors = new int[]{blp.topToTop, blp.topToBottom, blp.bottomToTop, blp.bottomToBottom,
 					tlp.bottomToTop, tlp.bottomToBottom, clp.topToTop, clp.topToBottom, clp.bottomToTop,
 					clp.bottomToBottom};
+		}
+
+		// Animates the bars/body sliding to their new anchors instead of jumping there instantly.
+		// ChangeBounds only interpolates position/size, so unlike a cloned ConstraintSet (see above)
+		// it can't stomp the visibility/alpha/scale/translation this method deliberately leaves alone.
+		// Guarded on attachedToWindow: the very first call comes from BodyLayout's constructor, before
+		// the root ConstraintLayout has ever been through a layout pass, where the transition would
+		// have nothing to compare against anyway.
+		if (body.isAttachedToWindow() && (body.getParent() instanceof ViewGroup root)) {
+			TransitionManager.beginDelayedTransition(root, new ChangeBounds().setDuration(300));
 		}
 
 		if (videoMode) {

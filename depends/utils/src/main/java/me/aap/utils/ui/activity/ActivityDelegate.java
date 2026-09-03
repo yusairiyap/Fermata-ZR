@@ -406,14 +406,44 @@ public abstract class ActivityDelegate implements EventBroadcaster<ActivityListe
 		if (switchingFrom != null) switchingFrom.switchingTo(switchingTo);
 		switchingTo.switchingFrom(switchingFrom);
 		if (input != null) switchingTo.setInput(input);
+		// Grabbed before commitNow() -- hide()/show() only ever toggle this same View's visibility,
+		// never destroy it, so the reference stays valid across the transaction and lets the
+		// crossfade below animate the outgoing screen's actual last-laid-out view.
+		View fromView = (switchingFrom != null) ? switchingFrom.getView() : null;
 		try {
 			tr.commitNow();
 			postBroadcastEvent(FRAGMENT_CHANGED);
+			if (activeId != ID_NULL) crossfadeFragmentViews(fromView, switchingTo.getView());
 			return switchingTo;
 		} catch (IllegalStateException err) {
 			activeFragmentId = ID_NULL;
 			Log.d(err);
 			return null;
+		}
+	}
+
+	private static final long FRAGMENT_FADE_IN_DURATION = 200L;
+	private static final long FRAGMENT_FADE_OUT_DURATION = 150L;
+
+	/**
+	 * Crossfades the incoming tab's view in over the outgoing one instead of the instant show/hide
+	 * visibility swap {@link FragmentTransaction} does on its own -- {@code FragmentTransaction}'s
+	 * built-in {@code setCustomAnimations} is unreliable together with {@code commitNow()} (which
+	 * this method relies on for its synchronous return), so the fade is driven directly on the
+	 * fragments' root views instead, the same way {@code ControlPanelView} already fades its FABs.
+	 */
+	private void crossfadeFragmentViews(@Nullable View from, @Nullable View to) {
+		if (to != null) {
+			to.animate().cancel();
+			to.setAlpha(0f);
+			to.animate().alpha(1f).setDuration(FRAGMENT_FADE_IN_DURATION).start();
+		}
+		if ((from != null) && (from != to)) {
+			from.animate().cancel();
+			from.setAlpha(1f);
+			from.setVisibility(View.VISIBLE);
+			from.animate().alpha(0f).setDuration(FRAGMENT_FADE_OUT_DURATION)
+					.withEndAction(() -> from.setVisibility(View.GONE)).start();
 		}
 	}
 

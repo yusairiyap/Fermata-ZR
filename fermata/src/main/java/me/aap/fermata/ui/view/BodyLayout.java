@@ -16,6 +16,8 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.Guideline;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.transition.ChangeBounds;
+import androidx.transition.TransitionManager;
 
 import me.aap.fermata.R;
 import me.aap.fermata.media.engine.MediaEngine;
@@ -125,6 +127,12 @@ public class BodyLayout extends SplitLayout
 			}
 		}
 
+		// Animates the video pane growing/shrinking against the guideline instead of snapping to its
+		// new split, e.g. when entering/leaving fullscreen video playback. No-ops harmlessly if this
+		// layout hasn't been through a first layout pass yet (attachedToWindow guards that).
+		if (isAttachedToWindow()) {
+			TransitionManager.beginDelayedTransition(this, new ChangeBounds().setDuration(300));
+		}
 		gl.setLayoutParams(lp);
 		a.fireBroadcastEvent(MODE_CHANGED);
 	}
