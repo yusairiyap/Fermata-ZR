@@ -669,35 +669,49 @@ public class MainActivityDelegate extends ActivityDelegate
 	private void applyVideoOverlayLayout(boolean videoMode) {
 		ConstraintLayout layout = findViewById(R.id.main_activity);
 
-		if (videoOverlayConstraints == null) {
-			normalConstraints = new ConstraintSet();
-			normalConstraints.clone(layout);
+		try {
+			if (videoOverlayConstraints == null) {
+				ConstraintSet normal = new ConstraintSet();
+				normal.clone(layout);
 
-			videoOverlayConstraints = new ConstraintSet();
-			videoOverlayConstraints.clone(normalConstraints);
+				ConstraintSet overlay = new ConstraintSet();
+				overlay.clone(normal);
 
-			videoOverlayConstraints.clear(R.id.body_layout, ConstraintSet.TOP);
-			videoOverlayConstraints.connect(R.id.body_layout, ConstraintSet.TOP,
-					ConstraintSet.PARENT_ID, ConstraintSet.TOP);
-			videoOverlayConstraints.clear(R.id.body_layout, ConstraintSet.BOTTOM);
-			videoOverlayConstraints.connect(R.id.body_layout, ConstraintSet.BOTTOM,
-					ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+				overlay.clear(R.id.body_layout, ConstraintSet.TOP);
+				overlay.connect(R.id.body_layout, ConstraintSet.TOP, ConstraintSet.PARENT_ID,
+						ConstraintSet.TOP);
+				overlay.clear(R.id.body_layout, ConstraintSet.BOTTOM);
+				overlay.connect(R.id.body_layout, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID,
+						ConstraintSet.BOTTOM);
 
-			videoOverlayConstraints.clear(R.id.tool_bar, ConstraintSet.BOTTOM);
+				overlay.clear(R.id.tool_bar, ConstraintSet.BOTTOM);
 
-			videoOverlayConstraints.clear(R.id.control_panel, ConstraintSet.TOP);
-			videoOverlayConstraints.clear(R.id.control_panel, ConstraintSet.BOTTOM);
-			videoOverlayConstraints.connect(R.id.control_panel, ConstraintSet.BOTTOM,
-					ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+				overlay.clear(R.id.control_panel, ConstraintSet.TOP);
+				overlay.clear(R.id.control_panel, ConstraintSet.BOTTOM);
+				overlay.connect(R.id.control_panel, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID,
+						ConstraintSet.BOTTOM);
 
-			// nav_bar is intentionally left untouched: in the bottom-nav layout its existing
-			// top_toBottomOf(control_panel) constraint still resolves fine (control_panel's bottom no
-			// longer depends on nav_bar at all, so there's no cycle), while in the left/right side-nav
-			// layouts nav_bar is a wholly independent column already anchored top+bottom to its own
-			// parent edges - clearing either side there would collapse its 0dp/weighted height.
+				// nav_bar is intentionally left untouched: in the bottom-nav layout its existing
+				// top_toBottomOf(control_panel) constraint still resolves fine (control_panel's bottom
+				// no longer depends on nav_bar at all, so there's no cycle), while in the left/right
+				// side-nav layouts nav_bar is a wholly independent column already anchored top+bottom
+				// to its own parent edges - clearing either side there would collapse its
+				// 0dp/weighted height.
+
+				normalConstraints = normal;
+				videoOverlayConstraints = overlay;
+			}
+
+			(videoMode ? videoOverlayConstraints : normalConstraints).applyTo(layout);
+		} catch (RuntimeException ex) {
+			// ConstraintSet.clone(ConstraintLayout) requires every direct child of the root layout
+			// to have an id (e.g. a dynamically added, id-less view breaks it) -- this is a purely
+			// cosmetic feature, so fail soft rather than take the whole app down with it.
+			Log.e(ex, "Failed to apply video-mode overlay layout");
+			normalConstraints = null;
+			videoOverlayConstraints = null;
+			return;
 		}
-
-		(videoMode ? videoOverlayConstraints : normalConstraints).applyTo(layout);
 
 		ToolBarView tb = getToolBar();
 		int c = MaterialColors.getColor(getContext(), androidx.appcompat.R.attr.colorPrimary,
