@@ -88,6 +88,7 @@ public interface MainActivityPrefs
 	Pref<IntSupplier> BRIGHTNESS = Pref.i("BRIGHTNESS", 255);
 	Pref<BooleanSupplier> FAB2_ENABLED = Pref.b("FAB2_ENABLED", true);
 	Pref<IntSupplier> FAB2_ACTION = Pref.i("FAB2_ACTION", Action.PLAY_PAUSE.ordinal());
+	Pref<BooleanSupplier> FAB_DRAGGABLE = Pref.b("FAB_DRAGGABLE", true);
 	Pref<BooleanSupplier> DIM_ENABLED = Pref.b("DIM_ENABLED", false);
 	Pref<IntSupplier> DIM_OPACITY = Pref.i("DIM_OPACITY", 50);
 	Pref<IntSupplier> DIM_COLOR_PRESET = Pref.i("DIM_COLOR_PRESET", 0);

@@ -772,6 +772,12 @@ public class SettingsFragment extends MainActivityFragment
 			o.valuesMap = fab2ActionOrdinals;
 			o.visibility = fab2EnabledCond;
 		});
+		ps.addBooleanPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.FAB_DRAGGABLE;
+			o.title = R.string.fab_draggable;
+			o.subtitle = R.string.fab_draggable_sub;
+		});
 	}
 
 	private void addAAInterface(MainActivityDelegate a, PreferenceSet ps) {

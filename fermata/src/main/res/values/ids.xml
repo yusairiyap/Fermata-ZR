@@ -130,6 +130,7 @@
 
     <item name="dim_toggle" type="id" />
     <item name="dim_settings" type="id" />
+    <item name="mute_toggle" type="id" />
 
     <item name="speed" type="id" />
     <item name="timer" type="id" />

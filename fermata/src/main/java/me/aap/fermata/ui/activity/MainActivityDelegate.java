@@ -28,6 +28,7 @@ import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_ENABLED;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_OPACITY;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB2_ACTION;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB2_ENABLED;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB_DRAGGABLE;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.LOCALE;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROL_SUBST;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROl_ENABLED;
@@ -1100,6 +1101,7 @@ public class MainActivityDelegate extends ActivityDelegate
 		floatingButton.setScale(getPrefs().getTextIconSizePref(this));
 		floatingButton2 = a.findViewById(R.id.floating_button2);
 		floatingButton2.setScale(getPrefs().getTextIconSizePref(this));
+		updateFabDraggable();
 		controlPanel.bind(getMediaServiceBinder());
 
 		if (VERSION.SDK_INT >= VERSION_CODES.VANILLA_ICE_CREAM && !a.isCarActivity()) {
@@ -1206,7 +1208,15 @@ public class MainActivityDelegate extends ActivityDelegate
 			updateSecondaryFabVisibility();
 		} else if (prefs.contains(FAB2_ACTION)) {
 			if (floatingButton2 != null) fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
+		} else if (prefs.contains(FAB_DRAGGABLE)) {
+			updateFabDraggable();
 		}
+	}
+
+	private void updateFabDraggable() {
+		boolean draggable = getPrefs().getBooleanPref(FAB_DRAGGABLE);
+		if (floatingButton != null) floatingButton.setDraggable(draggable);
+		if (floatingButton2 != null) floatingButton2.setDraggable(draggable);
 	}
 
 	private void updateSecondaryFabVisibility() {

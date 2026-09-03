@@ -354,9 +354,11 @@
     <string name="change_brightness_sub">The brightness can also be changed with two finger scroll</string>
     <string name="watched_threshold">Watched threshold</string>
     <string name="watched_threshold_sub">Marked video as watched, if more than this number of percentages has been watched</string>
-    <string name="secondary_fab_prefs">Secondary FAB</string>
+    <string name="secondary_fab_prefs">Floating Action Button</string>
     <string name="fab2_enable">Show secondary floating button</string>
     <string name="fab2_action">Tap action</string>
+    <string name="fab_draggable">Draggable</string>
+    <string name="fab_draggable_sub">Let the floating buttons be dragged to a different position on screen</string>
     <string name="dim_prefs">Dim screen</string>
     <string name="dim_enable">Dim video screen</string>
     <string name="dim_opacity">Dim opacity</string>

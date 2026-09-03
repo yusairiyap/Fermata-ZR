@@ -152,6 +152,12 @@ public class FloatingButton extends FloatingActionButton implements ActivityList
 		setY(getY() - diff);
 	}
 
+	private boolean draggable = true;
+
+	public void setDraggable(boolean draggable) {
+		this.draggable = draggable;
+	}
+
 	private float downX, downY, dx, dy;
 	private boolean moving;
 
@@ -167,6 +173,7 @@ public class FloatingButton extends FloatingActionButton implements ActivityList
 				return super.onTouchEvent(e);
 
 			case MotionEvent.ACTION_MOVE:
+				if (!draggable) return super.onTouchEvent(e);
 				int w = getWidth();
 				int h = getHeight();
 

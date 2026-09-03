@@ -13,6 +13,7 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,6 +33,7 @@ import com.google.android.material.textview.MaterialTextView;
 import java.util.List;
 
 import me.aap.fermata.R;
+import me.aap.fermata.action.Action;
 import me.aap.fermata.media.engine.AudioStreamInfo;
 import me.aap.fermata.media.engine.MediaEngine;
 import me.aap.fermata.media.engine.SubtitleStreamInfo;
@@ -727,9 +729,10 @@ public class ControlPanelView extends ConstraintLayout
 			if (eng == null) return;
 
 			if (pi.isVideo()) {
+				b.addItem(R.id.mute_toggle, R.drawable.volume_mute, R.string.action_vol_mute_unmute)
+						.setChecked(Action.isMuted(a.getContext()));
 				b.addItem(R.id.dim_toggle, R.drawable.dim_screen, R.string.dim_screen)
 						.setChecked(a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED));
-				b.addItem(R.id.dim_settings, R.drawable.settings, R.string.dim_settings);
 			}
 
 			boolean stream = (pi.isStream());
@@ -764,6 +767,12 @@ public class ControlPanelView extends ConstraintLayout
 
 			b.addItem(R.id.timer, R.drawable.timer, R.string.timer)
 					.setSubmenu(s -> new TimerMenuHandler(a).build(s));
+
+			if (pi.isVideo()) {
+				// Navigates to a different page entirely, so keep it last rather than grouped with
+				// the in-place toggles above.
+				b.addItem(R.id.dim_settings, R.drawable.settings, R.string.dim_settings);
+			}
 		}
 
 		private void buildRepeatMenu(OverlayMenu.Builder b) {
@@ -797,8 +806,18 @@ public class ControlPanelView extends ConstraintLayout
 				MainActivityPrefs p = getActivity().getPrefs();
 				p.applyBooleanPref(MainActivityPrefs.DIM_ENABLED, !p.getBooleanPref(MainActivityPrefs.DIM_ENABLED));
 				return true;
+			} else if (id == R.id.mute_toggle) {
+				MainActivityDelegate a = getActivity();
+				Action.VOLUME_MUTE_UNMUTE.getHandler()
+						.handle(a.getMediaSessionCallback(), a, SystemClock.uptimeMillis());
+				return true;
 			} else if (id == R.id.dim_settings) {
-				getActivity().showFragment(R.id.settings_fragment, SettingsFragment.SHOW_DIM_SETTINGS);
+				MainActivityDelegate a = getActivity();
+				// Settings is a normal fragment hosted in frame_layout, which sits behind the
+				// fullscreen video overlay while video mode is active -- collapse out of it first
+				// or the settings page would navigate but stay invisible behind the video.
+				a.getBody().setMode(BodyLayout.Mode.FRAME);
+				a.showFragment(R.id.settings_fragment, SettingsFragment.SHOW_DIM_SETTINGS);
 				return true;
 			}
 

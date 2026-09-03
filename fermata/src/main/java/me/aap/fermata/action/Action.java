@@ -84,6 +84,12 @@ public enum Action {
 		return (ordinal >= 0) && (ordinal < all.size()) ? all.get(ordinal) : null;
 	}
 
+	/** Shared by anything that needs to show the current mute state (FAB2's icon, menu items). */
+	public static boolean isMuted(Context ctx) {
+		var amgr = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+		return (amgr != null) && amgr.isStreamMute(STREAM_MUSIC);
+	}
+
 	public static List<Action> getAll() {
 		return all;
 	}

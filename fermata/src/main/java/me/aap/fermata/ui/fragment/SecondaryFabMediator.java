@@ -1,12 +1,9 @@
 package me.aap.fermata.ui.fragment;
 
-import static android.media.AudioManager.STREAM_MUSIC;
 import static android.os.SystemClock.uptimeMillis;
 import static me.aap.utils.ui.activity.ActivityListener.FRAGMENT_CHANGED;
 import static me.aap.utils.ui.activity.ActivityListener.FRAGMENT_CONTENT_CHANGED;
 
-import android.content.Context;
-import android.media.AudioManager;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.View;
 
@@ -20,6 +17,7 @@ import me.aap.fermata.action.Action;
 import me.aap.fermata.media.service.MediaSessionCallback;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
 import me.aap.fermata.ui.activity.MainActivityPrefs;
+import me.aap.fermata.ui.view.BodyLayout;
 import me.aap.utils.ui.UiUtils;
 import me.aap.utils.ui.activity.ActivityDelegate;
 import me.aap.utils.ui.fragment.ActivityFragment;
@@ -79,18 +77,13 @@ public final class SecondaryFabMediator implements FloatingButton.Mediator,
 	@DrawableRes
 	private int iconFor(MainActivityDelegate a, @Nullable Action action) {
 		if (action == Action.FULLSCREEN_TOGGLE) return R.drawable.video_fullscreen;
-		if (action == Action.VOLUME_MUTE_UNMUTE) return isMuted(a) ? R.drawable.volume_mute :
-				R.drawable.volume_up;
+		if (action == Action.VOLUME_MUTE_UNMUTE) return Action.isMuted(a.getContext()) ?
+				R.drawable.volume_mute : R.drawable.volume_up;
 		if (action == Action.DIM_TOGGLE) return a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED)
 				? R.drawable.dim_screen : R.drawable.dim_screen_off;
 		if (action == Action.PLAY_PAUSE)
 			return a.getMediaSessionCallback().isPlaying() ? R.drawable.pause : R.drawable.play;
 		return R.drawable.play_pause;
-	}
-
-	private boolean isMuted(MainActivityDelegate a) {
-		var amgr = (AudioManager) a.getContext().getSystemService(Context.AUDIO_SERVICE);
-		return (amgr != null) && amgr.isStreamMute(STREAM_MUSIC);
 	}
 
 	@Override
@@ -119,6 +112,10 @@ public final class SecondaryFabMediator implements FloatingButton.Mediator,
 				b.addItem(UiUtils.getArrayItemId(i), iconFor(a, action), action.getName()).setData(action);
 			}
 			b.addItem(R.id.dim_settings, R.drawable.settings, R.string.dim_settings).setHandler(item -> {
+				// Settings is a normal fragment hosted in frame_layout, which sits behind the
+				// fullscreen video overlay while video mode is active -- collapse out of it first
+				// or the settings page would navigate but stay invisible behind the video.
+				a.getBody().setMode(BodyLayout.Mode.FRAME);
 				a.showFragment(R.id.settings_fragment, SettingsFragment.SHOW_DIM_SETTINGS);
 				return true;
 			});
