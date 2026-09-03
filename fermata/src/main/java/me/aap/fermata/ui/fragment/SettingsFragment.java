@@ -677,16 +677,13 @@ public class SettingsFragment extends MainActivityFragment
 					R.string.color_amber, R.string.color_yellow, R.string.color_custom};
 			o.visibility = dimEnabledCond.copy();
 		});
-		var dimCustomColorCond = new PrefCondition<>(a.getPrefs(), MainActivityPrefs.DIM_COLOR_PRESET,
-				p -> a.getPrefs().getIntPref(p) == MainActivityPrefs.DIM_COLOR_CUSTOM_IDX
-						&& a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED));
 		sub2.addIntPref(o -> {
 			o.store = a.getPrefs();
 			o.pref = MainActivityPrefs.DIM_COLOR_CUSTOM_R;
 			o.title = R.string.dim_color_r;
 			o.seekMin = 0;
 			o.seekMax = 255;
-			o.visibility = dimCustomColorCond.copy();
+			o.visibility = dimCustomColorCond(a);
 		});
 		sub2.addIntPref(o -> {
 			o.store = a.getPrefs();
@@ -694,7 +691,7 @@ public class SettingsFragment extends MainActivityFragment
 			o.title = R.string.dim_color_g;
 			o.seekMin = 0;
 			o.seekMax = 255;
-			o.visibility = dimCustomColorCond.copy();
+			o.visibility = dimCustomColorCond(a);
 		});
 		sub2.addIntPref(o -> {
 			o.store = a.getPrefs();
@@ -702,7 +699,7 @@ public class SettingsFragment extends MainActivityFragment
 			o.title = R.string.dim_color_b;
 			o.seekMin = 0;
 			o.seekMax = 255;
-			o.visibility = dimCustomColorCond.copy();
+			o.visibility = dimCustomColorCond(a);
 		});
 
 		sub1 = set.subSet(o -> o.title = R.string.subtitles);
@@ -744,6 +741,18 @@ public class SettingsFragment extends MainActivityFragment
 				a.fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
 			}
 		};
+	}
+
+	/**
+	 * Visible only while dimming is on <em>and</em> the custom colour is selected. Built fresh per
+	 * row rather than copied: each condition registers itself as the listener of the prefs it
+	 * watches, so sharing one instance across rows would leave only the last row reacting.
+	 */
+	private static ChangeableCondition dimCustomColorCond(MainActivityDelegate a) {
+		var prefs = a.getPrefs();
+		return PrefCondition.create(prefs, MainActivityPrefs.DIM_ENABLED)
+				.and(new PrefCondition<>(prefs, MainActivityPrefs.DIM_COLOR_PRESET,
+						p -> prefs.getIntPref(p) == MainActivityPrefs.DIM_COLOR_CUSTOM_IDX));
 	}
 
 	private void addSecondaryFabPrefs(MainActivityDelegate a, PreferenceSet ps) {

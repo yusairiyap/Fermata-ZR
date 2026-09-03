@@ -165,7 +165,11 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 		ConstraintLayout root = a.findViewById(me.aap.fermata.R.id.main_activity);
 		if (root == null) return;
 		View v = root.findViewWithTag(YT_VIDEO_VIEW_TAG);
-		if (v != null) root.removeView(v);
+		if (v == null) return;
+		// Drop the chrome client hook with the view, or the fullscreen action would keep poking a
+		// dead WebView instead of falling back to the app's own fullscreen once we're gone.
+		if (v instanceof VideoView vv) vv.setNativeFullscreen(null);
+		root.removeView(v);
 	}
 
 	@Override

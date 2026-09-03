@@ -48,14 +48,6 @@ public enum Action {
 	VOLUME_UP(R.string.action_vol_up, new VolumeHandler(ADJUST_RAISE)),
 	VOLUME_DOWN(R.string.action_vol_down, new VolumeHandler(ADJUST_LOWER)),
 	VOLUME_MUTE_UNMUTE(R.string.action_vol_mute_unmute, new VolumeHandler(ADJUST_TOGGLE_MUTE)),
-	FULLSCREEN_TOGGLE(R.string.action_fullscreen_toggle, a(a -> {
-		var vv = a.getActiveVideoView();
-		if ((vv != null) && vv.toggleNativeFullscreen()) return;
-		a.getPrefs().setFullscreenPref(a, !a.getPrefs().getFullscreenPref(a));
-	})),
-	DIM_TOGGLE(R.string.action_dim_toggle, a(a ->
-			a.getPrefs().applyBooleanPref(MainActivityPrefs.DIM_ENABLED,
-					!a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED)))),
 	ACTIVATE_VOICE_CTRL(R.string.action_activate_voice_ctrl,
 			m(cb -> cb.getAssistant().startVoiceAssistant())),
 	MENU(R.string.action_menu, a(a -> a.getNavBarMediator().showMenu(a))),
@@ -66,6 +58,16 @@ public enum Action {
 	BACK_OR_EXIT(R.string.action_back_or_exit, a(ActivityDelegate::onBackPressed)),
 	EXIT(R.string.action_exit, a(ActivityDelegate::finish)),
 	NONE(R.string.action_none, m(cb -> {})),
+	// Key bindings and the secondary FAB's action are persisted as ordinals, so new entries go at
+	// the end: inserting one mid-enum silently remaps every existing user's saved bindings.
+	FULLSCREEN_TOGGLE(R.string.action_fullscreen_toggle, a(a -> {
+		var vv = a.getActiveVideoView();
+		if ((vv != null) && vv.toggleNativeFullscreen()) return;
+		a.getPrefs().setFullscreenPref(a, !a.getPrefs().getFullscreenPref(a));
+	})),
+	DIM_TOGGLE(R.string.action_dim_toggle, a(a ->
+			a.getPrefs().applyBooleanPref(MainActivityPrefs.DIM_ENABLED,
+					!a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED)))),
 	;
 
 	private static final List<Action> all = unmodifiableList(asList(values()));

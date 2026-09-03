@@ -4,6 +4,8 @@ import static android.app.PendingIntent.FLAG_IMMUTABLE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID;
+import static androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.UNSET;
 import static android.provider.Settings.System.SCREEN_BRIGHTNESS;
 import static android.util.Base64.URL_SAFE;
 import static android.view.View.GONE;
@@ -81,7 +83,6 @@ import androidx.annotation.StyleRes;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.ContentLoadingProgressBar;
@@ -184,8 +185,8 @@ public class MainActivityDelegate extends ActivityDelegate
 	private int brightness = 255;
 	@Nullable
 	private VideoView activeVideoView;
-	private ConstraintSet normalConstraints;
-	private ConstraintSet videoOverlayConstraints;
+	@Nullable
+	private int[] normalAnchors;
 	private SpeechListener speechListener;
 	private VoiceCommandHandler voiceCommandHandler;
 
@@ -695,58 +696,75 @@ public class MainActivityDelegate extends ActivityDelegate
 		fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
 	}
 
+	/**
+	 * Re-anchors the three bars for video mode by editing their layout params directly.
+	 * <p>
+	 * This deliberately does not go through {@code ConstraintSet}: cloning one captures every
+	 * child's visibility, alpha, scale and translation as well, and applying it back stomps all of
+	 * them -- it would re-hide the FAB and control panel (both are hidden the moment video mode
+	 * starts, and the control panel is {@code gone} in the layout to begin with), reset a dragged
+	 * FAB and undo the icon-size scaling. Touching only the anchors we actually change also means
+	 * no dynamically added, id-less child can break the switch.
+	 */
 	private void applyVideoOverlayLayout(boolean videoMode) {
-		ConstraintLayout layout = findViewById(R.id.main_activity);
+		View body = findViewById(R.id.body_layout);
+		View tb = findViewById(R.id.tool_bar);
+		View cp = findViewById(R.id.control_panel);
+		if ((body == null) || (tb == null) || (cp == null)) return;
+		if (!(body.getLayoutParams() instanceof ConstraintLayout.LayoutParams blp)
+				|| !(tb.getLayoutParams() instanceof ConstraintLayout.LayoutParams tlp)
+				|| !(cp.getLayoutParams() instanceof ConstraintLayout.LayoutParams clp)) return;
 
-		try {
-			if (videoOverlayConstraints == null) {
-				ConstraintSet normal = new ConstraintSet();
-				normal.clone(layout);
-
-				ConstraintSet overlay = new ConstraintSet();
-				overlay.clone(normal);
-
-				overlay.clear(R.id.body_layout, ConstraintSet.TOP);
-				overlay.connect(R.id.body_layout, ConstraintSet.TOP, ConstraintSet.PARENT_ID,
-						ConstraintSet.TOP);
-				overlay.clear(R.id.body_layout, ConstraintSet.BOTTOM);
-				overlay.connect(R.id.body_layout, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID,
-						ConstraintSet.BOTTOM);
-
-				overlay.clear(R.id.tool_bar, ConstraintSet.BOTTOM);
-
-				overlay.clear(R.id.control_panel, ConstraintSet.TOP);
-				overlay.clear(R.id.control_panel, ConstraintSet.BOTTOM);
-				overlay.connect(R.id.control_panel, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID,
-						ConstraintSet.BOTTOM);
-
-				// nav_bar is intentionally left untouched: in the bottom-nav layout its existing
-				// top_toBottomOf(control_panel) constraint still resolves fine (control_panel's bottom
-				// no longer depends on nav_bar at all, so there's no cycle), while in the left/right
-				// side-nav layouts nav_bar is a wholly independent column already anchored top+bottom
-				// to its own parent edges - clearing either side there would collapse its
-				// 0dp/weighted height.
-
-				normalConstraints = normal;
-				videoOverlayConstraints = overlay;
-			}
-
-			(videoMode ? videoOverlayConstraints : normalConstraints).applyTo(layout);
-		} catch (RuntimeException ex) {
-			// ConstraintSet.clone(ConstraintLayout) requires every direct child of the root layout
-			// to have an id (e.g. a dynamically added, id-less view breaks it) -- this is a purely
-			// cosmetic feature, so fail soft rather than take the whole app down with it.
-			Log.e(ex, "Failed to apply video-mode overlay layout");
-			normalConstraints = null;
-			videoOverlayConstraints = null;
-			return;
+		// Captured from whichever layout variant was actually inflated, before the first switch,
+		// so normal mode is restored exactly as the variant declared it.
+		if (normalAnchors == null) {
+			normalAnchors = new int[]{blp.topToTop, blp.topToBottom, blp.bottomToTop, blp.bottomToBottom,
+					tlp.bottomToTop, tlp.bottomToBottom, clp.topToTop, clp.topToBottom, clp.bottomToTop,
+					clp.bottomToBottom};
 		}
 
-		ToolBarView tb = getToolBar();
+		if (videoMode) {
+			// body_layout fills the screen, and tool_bar/control_panel float over it pinned to the
+			// screen edges instead of squeezing the video into a strip between them.
+			blp.topToTop = PARENT_ID;
+			blp.topToBottom = UNSET;
+			blp.bottomToBottom = PARENT_ID;
+			blp.bottomToTop = UNSET;
+			tlp.bottomToTop = UNSET;
+			tlp.bottomToBottom = UNSET;
+			clp.topToTop = UNSET;
+			clp.topToBottom = UNSET;
+			clp.bottomToBottom = PARENT_ID;
+			clp.bottomToTop = UNSET;
+			// nav_bar is intentionally left untouched: in the bottom-nav layout its existing
+			// top_toBottomOf(control_panel) constraint still resolves fine (control_panel's bottom
+			// no longer depends on nav_bar at all, so there's no cycle), while in the left/right
+			// side-nav layouts nav_bar is a wholly independent column already anchored top+bottom
+			// to its own parent edges - clearing either side there would collapse its
+			// 0dp/weighted height.
+		} else {
+			int[] a = normalAnchors;
+			blp.topToTop = a[0];
+			blp.topToBottom = a[1];
+			blp.bottomToTop = a[2];
+			blp.bottomToBottom = a[3];
+			tlp.bottomToTop = a[4];
+			tlp.bottomToBottom = a[5];
+			clp.topToTop = a[6];
+			clp.topToBottom = a[7];
+			clp.bottomToTop = a[8];
+			clp.bottomToBottom = a[9];
+		}
+
+		body.setLayoutParams(blp);
+		tb.setLayoutParams(tlp);
+		cp.setLayoutParams(clp);
+
+		ToolBarView tbv = getToolBar();
 		int c = MaterialColors.getColor(getContext(), androidx.appcompat.R.attr.colorPrimary,
 				Color.BLACK);
-		if (videoMode) tb.setBackground(ControlPanelView.buildScrimGradient(c, false));
-		else tb.setBackgroundColor(c);
+		if (videoMode) tbv.setBackground(ControlPanelView.buildScrimGradient(c, false));
+		else tbv.setBackgroundColor(c);
 	}
 
 	private boolean checkMirroringMode(boolean clearFlags) {

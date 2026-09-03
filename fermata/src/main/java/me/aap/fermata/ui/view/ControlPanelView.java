@@ -624,8 +624,8 @@ public class ControlPanelView extends ConstraintLayout
 			if (playbackTimer == null) {
 				Context ctx = getContext();
 				playbackTimer = new MaterialTextView(ctx);
-				// ConstraintSet.clone(ConstraintLayout) (used by the video-mode overlay layout swap)
-				// requires every direct child of the root ConstraintLayout to have an id.
+				// Give it an id: it is added straight into the root ConstraintLayout, and anything
+				// that walks that layout via ConstraintSet requires every direct child to have one.
 				playbackTimer.setId(View.generateViewId());
 				((ViewGroup) getParent()).addView(playbackTimer);
 				playbackTimer.setBackgroundResource(R.drawable.playback_timer_bg);
