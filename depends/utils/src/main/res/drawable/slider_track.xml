@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A rounded-pill SeekBar track (Material-3-slider-like) used in place of the plain flat line the
+     platform default progressDrawable draws. The background segment is theme-aware so it stays
+     legible on both light and dark app themes; the progress/secondaryProgress segments are plain
+     white so that android:progressTint/secondaryProgressTint (set per-style) recolor them. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <corners android:radius="3dp" />
+            <solid android:color="?attr/colorControlNormal" />
+            <size android:height="6dp" />
+        </shape>
+    </item>
+
+    <item android:id="@android:id/secondaryProgress">
+        <clip>
+            <shape android:shape="rectangle">
+                <corners android:radius="3dp" />
+                <solid android:color="@android:color/white" />
+                <size android:height="6dp" />
+            </shape>
+        </clip>
+    </item>
+
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape android:shape="rectangle">
+                <corners android:radius="3dp" />
+                <solid android:color="@android:color/white" />
+                <size android:height="6dp" />
+            </shape>
+        </clip>
+    </item>
+</layer-list>

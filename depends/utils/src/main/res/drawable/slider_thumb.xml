@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A bigger, plain filled circle used as the SeekBar thumb in place of the small default platform
+     handle -- easier to grab, and recolored per-style via android:thumbTint. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@android:color/white" />
+    <size
+        android:width="20dp"
+        android:height="20dp" />
+</shape>

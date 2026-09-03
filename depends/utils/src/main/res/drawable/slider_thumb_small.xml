@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same idea as slider_thumb.xml but sized for tight, fixed-height rows (e.g. the equalizer
+     panel's sliders, whose height is pinned to a label row rather than wrap_content) where the
+     full-size thumb would overflow its bounds. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@android:color/white" />
+    <size
+        android:width="14dp"
+        android:height="14dp" />
+</shape>
