@@ -142,8 +142,14 @@ public class VideoView extends FrameLayout
 	/**
 	 * Shows/hides the night-driving dim overlay. {@code opacityPercent} is 0-100,
 	 * {@code rgbColor} is an opaque RGB color whose alpha channel is ignored.
+	 * <p>
+	 * {@code dimOverlay} is {@code null} for subclasses (e.g. {@code YoutubeVideoView}) that
+	 * override {@link #init(Context)} without calling {@code super.init(context)} to build their
+	 * own child structure -- those act as plain fullscreen containers, not real playback surfaces,
+	 * so this is a no-op for them rather than a crash.
 	 */
 	public void setDimOverlay(boolean show, int opacityPercent, int rgbColor) {
+		if (dimOverlay == null) return;
 		if (show) {
 			int alpha = Math.round(opacityPercent * 255 / 100f);
 			dimOverlay.setBackgroundColor((alpha << 24) | (rgbColor & 0x00FFFFFF));
