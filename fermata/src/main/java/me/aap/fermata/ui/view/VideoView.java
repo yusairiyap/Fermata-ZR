@@ -91,7 +91,7 @@ public class VideoView extends FrameLayout
 	private FutureSupplier<?> createSurface = new Promise<>();
 	private View dimOverlay;
 	@Nullable
-	private Runnable nativeFullscreenToggle;
+	private NativeFullscreen nativeFullscreen;
 
 	public VideoView(Context context) {
 		this(context, null);
@@ -171,20 +171,41 @@ public class VideoView extends FrameLayout
 	}
 
 	/**
-	 * Lets a video source with its own native fullscreen playback (e.g. a WebView-hosted YouTube
-	 * player, wired up by {@code modules/web}) register a hook here so that {@link
-	 * me.aap.fermata.action.Action#FULLSCREEN_TOGGLE} can defer to it instead of toggling the app's
-	 * own immersive-UI pref. This base module can't reference the feature module directly, so the
-	 * feature module reaches in and sets this instead -- same inversion as {@link #addDimOverlay}.
+	 * A video source that has its own native fullscreen playback, separate from the app's own
+	 * video mode -- e.g. a WebView-hosted YouTube player, whose fullscreen is the browser's custom
+	 * view rather than anything this module controls.
 	 */
-	public void setNativeFullscreenToggle(@Nullable Runnable toggle) {
-		nativeFullscreenToggle = toggle;
+	public interface NativeFullscreen {
+		boolean isNativeFullscreen();
+
+		void setNativeFullscreen(boolean fullscreen);
 	}
 
-	/** Returns {@code true} if a registered native fullscreen toggle handled the request. */
+	/**
+	 * Lets such a source (wired up by {@code modules/web}) register itself here, so that both
+	 * {@link me.aap.fermata.action.Action#FULLSCREEN_TOGGLE} and
+	 * {@link me.aap.fermata.ui.activity.MainActivityDelegate#exitVideoMode()} can defer to it
+	 * instead of driving the app's own video mode. This base module can't reference the feature
+	 * module directly, so the feature module reaches in and sets this -- same inversion as
+	 * {@link #addDimOverlay}.
+	 */
+	public void setNativeFullscreen(@Nullable NativeFullscreen fs) {
+		nativeFullscreen = fs;
+	}
+
+	/** Returns {@code true} if a registered native fullscreen handled the toggle. */
 	public boolean toggleNativeFullscreen() {
-		if (nativeFullscreenToggle == null) return false;
-		nativeFullscreenToggle.run();
+		NativeFullscreen fs = nativeFullscreen;
+		if (fs == null) return false;
+		fs.setNativeFullscreen(!fs.isNativeFullscreen());
+		return true;
+	}
+
+	/** Returns {@code true} only if a native fullscreen really was active and has now been left. */
+	public boolean exitNativeFullscreen() {
+		NativeFullscreen fs = nativeFullscreen;
+		if ((fs == null) || !fs.isNativeFullscreen()) return false;
+		fs.setNativeFullscreen(false);
 		return true;
 	}
 

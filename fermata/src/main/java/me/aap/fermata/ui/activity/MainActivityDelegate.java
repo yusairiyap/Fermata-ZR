@@ -607,6 +607,22 @@ public class MainActivityDelegate extends ActivityDelegate
 		return activeVideoView;
 	}
 
+	/**
+	 * Leaves fullscreen video playback, whichever kind is currently active, so that a normal
+	 * fragment can be shown afterwards.
+	 * <p>
+	 * A WebView-hosted player (YouTube) draws its fullscreen as its own overlay on the activity
+	 * root and is not part of {@link BodyLayout}'s video mode at all, so collapsing the body alone
+	 * would leave that overlay covering the whole screen -- ask the video view to leave its native
+	 * fullscreen first, and only fall back to the body when there is no such fullscreen active.
+	 */
+	public void exitVideoMode() {
+		VideoView v = activeVideoView;
+		if ((v != null) && v.exitNativeFullscreen()) return;
+		BodyLayout b = getBody();
+		if ((b != null) && !b.isFrameMode()) b.setMode(BodyLayout.Mode.FRAME);
+	}
+
 	@Override
 	public float getTextIconSize() {
 		return getPrefs().getTextIconSizePref(this);

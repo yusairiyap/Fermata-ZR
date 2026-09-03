@@ -192,7 +192,35 @@ public class ControlPanelView extends ConstraintLayout
 		}
 
 		setHeight(R.id.control_next, buttonSize);
+		setIconPadding(scale, buttonSize);
 		getLayoutParams().height = panelSize;
+	}
+
+	/**
+	 * The layout gives the icons a fixed dp padding, so the bigger the control panel gets the more
+	 * the icons grow into each other and into the panel edges -- most noticeable over fullscreen
+	 * video, where the panel is at its largest. Scale the padding along with the panel instead, so
+	 * the row stays evenly spaced at any size. The vertical padding is capped relative to the
+	 * button height so the glyph can never be squeezed away at the smallest sizes.
+	 */
+	private void setIconPadding(float scale, int buttonSize) {
+		Context ctx = getContext();
+		int h = toIntPx(ctx, Math.round(20 * scale));
+		int v = Math.min(toIntPx(ctx, Math.round(8 * scale)), Math.max(0, buttonSize / 4));
+		setPadding(R.id.control_prev, h, v);
+		setPadding(R.id.control_rw, h, v);
+		setPadding(R.id.control_play_pause, h, v);
+		setPadding(R.id.control_ff, h, v);
+		setPadding(R.id.control_next, h, v);
+
+		int corner = toIntPx(ctx, Math.round(3 * scale));
+		setPadding(R.id.show_hide_bars_icon, corner, corner);
+		setPadding(R.id.control_menu_button_icon, corner, corner);
+	}
+
+	private void setPadding(@IdRes int id, int h, int v) {
+		View b = findViewById(id);
+		if (b != null) b.setPadding(h, v, h, v);
 	}
 
 	private void seTextAppearance(TextView t, float size) {
@@ -813,10 +841,10 @@ public class ControlPanelView extends ConstraintLayout
 				return true;
 			} else if (id == R.id.dim_settings) {
 				MainActivityDelegate a = getActivity();
-				// Settings is a normal fragment hosted in frame_layout, which sits behind the
-				// fullscreen video overlay while video mode is active -- collapse out of it first
-				// or the settings page would navigate but stay invisible behind the video.
-				a.getBody().setMode(BodyLayout.Mode.FRAME);
+				// Settings is a normal fragment hosted in frame_layout, which sits behind whatever
+				// is drawing the fullscreen video -- leave fullscreen first, or the settings page
+				// navigates but stays hidden underneath it.
+				a.exitVideoMode();
 				a.showFragment(R.id.settings_fragment, SettingsFragment.SHOW_DIM_SETTINGS);
 				return true;
 			}

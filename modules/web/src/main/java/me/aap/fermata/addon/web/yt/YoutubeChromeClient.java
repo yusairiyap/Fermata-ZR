@@ -23,9 +23,17 @@ public class YoutubeChromeClient extends FermataChromeClient {
 
 	public YoutubeChromeClient(FermataWebView web, VideoView videoView) {
 		super(web, videoView);
-		videoView.setNativeFullscreenToggle(() -> {
-			if (isFullScreen()) exitFullScreen();
-			else enterFullScreen();
+		videoView.setNativeFullscreen(new VideoView.NativeFullscreen() {
+			@Override
+			public boolean isNativeFullscreen() {
+				return isFullScreen();
+			}
+
+			@Override
+			public void setNativeFullscreen(boolean fullscreen) {
+				if (fullscreen) enterFullScreen();
+				else exitFullScreen();
+			}
 		});
 	}
 

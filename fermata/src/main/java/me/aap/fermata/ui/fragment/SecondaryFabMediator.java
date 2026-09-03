@@ -17,7 +17,6 @@ import me.aap.fermata.action.Action;
 import me.aap.fermata.media.service.MediaSessionCallback;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
 import me.aap.fermata.ui.activity.MainActivityPrefs;
-import me.aap.fermata.ui.view.BodyLayout;
 import me.aap.utils.ui.UiUtils;
 import me.aap.utils.ui.activity.ActivityDelegate;
 import me.aap.utils.ui.fragment.ActivityFragment;
@@ -112,10 +111,10 @@ public final class SecondaryFabMediator implements FloatingButton.Mediator,
 				b.addItem(UiUtils.getArrayItemId(i), iconFor(a, action), action.getName()).setData(action);
 			}
 			b.addItem(R.id.dim_settings, R.drawable.settings, R.string.dim_settings).setHandler(item -> {
-				// Settings is a normal fragment hosted in frame_layout, which sits behind the
-				// fullscreen video overlay while video mode is active -- collapse out of it first
-				// or the settings page would navigate but stay invisible behind the video.
-				a.getBody().setMode(BodyLayout.Mode.FRAME);
+				// Settings is a normal fragment hosted in frame_layout, which sits behind whatever
+				// is drawing the fullscreen video -- leave fullscreen first, or the settings page
+				// navigates but stays hidden underneath it.
+				a.exitVideoMode();
 				a.showFragment(R.id.settings_fragment, SettingsFragment.SHOW_DIM_SETTINGS);
 				return true;
 			});
