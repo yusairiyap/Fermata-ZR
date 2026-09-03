@@ -30,7 +30,10 @@ import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_ENABLED;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_OPACITY;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB2_ACTION;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB2_ENABLED;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB3_ACTION;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB3_ENABLED;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB_DRAGGABLE;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB_SIZE;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.LOCALE;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROL_SUBST;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROl_ENABLED;
@@ -136,6 +139,7 @@ import me.aap.fermata.ui.fragment.SubtitlesFragment;
 import me.aap.fermata.ui.view.BodyLayout;
 import me.aap.fermata.ui.view.ControlPanelView;
 import me.aap.fermata.ui.view.SecondaryFloatingButton;
+import me.aap.fermata.ui.view.TertiaryFloatingButton;
 import me.aap.fermata.ui.view.VideoView;
 import me.aap.utils.app.App;
 import me.aap.utils.async.FutureSupplier;
@@ -178,6 +182,7 @@ public class MainActivityDelegate extends ActivityDelegate
 	private ControlPanelView controlPanel;
 	private FloatingButton floatingButton;
 	private SecondaryFloatingButton floatingButton2;
+	private TertiaryFloatingButton floatingButton3;
 	private ContentLoadingProgressBar progressBar;
 	private FutureSupplier<?> contentLoading;
 	private boolean barsHidden;
@@ -604,6 +609,11 @@ public class MainActivityDelegate extends ActivityDelegate
 	}
 
 	@Nullable
+	public TertiaryFloatingButton getFloatingButton3() {
+		return floatingButton3;
+	}
+
+	@Nullable
 	public VideoView getActiveVideoView() {
 		return activeVideoView;
 	}
@@ -693,6 +703,7 @@ public class MainActivityDelegate extends ActivityDelegate
 
 		applyVideoOverlayLayout(videoMode);
 		updateSecondaryFabVisibility();
+		updateTertiaryFabVisibility();
 		fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
 	}
 
@@ -842,6 +853,7 @@ public class MainActivityDelegate extends ActivityDelegate
 		if (b.isVideoMode()) b.setMode(BodyLayout.Mode.BOTH);
 		ActivityFragment f = super.showFragment(id, input);
 		updateSecondaryFabVisibility();
+		updateTertiaryFabVisibility();
 		return f;
 	}
 
@@ -1132,9 +1144,11 @@ public class MainActivityDelegate extends ActivityDelegate
 		body = a.findViewById(R.id.body_layout);
 		controlPanel = a.findViewById(R.id.control_panel);
 		floatingButton = a.findViewById(R.id.floating_button);
-		floatingButton.setScale(getPrefs().getTextIconSizePref(this));
+		floatingButton.setScale(getPrefs().getFabSizePref());
 		floatingButton2 = a.findViewById(R.id.floating_button2);
-		floatingButton2.setScale(getPrefs().getTextIconSizePref(this));
+		floatingButton2.setScale(getPrefs().getFabSizePref());
+		floatingButton3 = a.findViewById(R.id.floating_button3);
+		floatingButton3.setScale(getPrefs().getFabSizePref());
 		updateFabDraggable();
 		controlPanel.bind(getMediaServiceBinder());
 
@@ -1186,9 +1200,10 @@ public class MainActivityDelegate extends ActivityDelegate
 			recreate();
 		} else if (MainActivityPrefs.hasNavBarPosPref(this, prefs)) {
 			recreate();
-		} else if (MainActivityPrefs.hasTextIconSizePref(this, prefs)) {
-			if (floatingButton != null) floatingButton.setScale(getPrefs().getTextIconSizePref(this));
-			if (floatingButton2 != null) floatingButton2.setScale(getPrefs().getTextIconSizePref(this));
+		} else if (prefs.contains(FAB_SIZE)) {
+			if (floatingButton != null) floatingButton.setScale(getPrefs().getFabSizePref());
+			if (floatingButton2 != null) floatingButton2.setScale(getPrefs().getFabSizePref());
+			if (floatingButton3 != null) floatingButton3.setScale(getPrefs().getFabSizePref());
 		} else if (MainActivityPrefs.hasNavBarSizePref(this, prefs)) {
 			if (navBar != null) navBar.setSize(getPrefs().getNavBarSizePref(this));
 		} else if (MainActivityPrefs.hasToolBarSizePref(this, prefs)) {
@@ -1242,6 +1257,10 @@ public class MainActivityDelegate extends ActivityDelegate
 			updateSecondaryFabVisibility();
 		} else if (prefs.contains(FAB2_ACTION)) {
 			if (floatingButton2 != null) fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
+		} else if (prefs.contains(FAB3_ENABLED)) {
+			updateTertiaryFabVisibility();
+		} else if (prefs.contains(FAB3_ACTION)) {
+			if (floatingButton3 != null) fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
 		} else if (prefs.contains(FAB_DRAGGABLE)) {
 			updateFabDraggable();
 		}
@@ -1251,6 +1270,7 @@ public class MainActivityDelegate extends ActivityDelegate
 		boolean draggable = getPrefs().getBooleanPref(FAB_DRAGGABLE);
 		if (floatingButton != null) floatingButton.setDraggable(draggable);
 		if (floatingButton2 != null) floatingButton2.setDraggable(draggable);
+		if (floatingButton3 != null) floatingButton3.setDraggable(draggable);
 	}
 
 	private void updateSecondaryFabVisibility() {
@@ -1268,6 +1288,20 @@ public class MainActivityDelegate extends ActivityDelegate
 			floatingButton2.setVisibility(floatingButton.getVisibility());
 		} else {
 			floatingButton2.setVisibility(isWebBrowserActive() ? VISIBLE : GONE);
+		}
+	}
+
+	private void updateTertiaryFabVisibility() {
+		if (floatingButton3 == null) return;
+		if (!getPrefs().getBooleanPref(FAB3_ENABLED)) {
+			floatingButton3.setVisibility(GONE);
+			return;
+		}
+
+		if (isVideoMode()) {
+			floatingButton3.setVisibility(floatingButton.getVisibility());
+		} else {
+			floatingButton3.setVisibility(isWebBrowserActive() ? VISIBLE : GONE);
 		}
 	}
 

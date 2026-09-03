@@ -20,6 +20,7 @@ import static me.aap.utils.ui.UiUtils.showAlert;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
@@ -67,6 +68,7 @@ public class MainActivity extends SplitCompatActivityBase
 		implements ZrAutoActivity, AddonManager.Listener {
 	private static FermataMediaServiceConnection service;
 	private static MainActivity activeInstance;
+	private int nightMode;
 
 	@Nullable
 	public static MainActivity getActiveInstance() {
@@ -110,6 +112,7 @@ public class MainActivity extends SplitCompatActivityBase
 						== MainActivityPrefs.THEME_DYNAMIC)) {
 			com.google.android.material.color.DynamicColors.applyToActivityIfAvailable(this);
 		}
+		nightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
 		AddonManager.get().addBroadcastListener(this);
 		getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
 			@Override
@@ -124,6 +127,28 @@ public class MainActivity extends SplitCompatActivityBase
 	protected void onDestroy() {
 		AddonManager.get().removeBroadcastListener(this);
 		super.onDestroy();
+	}
+
+	/**
+	 * android:configChanges in the manifest lists "uiMode" so the system never recreates this
+	 * Activity on its own when the user flips system dark/light mode -- without this override the
+	 * THEME_SYSTEM/THEME_DYNAMIC background picked in {@link MainActivityDelegate#setTheme} would
+	 * stay stuck on whatever it was at launch until the app is killed and restarted. Recreate
+	 * ourselves only when the night-mode bit actually flipped and the active theme actually follows
+	 * it, so THEME_LIGHT/THEME_DARK/etc. (which don't depend on system dark mode) aren't disturbed
+	 * by unrelated config changes (keyboard, locale, ...) that this same configChanges entry covers.
+	 */
+	@Override
+	public void onConfigurationChanged(@NonNull Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		int mode = newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK;
+		if (mode == nightMode) return;
+		nightMode = mode;
+		boolean auto = isCarActivity() || FermataApplication.get().isMirroringMode();
+		int theme = MainActivityDelegate.Prefs.instance.getThemePref(auto);
+		if ((theme == MainActivityPrefs.THEME_SYSTEM) || (theme == MainActivityPrefs.THEME_DYNAMIC)) {
+			recreate();
+		}
 	}
 
 	@Override
