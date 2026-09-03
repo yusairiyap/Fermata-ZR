@@ -53,7 +53,7 @@ public final class SecondaryFabMediator implements FloatingButton.Mediator,
 
 	@DrawableRes
 	private int iconFor(@Nullable Action action) {
-		if (action == Action.FULLSCREEN_TOGGLE) return R.drawable.fullscreen;
+		if (action == Action.FULLSCREEN_TOGGLE) return R.drawable.video_fullscreen;
 		if (action == Action.VOLUME_MUTE_UNMUTE) return R.drawable.volume_mute;
 		if (action == Action.DIM_TOGGLE) return R.drawable.dim_screen;
 		return R.drawable.play_pause;
