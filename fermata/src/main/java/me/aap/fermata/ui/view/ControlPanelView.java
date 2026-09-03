@@ -73,6 +73,8 @@ public class ControlPanelView extends ConstraintLayout
 		GestureListener {
 	private static final byte MASK_VISIBLE = 1;
 	private static final byte MASK_VIDEO_MODE = 2;
+	/** The vertical padding control_panel_view.xml gives the transport buttons, in dp. */
+	private static final int LAYOUT_BUTTON_PAD_V = 6;
 	private final GestureDetectorCompat gestureDetector;
 	private final ImageView showHideBars;
 	@DimenRes
@@ -163,15 +165,38 @@ public class ControlPanelView extends ConstraintLayout
 	}
 
 	private void setSize(float scale) {
+		Context ctx = getContext();
 		TextView seekTime = findViewById(R.id.seek_time);
 		TextView seekTotal = findViewById(R.id.seek_total);
-		float textSize = getTextAppearanceSize(getContext(), textAppearance) * scale;
+		float textSize = getTextAppearanceSize(ctx, textAppearance) * scale;
 		int textPad = seekTime.getPaddingTop() + seekTime.getPaddingBottom();
-		int pad = 2 * toIntPx(getContext(), 4) + textPad;
+		int pad = 2 * toIntPx(ctx, 4) + textPad;
 		int iconSize = (int) (textSize + pad);
 		int panelSize = (int) (size * scale);
 		int buttonSize = (int) (panelSize - textSize - pad);
 		ControlPanelSeekView seek = findViewById(R.id.seek_bar);
+
+		// The layout gives the icons a fixed dp padding, so the bigger the panel gets the more they
+		// grow into each other -- scale it with the panel instead, and give a bit more of it than
+		// the layout does.
+		int btnPadV = Math.min(toIntPx(ctx, Math.round(8 * scale)), Math.max(0, buttonSize / 4));
+		int cornerPad = toIntPx(ctx, Math.round(3 * scale));
+		// The glyphs are drawn fitCenter inside their box, so padding alone would shrink them.
+		// Grow each box (and the panel with it) by exactly the padding added on top of what the
+		// layout already had, so the extra room lands around the icons and they stay their old size.
+		int growButtons = 2 * Math.max(0, btnPadV - toIntPx(ctx, LAYOUT_BUTTON_PAD_V));
+		int growCorners = 2 * cornerPad;
+		buttonSize += growButtons;
+		iconSize += growCorners;
+		panelSize += growButtons + growCorners;
+		// On a narrow screen each transport button only gets a fifth of the panel width, where the
+		// horizontal padding could become the limiting dimension and shrink the glyph rather than
+		// just space it out -- cap it so the height always stays the limiting one.
+		int panelWidth = getWidth();
+		if (panelWidth <= 0) panelWidth = getResources().getDisplayMetrics().widthPixels;
+		int btnPadH = Math.min(toIntPx(ctx, Math.round(20 * scale)),
+				Math.max(0, (panelWidth / 5 - (buttonSize - 2 * btnPadV)) / 2));
+		setIconPadding(btnPadH, btnPadV, cornerPad);
 
 		if (seek.isEnabled()) {
 			setHeight(seek, iconSize);
@@ -192,30 +217,17 @@ public class ControlPanelView extends ConstraintLayout
 		}
 
 		setHeight(R.id.control_next, buttonSize);
-		setIconPadding(scale, buttonSize);
 		getLayoutParams().height = panelSize;
 	}
 
-	/**
-	 * The layout gives the icons a fixed dp padding, so the bigger the control panel gets the more
-	 * the icons grow into each other and into the panel edges -- most noticeable over fullscreen
-	 * video, where the panel is at its largest. Scale the padding along with the panel instead, so
-	 * the row stays evenly spaced at any size. The vertical padding is capped relative to the
-	 * button height so the glyph can never be squeezed away at the smallest sizes.
-	 */
-	private void setIconPadding(float scale, int buttonSize) {
-		Context ctx = getContext();
-		int h = toIntPx(ctx, Math.round(20 * scale));
-		int v = Math.min(toIntPx(ctx, Math.round(8 * scale)), Math.max(0, buttonSize / 4));
-		setPadding(R.id.control_prev, h, v);
-		setPadding(R.id.control_rw, h, v);
-		setPadding(R.id.control_play_pause, h, v);
-		setPadding(R.id.control_ff, h, v);
-		setPadding(R.id.control_next, h, v);
-
-		int corner = toIntPx(ctx, Math.round(3 * scale));
-		setPadding(R.id.show_hide_bars_icon, corner, corner);
-		setPadding(R.id.control_menu_button_icon, corner, corner);
+	private void setIconPadding(int btnPadH, int btnPadV, int cornerPad) {
+		setPadding(R.id.control_prev, btnPadH, btnPadV);
+		setPadding(R.id.control_rw, btnPadH, btnPadV);
+		setPadding(R.id.control_play_pause, btnPadH, btnPadV);
+		setPadding(R.id.control_ff, btnPadH, btnPadV);
+		setPadding(R.id.control_next, btnPadH, btnPadV);
+		setPadding(R.id.show_hide_bars_icon, cornerPad, cornerPad);
+		setPadding(R.id.control_menu_button_icon, cornerPad, cornerPad);
 	}
 
 	private void setPadding(@IdRes int id, int h, int v) {
