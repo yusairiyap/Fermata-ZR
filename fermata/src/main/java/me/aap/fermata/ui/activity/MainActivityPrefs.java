@@ -2,6 +2,9 @@ package me.aap.fermata.ui.activity;
 
 import static me.aap.fermata.BuildConfig.AUTO;
 
+import android.graphics.Color;
+
+import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
 
 import java.util.HashMap;
@@ -9,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import me.aap.fermata.action.Action;
 import me.aap.utils.event.EventBroadcaster;
 import me.aap.utils.function.BooleanSupplier;
 import me.aap.utils.function.DoubleSupplier;
@@ -37,10 +41,22 @@ public interface MainActivityPrefs
 	int CLOCK_POS_RIGHT = 2;
 	int CLOCK_POS_CENTER = 3;
 
+	// Curated dim-overlay tint presets; DIM_COLOR_CUSTOM_IDX (one past the end) selects the
+	// user-defined RGB sliders instead of a preset.
+	int[] DIM_COLOR_PRESETS = {
+			Color.BLACK,
+			Color.rgb(255, 0, 0),   // Red
+			Color.rgb(139, 0, 0),   // Deep Red
+			Color.rgb(255, 191, 0), // Amber
+			Color.rgb(255, 255, 0), // Yellow
+	};
+	int DIM_COLOR_CUSTOM_IDX = DIM_COLOR_PRESETS.length;
+
 	// Hidden baseline multipliers applied on top of the user-facing size-slider preferences below,
 	// so a slider showing "1.0" renders at the intended default size rather than the raw
 	// 40dp/70dp view base. Moving a slider away from 1.0 scales relative to this baseline.
 	float TOOL_BAR_SIZE_BASE_MOBILE = 1.3f;
+	float CONTROL_PANEL_SIZE_BASE_MOBILE = 1.4f;
 	float NAV_BAR_SIZE_BASE_AUTO = 1.05f;
 	float TOOL_BAR_SIZE_BASE_AUTO = 1.5f;
 	float CONTROL_PANEL_SIZE_BASE_AUTO = 1.3f;
@@ -70,6 +86,15 @@ public interface MainActivityPrefs
 	Pref<BooleanSupplier> LANDSCAPE_VIDEO = Pref.b("LANDSCAPE_VIDEO", false);
 	Pref<BooleanSupplier> CHANGE_BRIGHTNESS = Pref.b("CHANGE_BRIGHTNESS", false);
 	Pref<IntSupplier> BRIGHTNESS = Pref.i("BRIGHTNESS", 255);
+	Pref<BooleanSupplier> FAB2_ENABLED = Pref.b("FAB2_ENABLED", true);
+	Pref<IntSupplier> FAB2_ACTION = Pref.i("FAB2_ACTION", Action.PLAY_PAUSE.ordinal());
+	Pref<BooleanSupplier> FAB_DRAGGABLE = Pref.b("FAB_DRAGGABLE", true);
+	Pref<BooleanSupplier> DIM_ENABLED = Pref.b("DIM_ENABLED", false);
+	Pref<IntSupplier> DIM_OPACITY = Pref.i("DIM_OPACITY", 50);
+	Pref<IntSupplier> DIM_COLOR_PRESET = Pref.i("DIM_COLOR_PRESET", 0);
+	Pref<IntSupplier> DIM_COLOR_CUSTOM_R = Pref.i("DIM_COLOR_CUSTOM_R", 0);
+	Pref<IntSupplier> DIM_COLOR_CUSTOM_G = Pref.i("DIM_COLOR_CUSTOM_G", 0);
+	Pref<IntSupplier> DIM_COLOR_CUSTOM_B = Pref.i("DIM_COLOR_CUSTOM_B", 0);
 	Pref<BooleanSupplier> VOICE_CONTROl_ENABLED = Pref.b("VOICE_CONTROl_ENABLED", false);
 	Pref<BooleanSupplier> VOICE_CONTROl_FB = Pref.b("VOICE_CONTROl_FB", false);
 	Pref<Supplier<String>> VOICE_CONTROL_SUBST = Pref.s("VOICE_CONTROL_SUBST", "");
@@ -133,6 +158,10 @@ public interface MainActivityPrefs
 		return getBooleanPref(FULLSCREEN);
 	}
 
+	default void setFullscreenPref(MainActivityDelegate a, boolean v) {
+		applyBooleanPref((AUTO && a.isCarActivity()) ? FULLSCREEN_AA : FULLSCREEN, v);
+	}
+
 	static boolean hasHideBarsPref(MainActivityDelegate a, List<Pref<?>> prefs) {
 		if (AUTO && a.isCarActivity()) return prefs.contains(HIDE_BARS_AA);
 		return prefs.contains(HIDE_BARS);
@@ -190,7 +219,7 @@ public interface MainActivityPrefs
 	default float getControlPanelSizePref(MainActivityDelegate a) {
 		if (AUTO && a.isCarActivity())
 			return getFloatPref(CONTROL_PANEL_SIZE_AA) * CONTROL_PANEL_SIZE_BASE_AUTO;
-		return getFloatPref(CONTROL_PANEL_SIZE);
+		return getFloatPref(CONTROL_PANEL_SIZE) * CONTROL_PANEL_SIZE_BASE_MOBILE;
 	}
 
 	static boolean hasTextIconSizePref(MainActivityDelegate a, List<Pref<?>> prefs) {
@@ -244,6 +273,16 @@ public interface MainActivityPrefs
 
 	default int getBrightnessPref() {
 		return getIntPref(BRIGHTNESS);
+	}
+
+	@ColorInt
+	default int resolveDimColor() {
+		int idx = getIntPref(DIM_COLOR_PRESET);
+		if (idx == DIM_COLOR_CUSTOM_IDX) {
+			return Color.rgb(getIntPref(DIM_COLOR_CUSTOM_R), getIntPref(DIM_COLOR_CUSTOM_G),
+					getIntPref(DIM_COLOR_CUSTOM_B));
+		}
+		return ((idx >= 0) && (idx < DIM_COLOR_PRESETS.length)) ? DIM_COLOR_PRESETS[idx] : Color.BLACK;
 	}
 
 	default boolean getVoiceControlEnabledPref() {

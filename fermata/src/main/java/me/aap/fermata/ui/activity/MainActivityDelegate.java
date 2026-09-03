@@ -4,6 +4,8 @@ import static android.app.PendingIntent.FLAG_IMMUTABLE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID;
+import static androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.UNSET;
 import static android.provider.Settings.System.SCREEN_BRIGHTNESS;
 import static android.util.Base64.URL_SAFE;
 import static android.view.View.GONE;
@@ -20,6 +22,15 @@ import static me.aap.fermata.action.KeyEventHandler.handleKeyEvent;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.BRIGHTNESS;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.CHANGE_BRIGHTNESS;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.CLOCK_POS;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_COLOR_CUSTOM_B;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_COLOR_CUSTOM_G;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_COLOR_CUSTOM_R;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_COLOR_PRESET;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_ENABLED;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_OPACITY;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB2_ACTION;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB2_ENABLED;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB_DRAGGABLE;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.LOCALE;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROL_SUBST;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROl_ENABLED;
@@ -39,6 +50,7 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
@@ -76,6 +88,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.ContentLoadingProgressBar;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.textview.MaterialTextView;
 
 import java.io.IOException;
@@ -122,6 +135,7 @@ import me.aap.fermata.ui.fragment.SettingsFragment;
 import me.aap.fermata.ui.fragment.SubtitlesFragment;
 import me.aap.fermata.ui.view.BodyLayout;
 import me.aap.fermata.ui.view.ControlPanelView;
+import me.aap.fermata.ui.view.SecondaryFloatingButton;
 import me.aap.fermata.ui.view.VideoView;
 import me.aap.utils.app.App;
 import me.aap.utils.async.FutureSupplier;
@@ -163,11 +177,16 @@ public class MainActivityDelegate extends ActivityDelegate
 	private BodyLayout body;
 	private ControlPanelView controlPanel;
 	private FloatingButton floatingButton;
+	private SecondaryFloatingButton floatingButton2;
 	private ContentLoadingProgressBar progressBar;
 	private FutureSupplier<?> contentLoading;
 	private boolean barsHidden;
 	private boolean videoMode;
 	private int brightness = 255;
+	@Nullable
+	private VideoView activeVideoView;
+	@Nullable
+	private int[] normalAnchors;
 	private SpeechListener speechListener;
 	private VoiceCommandHandler voiceCommandHandler;
 
@@ -580,6 +599,31 @@ public class MainActivityDelegate extends ActivityDelegate
 		return floatingButton;
 	}
 
+	public SecondaryFloatingButton getFloatingButton2() {
+		return floatingButton2;
+	}
+
+	@Nullable
+	public VideoView getActiveVideoView() {
+		return activeVideoView;
+	}
+
+	/**
+	 * Leaves fullscreen video playback, whichever kind is currently active, so that a normal
+	 * fragment can be shown afterwards.
+	 * <p>
+	 * A WebView-hosted player (YouTube) draws its fullscreen as its own overlay on the activity
+	 * root and is not part of {@link BodyLayout}'s video mode at all, so collapsing the body alone
+	 * would leave that overlay covering the whole screen -- ask the video view to leave its native
+	 * fullscreen first, and only fall back to the body when there is no such fullscreen active.
+	 */
+	public void exitVideoMode() {
+		VideoView v = activeVideoView;
+		if ((v != null) && v.exitNativeFullscreen()) return;
+		BodyLayout b = getBody();
+		if ((b != null) && !b.isFrameMode()) b.setMode(BodyLayout.Mode.FRAME);
+	}
+
 	@Override
 	public float getTextIconSize() {
 		return getPrefs().getTextIconSizePref(this);
@@ -640,7 +684,87 @@ public class MainActivityDelegate extends ActivityDelegate
 			}
 		}
 
+		if (v != null) {
+			activeVideoView = v;
+			MainActivityPrefs p = getPrefs();
+			v.setDimOverlay(videoMode && p.getBooleanPref(DIM_ENABLED), p.getIntPref(DIM_OPACITY),
+					p.resolveDimColor());
+		}
+
+		applyVideoOverlayLayout(videoMode);
+		updateSecondaryFabVisibility();
 		fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
+	}
+
+	/**
+	 * Re-anchors the three bars for video mode by editing their layout params directly.
+	 * <p>
+	 * This deliberately does not go through {@code ConstraintSet}: cloning one captures every
+	 * child's visibility, alpha, scale and translation as well, and applying it back stomps all of
+	 * them -- it would re-hide the FAB and control panel (both are hidden the moment video mode
+	 * starts, and the control panel is {@code gone} in the layout to begin with), reset a dragged
+	 * FAB and undo the icon-size scaling. Touching only the anchors we actually change also means
+	 * no dynamically added, id-less child can break the switch.
+	 */
+	private void applyVideoOverlayLayout(boolean videoMode) {
+		View body = findViewById(R.id.body_layout);
+		View tb = findViewById(R.id.tool_bar);
+		View cp = findViewById(R.id.control_panel);
+		if ((body == null) || (tb == null) || (cp == null)) return;
+		if (!(body.getLayoutParams() instanceof ConstraintLayout.LayoutParams blp)
+				|| !(tb.getLayoutParams() instanceof ConstraintLayout.LayoutParams tlp)
+				|| !(cp.getLayoutParams() instanceof ConstraintLayout.LayoutParams clp)) return;
+
+		// Captured from whichever layout variant was actually inflated, before the first switch,
+		// so normal mode is restored exactly as the variant declared it.
+		if (normalAnchors == null) {
+			normalAnchors = new int[]{blp.topToTop, blp.topToBottom, blp.bottomToTop, blp.bottomToBottom,
+					tlp.bottomToTop, tlp.bottomToBottom, clp.topToTop, clp.topToBottom, clp.bottomToTop,
+					clp.bottomToBottom};
+		}
+
+		if (videoMode) {
+			// body_layout fills the screen, and tool_bar/control_panel float over it pinned to the
+			// screen edges instead of squeezing the video into a strip between them.
+			blp.topToTop = PARENT_ID;
+			blp.topToBottom = UNSET;
+			blp.bottomToBottom = PARENT_ID;
+			blp.bottomToTop = UNSET;
+			tlp.bottomToTop = UNSET;
+			tlp.bottomToBottom = UNSET;
+			clp.topToTop = UNSET;
+			clp.topToBottom = UNSET;
+			clp.bottomToBottom = PARENT_ID;
+			clp.bottomToTop = UNSET;
+			// nav_bar is intentionally left untouched: in the bottom-nav layout its existing
+			// top_toBottomOf(control_panel) constraint still resolves fine (control_panel's bottom
+			// no longer depends on nav_bar at all, so there's no cycle), while in the left/right
+			// side-nav layouts nav_bar is a wholly independent column already anchored top+bottom
+			// to its own parent edges - clearing either side there would collapse its
+			// 0dp/weighted height.
+		} else {
+			int[] a = normalAnchors;
+			blp.topToTop = a[0];
+			blp.topToBottom = a[1];
+			blp.bottomToTop = a[2];
+			blp.bottomToBottom = a[3];
+			tlp.bottomToTop = a[4];
+			tlp.bottomToBottom = a[5];
+			clp.topToTop = a[6];
+			clp.topToBottom = a[7];
+			clp.bottomToTop = a[8];
+			clp.bottomToBottom = a[9];
+		}
+
+		body.setLayoutParams(blp);
+		tb.setLayoutParams(tlp);
+		cp.setLayoutParams(clp);
+
+		ToolBarView tbv = getToolBar();
+		int c = MaterialColors.getColor(getContext(), androidx.appcompat.R.attr.colorPrimary,
+				Color.BLACK);
+		if (videoMode) tbv.setBackground(ControlPanelView.buildScrimGradient(c, false));
+		else tbv.setBackgroundColor(c);
 	}
 
 	private boolean checkMirroringMode(boolean clearFlags) {
@@ -716,7 +840,9 @@ public class MainActivityDelegate extends ActivityDelegate
 	public ActivityFragment showFragment(int id, Object input) {
 		BodyLayout b = getBody();
 		if (b.isVideoMode()) b.setMode(BodyLayout.Mode.BOTH);
-		return super.showFragment(id, input);
+		ActivityFragment f = super.showFragment(id, input);
+		updateSecondaryFabVisibility();
+		return f;
 	}
 
 	protected ActivityFragment createFragment(int id) {
@@ -1007,6 +1133,9 @@ public class MainActivityDelegate extends ActivityDelegate
 		controlPanel = a.findViewById(R.id.control_panel);
 		floatingButton = a.findViewById(R.id.floating_button);
 		floatingButton.setScale(getPrefs().getTextIconSizePref(this));
+		floatingButton2 = a.findViewById(R.id.floating_button2);
+		floatingButton2.setScale(getPrefs().getTextIconSizePref(this));
+		updateFabDraggable();
 		controlPanel.bind(getMediaServiceBinder());
 
 		if (VERSION.SDK_INT >= VERSION_CODES.VANILLA_ICE_CREAM && !a.isCarActivity()) {
@@ -1059,6 +1188,7 @@ public class MainActivityDelegate extends ActivityDelegate
 			recreate();
 		} else if (MainActivityPrefs.hasTextIconSizePref(this, prefs)) {
 			if (floatingButton != null) floatingButton.setScale(getPrefs().getTextIconSizePref(this));
+			if (floatingButton2 != null) floatingButton2.setScale(getPrefs().getTextIconSizePref(this));
 		} else if (MainActivityPrefs.hasNavBarSizePref(this, prefs)) {
 			if (navBar != null) navBar.setSize(getPrefs().getNavBarSizePref(this));
 		} else if (MainActivityPrefs.hasToolBarSizePref(this, prefs)) {
@@ -1095,7 +1225,60 @@ public class MainActivityDelegate extends ActivityDelegate
 			getBody().getVideoView().setClockPos(getPrefs().getClockPosPref());
 		} else if (prefs.contains(LOCALE)) {
 			recreate();
+		} else if (prefs.contains(DIM_ENABLED) || prefs.contains(DIM_OPACITY)
+				|| prefs.contains(DIM_COLOR_PRESET) || prefs.contains(DIM_COLOR_CUSTOM_R)
+				|| prefs.contains(DIM_COLOR_CUSTOM_G) || prefs.contains(DIM_COLOR_CUSTOM_B)) {
+			if (isVideoMode() && (activeVideoView != null)) {
+				MainActivityPrefs p = getPrefs();
+				activeVideoView.setDimOverlay(p.getBooleanPref(DIM_ENABLED), p.getIntPref(DIM_OPACITY),
+						p.resolveDimColor());
+			}
+			// Keeps FAB2's icon (when its configured action is "dim toggle") in sync with changes
+			// made from Settings or the video "more" menu, not just from FAB2 itself.
+			if (prefs.contains(DIM_ENABLED) && (floatingButton2 != null)) {
+				fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
+			}
+		} else if (prefs.contains(FAB2_ENABLED)) {
+			updateSecondaryFabVisibility();
+		} else if (prefs.contains(FAB2_ACTION)) {
+			if (floatingButton2 != null) fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
+		} else if (prefs.contains(FAB_DRAGGABLE)) {
+			updateFabDraggable();
 		}
+	}
+
+	private void updateFabDraggable() {
+		boolean draggable = getPrefs().getBooleanPref(FAB_DRAGGABLE);
+		if (floatingButton != null) floatingButton.setDraggable(draggable);
+		if (floatingButton2 != null) floatingButton2.setDraggable(draggable);
+	}
+
+	private void updateSecondaryFabVisibility() {
+		if (floatingButton2 == null) return;
+		if (!getPrefs().getBooleanPref(FAB2_ENABLED)) {
+			floatingButton2.setVisibility(GONE);
+			return;
+		}
+
+		if (isVideoMode()) {
+			// Mirror the primary FAB's actual current visibility rather than independently deriving
+			// it from isVideoMode() -- ControlPanelView.enableVideoMode() may have just hidden both
+			// FABs until the user taps the screen (getStartDelay() == 0), and recomputing visibility
+			// here from scratch would immediately clobber that, causing a brief flash on entry.
+			floatingButton2.setVisibility(floatingButton.getVisibility());
+		} else {
+			floatingButton2.setVisibility(isWebBrowserActive() ? VISIBLE : GONE);
+		}
+	}
+
+	// The web/YouTube browser addon is a video-adjacent context (fullscreen/mute/dim/play-pause
+	// all make sense there) even before/without the app's own isVideoMode() becoming true, e.g.
+	// while just browsing YouTube, not yet playing a video.
+	private boolean isWebBrowserActive() {
+		ActivityFragment f = getActiveFragment();
+		if (f == null) return false;
+		int id = f.getFragmentId();
+		return (id == R.id.youtube_fragment) || (id == R.id.web_browser_fragment);
 	}
 
 	@Override

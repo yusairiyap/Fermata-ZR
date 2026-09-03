@@ -95,6 +95,8 @@
     <string name="action_vol_up">Volume up</string>
     <string name="action_vol_down">Volume down</string>
     <string name="action_vol_mute_unmute">Mute/Unmute</string>
+    <string name="action_fullscreen_toggle">Toggle fullscreen</string>
+    <string name="action_dim_toggle">Toggle dim screen</string>
     <string name="action_activate_voice_ctrl">Activate voice control</string>
     <string name="action_menu">Menu</string>
     <string name="action_cp_menu">Control panel menu</string>
@@ -352,6 +354,26 @@
     <string name="change_brightness_sub">The brightness can also be changed with two finger scroll</string>
     <string name="watched_threshold">Watched threshold</string>
     <string name="watched_threshold_sub">Marked video as watched, if more than this number of percentages has been watched</string>
+    <string name="secondary_fab_prefs">Floating Action Button</string>
+    <string name="fab2_enable">Show secondary floating button</string>
+    <string name="fab2_action">Tap action</string>
+    <string name="fab_draggable">Draggable</string>
+    <string name="fab_draggable_sub">Let the floating buttons be dragged to a different position on screen</string>
+    <string name="dim_prefs">Dim screen</string>
+    <string name="dim_enable">Dim video screen</string>
+    <string name="dim_opacity">Dim opacity</string>
+    <string name="dim_color">Dim color</string>
+    <string name="dim_color_r">Custom color: red</string>
+    <string name="dim_color_g">Custom color: green</string>
+    <string name="dim_color_b">Custom color: blue</string>
+    <string name="dim_screen">Dim screen</string>
+    <string name="dim_settings">Dim screen settings</string>
+    <string name="color_black">Black</string>
+    <string name="color_red">Red</string>
+    <string name="color_deep_red">Deep red</string>
+    <string name="color_amber">Amber</string>
+    <string name="color_yellow">Yellow</string>
+    <string name="color_custom">Custom</string>
 
     <string name="other">Other</string>
     <string name="check_updates">Check for updates on startup</string>

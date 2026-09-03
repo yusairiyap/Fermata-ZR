@@ -120,7 +120,7 @@ jobs:
       - name: Upload arm64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: fermata-auto-${{ env.APP_VERSION }}${{ env.ARTIFACT_SFX }}-arm64
+          name: zrauto-${{ env.APP_VERSION }}${{ env.ARTIFACT_SFX }}-arm64
           path: dist/arm64/*.apk
           retention-days: 30
           if-no-files-found: error
@@ -128,7 +128,7 @@ jobs:
       - name: Upload arm APK
         uses: actions/upload-artifact@v4
         with:
-          name: fermata-auto-${{ env.APP_VERSION }}${{ env.ARTIFACT_SFX }}-arm
+          name: zrauto-${{ env.APP_VERSION }}${{ env.ARTIFACT_SFX }}-arm
           path: dist/arm/*.apk
           retention-days: 30
           if-no-files-found: error

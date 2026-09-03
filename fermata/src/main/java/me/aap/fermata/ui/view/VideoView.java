@@ -89,6 +89,9 @@ public class VideoView extends FrameLayout
 					MediaPrefs.SUB_DELAY));
 	private SubDrawer subDrawer;
 	private FutureSupplier<?> createSurface = new Promise<>();
+	private View dimOverlay;
+	@Nullable
+	private NativeFullscreen nativeFullscreen;
 
 	public VideoView(Context context) {
 		this(context, null);
@@ -126,9 +129,84 @@ public class VideoView extends FrameLayout
 			}
 		});
 
+		addDimOverlay(context);
+
 		addOnLayoutChangeListener(this);
 		setLayoutParams(new CircularRevealFrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
 		setFocusable(true);
+	}
+
+	/**
+	 * Adds the night-driving dim overlay as the last child and returns it. Subclasses that
+	 * override {@link #init(Context)} without calling {@code super.init(context)} (e.g.
+	 * {@code YoutubeVideoView}, which builds its own child structure) must call this themselves to
+	 * support {@link #setDimOverlay}.
+	 */
+	protected View addDimOverlay(Context context) {
+		dimOverlay = new View(context);
+		dimOverlay.setLayoutParams(new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+		dimOverlay.setVisibility(GONE);
+		dimOverlay.setClickable(false);
+		dimOverlay.setFocusable(false);
+		addView(dimOverlay);
+		return dimOverlay;
+	}
+
+	/**
+	 * Shows/hides the night-driving dim overlay. {@code opacityPercent} is 0-100,
+	 * {@code rgbColor} is an opaque RGB color whose alpha channel is ignored.
+	 * <p>
+	 * {@code dimOverlay} is {@code null} for subclasses (e.g. {@code YoutubeVideoView}) that
+	 * override {@link #init(Context)} without calling {@code super.init(context)} to build their
+	 * own child structure -- those act as plain fullscreen containers, not real playback surfaces,
+	 * so this is a no-op for them rather than a crash.
+	 */
+	public void setDimOverlay(boolean show, int opacityPercent, int rgbColor) {
+		if (dimOverlay == null) return;
+		if (show) {
+			int alpha = Math.round(opacityPercent * 255 / 100f);
+			dimOverlay.setBackgroundColor((alpha << 24) | (rgbColor & 0x00FFFFFF));
+		}
+		dimOverlay.setVisibility(show ? VISIBLE : GONE);
+	}
+
+	/**
+	 * A video source that has its own native fullscreen playback, separate from the app's own
+	 * video mode -- e.g. a WebView-hosted YouTube player, whose fullscreen is the browser's custom
+	 * view rather than anything this module controls.
+	 */
+	public interface NativeFullscreen {
+		boolean isNativeFullscreen();
+
+		void setNativeFullscreen(boolean fullscreen);
+	}
+
+	/**
+	 * Lets such a source (wired up by {@code modules/web}) register itself here, so that both
+	 * {@link me.aap.fermata.action.Action#FULLSCREEN_TOGGLE} and
+	 * {@link me.aap.fermata.ui.activity.MainActivityDelegate#exitVideoMode()} can defer to it
+	 * instead of driving the app's own video mode. This base module can't reference the feature
+	 * module directly, so the feature module reaches in and sets this -- same inversion as
+	 * {@link #addDimOverlay}.
+	 */
+	public void setNativeFullscreen(@Nullable NativeFullscreen fs) {
+		nativeFullscreen = fs;
+	}
+
+	/** Returns {@code true} if a registered native fullscreen handled the toggle. */
+	public boolean toggleNativeFullscreen() {
+		NativeFullscreen fs = nativeFullscreen;
+		if (fs == null) return false;
+		fs.setNativeFullscreen(!fs.isNativeFullscreen());
+		return true;
+	}
+
+	/** Returns {@code true} only if a native fullscreen really was active and has now been left. */
+	public boolean exitNativeFullscreen() {
+		NativeFullscreen fs = nativeFullscreen;
+		if ((fs == null) || !fs.isNativeFullscreen()) return false;
+		fs.setNativeFullscreen(false);
+		return true;
 	}
 
 	@Override

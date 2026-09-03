@@ -10,8 +10,10 @@ import static me.aap.utils.ui.UiUtils.toIntPx;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -31,6 +33,7 @@ import com.google.android.material.textview.MaterialTextView;
 import java.util.List;
 
 import me.aap.fermata.R;
+import me.aap.fermata.action.Action;
 import me.aap.fermata.media.engine.AudioStreamInfo;
 import me.aap.fermata.media.engine.MediaEngine;
 import me.aap.fermata.media.engine.SubtitleStreamInfo;
@@ -45,6 +48,7 @@ import me.aap.fermata.media.service.MediaSessionCallback;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
 import me.aap.fermata.ui.activity.MainActivityListener;
 import me.aap.fermata.ui.activity.MainActivityPrefs;
+import me.aap.fermata.ui.fragment.SettingsFragment;
 import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.function.BooleanSupplier;
 import me.aap.utils.function.DoubleSupplier;
@@ -69,6 +73,8 @@ public class ControlPanelView extends ConstraintLayout
 		GestureListener {
 	private static final byte MASK_VISIBLE = 1;
 	private static final byte MASK_VIDEO_MODE = 2;
+	/** The vertical padding control_panel_view.xml gives the transport buttons, in dp. */
+	private static final int LAYOUT_BUTTON_PAD_V = 6;
 	private final GestureDetectorCompat gestureDetector;
 	private final ImageView showHideBars;
 	@DimenRes
@@ -81,6 +87,7 @@ public class ControlPanelView extends ConstraintLayout
 	private View gestureSource;
 	private TextView playbackTimer;
 	private long scrollStamp;
+	private final int flatBackgroundColor;
 
 	public ControlPanelView(Context context, AttributeSet attrs) {
 		super(context, attrs, R.attr.appControlPanelStyle);
@@ -91,7 +98,8 @@ public class ControlPanelView extends ConstraintLayout
 				R.attr.appControlPanelStyle, R.style.AppTheme_ControlPanelStyle);
 		size = ta.getLayoutDimension(R.styleable.ControlPanelView_size, 0);
 		textAppearance = ta.getResourceId(R.styleable.ControlPanelView_textAppearance, 0);
-		setBackgroundColor(ta.getColor(R.styleable.ControlPanelView_android_colorBackground, 0));
+		flatBackgroundColor = ta.getColor(R.styleable.ControlPanelView_android_colorBackground, 0);
+		setBackgroundColor(flatBackgroundColor);
 		ta.recycle();
 
 		MainActivityDelegate a = getActivity();
@@ -104,6 +112,17 @@ public class ControlPanelView extends ConstraintLayout
 		g = findViewById(R.id.control_menu_button);
 		g.setOnClickListener(this::showMenu);
 		setShowHideBarsIcon(a);
+	}
+
+	/**
+	 * Builds a vertical scrim gradient that fades between {@code color} (opaque) and the same
+	 * RGB at alpha 0 (rather than a fully transparent black), to avoid a black-fringing artifact
+	 * as the alpha ramps down.
+	 */
+	public static GradientDrawable buildScrimGradient(int color, boolean fadeTowardBottom) {
+		int transparent = color & 0x00FFFFFF;
+		int[] stops = fadeTowardBottom ? new int[]{transparent, color} : new int[]{color, transparent};
+		return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, stops);
 	}
 
 	@Nullable
@@ -146,15 +165,38 @@ public class ControlPanelView extends ConstraintLayout
 	}
 
 	private void setSize(float scale) {
+		Context ctx = getContext();
 		TextView seekTime = findViewById(R.id.seek_time);
 		TextView seekTotal = findViewById(R.id.seek_total);
-		float textSize = getTextAppearanceSize(getContext(), textAppearance) * scale;
+		float textSize = getTextAppearanceSize(ctx, textAppearance) * scale;
 		int textPad = seekTime.getPaddingTop() + seekTime.getPaddingBottom();
-		int pad = 2 * toIntPx(getContext(), 4) + textPad;
+		int pad = 2 * toIntPx(ctx, 4) + textPad;
 		int iconSize = (int) (textSize + pad);
 		int panelSize = (int) (size * scale);
 		int buttonSize = (int) (panelSize - textSize - pad);
 		ControlPanelSeekView seek = findViewById(R.id.seek_bar);
+
+		// The layout gives the icons a fixed dp padding, so the bigger the panel gets the more they
+		// grow into each other -- scale it with the panel instead, and give a bit more of it than
+		// the layout does.
+		int btnPadV = Math.min(toIntPx(ctx, Math.round(8 * scale)), Math.max(0, buttonSize / 4));
+		int cornerPad = toIntPx(ctx, Math.round(3 * scale));
+		// The glyphs are drawn fitCenter inside their box, so padding alone would shrink them.
+		// Grow each box (and the panel with it) by exactly the padding added on top of what the
+		// layout already had, so the extra room lands around the icons and they stay their old size.
+		int growButtons = 2 * Math.max(0, btnPadV - toIntPx(ctx, LAYOUT_BUTTON_PAD_V));
+		int growCorners = 2 * cornerPad;
+		buttonSize += growButtons;
+		iconSize += growCorners;
+		panelSize += growButtons + growCorners;
+		// On a narrow screen each transport button only gets a fifth of the panel width, where the
+		// horizontal padding could become the limiting dimension and shrink the glyph rather than
+		// just space it out -- cap it so the height always stays the limiting one.
+		int panelWidth = getWidth();
+		if (panelWidth <= 0) panelWidth = getResources().getDisplayMetrics().widthPixels;
+		int btnPadH = Math.min(toIntPx(ctx, Math.round(20 * scale)),
+				Math.max(0, (panelWidth / 5 - (buttonSize - 2 * btnPadV)) / 2));
+		setIconPadding(btnPadH, btnPadV, cornerPad);
 
 		if (seek.isEnabled()) {
 			setHeight(seek, iconSize);
@@ -176,6 +218,21 @@ public class ControlPanelView extends ConstraintLayout
 
 		setHeight(R.id.control_next, buttonSize);
 		getLayoutParams().height = panelSize;
+	}
+
+	private void setIconPadding(int btnPadH, int btnPadV, int cornerPad) {
+		setPadding(R.id.control_prev, btnPadH, btnPadV);
+		setPadding(R.id.control_rw, btnPadH, btnPadV);
+		setPadding(R.id.control_play_pause, btnPadH, btnPadV);
+		setPadding(R.id.control_ff, btnPadH, btnPadV);
+		setPadding(R.id.control_next, btnPadH, btnPadV);
+		setPadding(R.id.show_hide_bars_icon, cornerPad, cornerPad);
+		setPadding(R.id.control_menu_button_icon, cornerPad, cornerPad);
+	}
+
+	private void setPadding(@IdRes int id, int h, int v) {
+		View b = findViewById(id);
+		if (b != null) b.setPadding(h, v, h, v);
 	}
 
 	private void seTextAppearance(TextView t, float size) {
@@ -240,29 +297,41 @@ public class ControlPanelView extends ConstraintLayout
 		hideTimer = null;
 		mask |= MASK_VIDEO_MODE;
 
+		setBackground(buildScrimGradient(flatBackgroundColor, true));
 		a.setBarsHidden(true);
 		setShowHideBarsIcon(a);
 
 		View fb = a.getFloatingButton();
+		View fb2 = fab2(a);
 		int delay = getStartDelay();
 
 		if (delay == 0) {
 			fb.setVisibility(GONE);
+			if (fb2 != null) fb2.setVisibility(GONE);
 			super.setVisibility(GONE);
 		} else {
 			fb.setVisibility(VISIBLE);
+			if (fb2 != null) fb2.setVisibility(VISIBLE);
 			super.setVisibility(VISIBLE);
-			hideTimer = new HideTimer(a, delay, false, fb);
+			hideTimer = new HideTimer(a, delay, false, fb, fb2);
 			a.postDelayed(hideTimer, delay);
 		}
 
 		checkPlaybackTimer(a);
 	}
 
+	/** The secondary FAB, if the user has it enabled -- null otherwise (shows/hides with fb). */
+	@Nullable
+	private View fab2(MainActivityDelegate a) {
+		return a.getPrefs().getBooleanPref(MainActivityPrefs.FAB2_ENABLED) ? a.getFloatingButton2() :
+				null;
+	}
+
 	public void disableVideoMode() {
 		MainActivityDelegate a = getActivity();
 		hideTimer = null;
 		mask &= ~MASK_VIDEO_MODE;
+		setBackgroundColor(flatBackgroundColor);
 		a.getFloatingButton().setVisibility(VISIBLE);
 
 		if ((mask & MASK_VISIBLE) == 0) {
@@ -383,17 +452,20 @@ public class ControlPanelView extends ConstraintLayout
 		if (delay == 0) return false;
 
 		View fb = a.getFloatingButton();
+		View fb2 = fab2(a);
 
 		if (getVisibility() == VISIBLE) {
 			fadeOut(this, true);
 			fadeOut(fb, false);
+			if (fb2 != null) fadeOut(fb2, false);
 			if (a.getPrefs().getSysBarsOnVideoTouchPref()) a.setFullScreen(true);
 		} else {
 			fadeIn(this, true);
 			fadeIn(fb, false);
+			if (fb2 != null) fadeIn(fb2, false);
 			if (a.getPrefs().getSysBarsOnVideoTouchPref()) a.setFullScreen(false);
 			clearFocus();
-			hideTimer = new HideTimer(a, delay, false, fb);
+			hideTimer = new HideTimer(a, delay, false, fb, fb2);
 			a.postDelayed(hideTimer, delay);
 		}
 
@@ -434,11 +506,13 @@ public class ControlPanelView extends ConstraintLayout
 		}
 
 		View fb = a.getFloatingButton();
+		View fb2 = fab2(a);
 		int delay = getSeekDelay();
 		super.setVisibility(VISIBLE);
 		fb.setVisibility(VISIBLE);
+		if (fb2 != null) fb2.setVisibility(VISIBLE);
 		clearFocus();
-		hideTimer = new HideTimer(a, delay, true, fb);
+		hideTimer = new HideTimer(a, delay, true, fb, fb2);
 		a.postDelayed(hideTimer, delay);
 		checkPlaybackTimer(a);
 	}
@@ -550,6 +624,9 @@ public class ControlPanelView extends ConstraintLayout
 			if (playbackTimer == null) {
 				Context ctx = getContext();
 				playbackTimer = new MaterialTextView(ctx);
+				// Give it an id: it is added straight into the root ConstraintLayout, and anything
+				// that walks that layout via ConstraintSet requires every direct child to have one.
+				playbackTimer.setId(View.generateViewId());
 				((ViewGroup) getParent()).addView(playbackTimer);
 				playbackTimer.setBackgroundResource(R.drawable.playback_timer_bg);
 				playbackTimer.setTextAppearance(textAppearance);
@@ -691,6 +768,13 @@ public class ControlPanelView extends ConstraintLayout
 			MediaEngine eng = a.getMediaSessionCallback().getEngine();
 			if (eng == null) return;
 
+			if (pi.isVideo()) {
+				b.addItem(R.id.mute_toggle, R.drawable.volume_mute, R.string.action_vol_mute_unmute)
+						.setChecked(Action.isMuted(a.getContext()));
+				b.addItem(R.id.dim_toggle, R.drawable.dim_screen, R.string.dim_screen)
+						.setChecked(a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED));
+			}
+
 			boolean stream = (pi.isStream());
 			eng.contributeToMenu(b);
 
@@ -723,6 +807,12 @@ public class ControlPanelView extends ConstraintLayout
 
 			b.addItem(R.id.timer, R.drawable.timer, R.string.timer)
 					.setSubmenu(s -> new TimerMenuHandler(a).build(s));
+
+			if (pi.isVideo()) {
+				// Navigates to a different page entirely, so keep it last rather than grouped with
+				// the in-place toggles above.
+				b.addItem(R.id.dim_settings, R.drawable.settings, R.string.dim_settings);
+			}
 		}
 
 		private void buildRepeatMenu(OverlayMenu.Builder b) {
@@ -751,6 +841,23 @@ public class ControlPanelView extends ConstraintLayout
 			} else if (id == R.id.shuffle_enable || id == R.id.shuffle_disable) {
 				pi = (PlayableItem) getItem();
 				pi.getParent().getPrefs().setShufflePref(id == R.id.shuffle_enable);
+				return true;
+			} else if (id == R.id.dim_toggle) {
+				MainActivityPrefs p = getActivity().getPrefs();
+				p.applyBooleanPref(MainActivityPrefs.DIM_ENABLED, !p.getBooleanPref(MainActivityPrefs.DIM_ENABLED));
+				return true;
+			} else if (id == R.id.mute_toggle) {
+				MainActivityDelegate a = getActivity();
+				Action.VOLUME_MUTE_UNMUTE.getHandler()
+						.handle(a.getMediaSessionCallback(), a, SystemClock.uptimeMillis());
+				return true;
+			} else if (id == R.id.dim_settings) {
+				MainActivityDelegate a = getActivity();
+				// Settings is a normal fragment hosted in frame_layout, which sits behind whatever
+				// is drawing the fullscreen video -- leave fullscreen first, or the settings page
+				// navigates but stays hidden underneath it.
+				a.exitVideoMode();
+				a.showFragment(R.id.settings_fragment, SettingsFragment.SHOW_DIM_SETTINGS);
 				return true;
 			}
 

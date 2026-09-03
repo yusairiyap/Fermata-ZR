@@ -1,6 +1,3 @@
-## !!!Be aware of scam!!! The sites like https :// fermata-auto . com  are 100% scam. This app is free and opensource!
-
-
 ## zrAuto
 zrAuto is a free, open source media player built for Android Auto, made by [Yusairi Yap](https://github.com/yusairiyap). It's simple, easy to use, and gets you playing your music, videos, and playlists in the car without any fuss.
 
@@ -11,6 +8,8 @@ zrAuto is built on top of the original Fermata Auto, with a few changes to make 
 
 * **A fresher look** — redesigned menus with a cleaner, card-style layout
 * **Bigger, easier-to-tap controls** — the toolbar, navigation bar, and control panel are sized with driving in mind, so you're not squinting or fumbling for buttons on the road
+* **A customizable second floating button** — pick its tap action (fullscreen, mute, play/pause, or screen dimming) from Settings, and long-press it any time for a quick menu of all four
+* **Night-friendly video dimming** — a translucent overlay over the video, with adjustable opacity and color (presets or your own custom color), to keep the screen easier on your eyes when watching or driving at night. Turn it on and off from Settings, the secondary floating button, or the video screen's menu
 * **YouTube in your Favorites and Playlists** — save YouTube videos alongside your other media, not just browse them live
 * **No donation nagging** — the app doesn't interrupt you asking for money
 * **Its own update channel** — zrAuto checks for and installs its own updates, so you're always running the latest zrAuto build
