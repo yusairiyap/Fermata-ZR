@@ -681,13 +681,6 @@ public class SettingsFragment extends MainActivityFragment
 			o.visibility = PrefCondition.create(a.getPrefs(), MainActivityPrefs.CHANGE_BRIGHTNESS);
 		});
 
-		sub2 = sub1.subSet(o -> {
-			o.title = R.string.audio;
-			o.visibility = vlcCond;
-			o.icon = R.drawable.audiotrack;
-		});
-		addAudioPrefs(sub2, mediaPrefs, isCar);
-
 		sub1.addIntPref(o -> {
 			o.store = mediaPrefs;
 			o.pref = MediaPrefs.WATCHED_THRESHOLD;
@@ -750,6 +743,13 @@ public class SettingsFragment extends MainActivityFragment
 			o.seekMax = 255;
 			o.visibility = dimCustomColorCond(a);
 		});
+
+		sub2 = sub1.subSet(o -> {
+			o.title = R.string.audio;
+			o.visibility = vlcCond;
+			o.icon = R.drawable.audiotrack;
+		});
+		addAudioPrefs(sub2, mediaPrefs, isCar);
 
 		sub1 = set.subSet(o -> {
 			o.title = R.string.subtitles;

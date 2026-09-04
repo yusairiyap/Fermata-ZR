@@ -572,7 +572,7 @@ public class PreferenceView extends ConstraintLayout {
 		} else {
 			iconView.setVisibility(VISIBLE);
 			iconView.setImageResource(opts.icon);
-			iconView.setPadding(0, 0, toIntPx(getContext(), 5), 0);
+			iconView.setPadding(0, 0, toIntPx(getContext(), 14), 0);
 		}
 
 		if ((opts.csubtitle == null) && (opts.subtitle == ID_NULL)) {

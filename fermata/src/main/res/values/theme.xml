@@ -47,8 +47,14 @@
         <item name="android:progressDrawable">@drawable/slider_track</item>
         <item name="android:thumb">@drawable/slider_thumb</item>
         <item name="android:splitTrack">false</item>
-        <item name="android:thumbTint">?attr/colorOnPrimary</item>
-        <item name="android:progressTint">?attr/colorOnPrimary</item>
+        <!-- Was colorOnPrimary: a role meant for content on top of the (often very light, e.g.
+        Material You light) colorPrimary control-panel background, which can end up near-white
+        there and barely visible against the same near-white slider track. colorControlActivated
+        is what the settings sliders are tinted with (Theme.Utils.Base.SliderStyle), and matching it
+        here keeps every slider in the app reading the same color, and it's the attr actually
+        meant for "the active state of a control", so it stays legible across every theme. -->
+        <item name="android:thumbTint">?attr/colorControlActivated</item>
+        <item name="android:progressTint">?attr/colorControlActivated</item>
         <item name="android:secondaryProgressTint">?attr/colorAccent</item>
     </style>
 

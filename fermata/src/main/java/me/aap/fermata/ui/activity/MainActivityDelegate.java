@@ -77,7 +77,6 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 
 import androidx.annotation.LayoutRes;
@@ -87,8 +86,6 @@ import androidx.annotation.StyleRes;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.transition.ChangeBounds;
-import androidx.transition.TransitionManager;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.ContentLoadingProgressBar;
@@ -737,15 +734,19 @@ public class MainActivityDelegate extends ActivityDelegate
 					clp.bottomToBottom};
 		}
 
-		// Animates the bars/body sliding to their new anchors instead of jumping there instantly.
-		// ChangeBounds only interpolates position/size, so unlike a cloned ConstraintSet (see above)
-		// it can't stomp the visibility/alpha/scale/translation this method deliberately leaves alone.
-		// Guarded on attachedToWindow: the very first call comes from BodyLayout's constructor, before
-		// the root ConstraintLayout has ever been through a layout pass, where the transition would
-		// have nothing to compare against anyway.
-		if (body.isAttachedToWindow() && (body.getParent() instanceof ViewGroup root)) {
-			TransitionManager.beginDelayedTransition(root, new ChangeBounds().setDuration(300));
-		}
+		// Animates the bars/body sliding to their new anchors instead of jumping there instantly, via
+		// UiUtils.flipAnimate's manual FLIP technique -- a TransitionManager.beginDelayedTransition
+		// scene transition was tried here first, but it depends on capturing an uninterrupted
+		// before/after layout pass on the whole root, which updateSecondaryFabVisibility() et al.
+		// (called right after this method, changing sibling FAB visibility on the same root) can
+		// intervene on and silently drop, and did so in practice. This works off an explicit
+		// snapshot instead, so it can't be dropped that way. Guarded on attachedToWindow: the very
+		// first call comes from BodyLayout's constructor, before this has ever been laid out, where
+		// there's nothing meaningful to animate from anyway.
+		boolean animate = body.isAttachedToWindow() && (body.getHeight() > 0);
+		int[] bodyBounds = animate ? UiUtils.captureBounds(body) : null;
+		int[] tbBounds = animate ? UiUtils.captureBounds(tb) : null;
+		int[] cpBounds = animate ? UiUtils.captureBounds(cp) : null;
 
 		if (videoMode) {
 			// body_layout fills the screen, and tool_bar/control_panel float over it pinned to the
@@ -784,12 +785,20 @@ public class MainActivityDelegate extends ActivityDelegate
 		tb.setLayoutParams(tlp);
 		cp.setLayoutParams(clp);
 
+		if (animate) {
+			UiUtils.flipAnimate(body, bodyBounds, OVERLAY_ANIM_DURATION);
+			UiUtils.flipAnimate(tb, tbBounds, OVERLAY_ANIM_DURATION);
+			UiUtils.flipAnimate(cp, cpBounds, OVERLAY_ANIM_DURATION);
+		}
+
 		ToolBarView tbv = getToolBar();
 		int c = MaterialColors.getColor(getContext(), androidx.appcompat.R.attr.colorPrimary,
 				Color.BLACK);
 		if (videoMode) tbv.setBackground(ControlPanelView.buildScrimGradient(c, false));
 		else tbv.setBackgroundColor(c);
 	}
+
+	private static final long OVERLAY_ANIM_DURATION = 300L;
 
 	private boolean checkMirroringMode(boolean clearFlags) {
 		if (!AUTO) return false;
@@ -1284,6 +1293,20 @@ public class MainActivityDelegate extends ActivityDelegate
 		if (floatingButton != null) floatingButton.setDraggable(draggable);
 		if (floatingButton2 != null) floatingButton2.setDraggable(draggable);
 		if (floatingButton3 != null) floatingButton3.setDraggable(draggable);
+
+		// Previously a dragged FAB only snapped back to its default layout position on the next app
+		// restart (a fresh Activity/View never picked up the leftover drag translation to begin
+		// with). Reset it live the moment dragging is turned off instead.
+		if (!draggable) {
+			resetFabPosition(floatingButton);
+			resetFabPosition(floatingButton2);
+			resetFabPosition(floatingButton3);
+		}
+	}
+
+	private static void resetFabPosition(@Nullable FloatingButton fb) {
+		if (fb == null) return;
+		fb.animate().translationX(0f).translationY(0f).setDuration(200L).start();
 	}
 
 	private void updateSecondaryFabVisibility() {

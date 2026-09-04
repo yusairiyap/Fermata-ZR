@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Thinner counterpart of slider_track.xml, paired with slider_thumb_small.xml for tight,
-     fixed-height rows. -->
+     fixed-height rows. See slider_track.xml for why progress/secondaryProgress only round their
+     left corners. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:id="@android:id/background">
@@ -14,7 +15,11 @@
     <item android:id="@android:id/secondaryProgress">
         <clip>
             <shape android:shape="rectangle">
-                <corners android:radius="2dp" />
+                <corners
+                    android:topLeftRadius="2dp"
+                    android:bottomLeftRadius="2dp"
+                    android:topRightRadius="0dp"
+                    android:bottomRightRadius="0dp" />
                 <solid android:color="@android:color/white" />
                 <size android:height="4dp" />
             </shape>
@@ -24,7 +29,11 @@
     <item android:id="@android:id/progress">
         <clip>
             <shape android:shape="rectangle">
-                <corners android:radius="2dp" />
+                <corners
+                    android:topLeftRadius="2dp"
+                    android:bottomLeftRadius="2dp"
+                    android:topRightRadius="0dp"
+                    android:bottomRightRadius="0dp" />
                 <solid android:color="@android:color/white" />
                 <size android:height="4dp" />
             </shape>

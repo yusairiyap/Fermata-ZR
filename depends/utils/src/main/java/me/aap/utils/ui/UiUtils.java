@@ -29,6 +29,7 @@ import android.os.Build.VERSION_CODES;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.EditText;
 
 import androidx.annotation.ColorInt;
@@ -465,6 +466,57 @@ public class UiUtils {
 		paint.setStyle(Paint.Style.STROKE);
 		paint.setColor(strokeColor);
 		canvas.drawPath(p, paint);
+	}
+
+	/**
+	 * Captures a view's current on-screen bounds (relative to its parent) so they can later be
+	 * passed to {@link #flipAnimate(View, int[], long)} -- call this <em>before</em> whatever
+	 * layout change (e.g. a ConstraintLayout anchor swap) is about to move/resize the view.
+	 */
+	public static int[] captureBounds(View v) {
+		return new int[]{v.getLeft(), v.getTop(), v.getWidth(), v.getHeight()};
+	}
+
+	/**
+	 * Animates a view smoothly from a previously {@link #captureBounds(View) captured} position/size
+	 * to whatever position/size it has just been laid out at (its current bounds), using the
+	 * "FLIP" technique: offset/scale the view with a transform so it still *looks* like it's at its
+	 * old bounds, then animate that transform back to identity. Unlike a {@code TransitionManager}
+	 * scene transition -- which needs its own dedicated, uninterrupted before/after layout pass to
+	 * detect anything to animate, and silently does nothing if some other change on the same root
+	 * (e.g. a sibling's visibility flipping) intervenes first -- this works off an explicit captured
+	 * snapshot, so it can't be dropped that way.
+	 * <p>
+	 * Registered on the next {@code onPreDraw} rather than just posted, so the transform is applied
+	 * before the new (already-laid-out) bounds are ever actually drawn -- avoiding a one-frame flash
+	 * of the destination state before the animation starts.
+	 */
+	public static void flipAnimate(View v, int[] before, long duration) {
+		v.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+			@Override
+			public boolean onPreDraw() {
+				v.getViewTreeObserver().removeOnPreDrawListener(this);
+				int w = v.getWidth(), h = v.getHeight();
+				if ((w == 0) || (h == 0) || (before[2] == 0) || (before[3] == 0)) return true;
+
+				float dx = before[0] - v.getLeft();
+				float dy = before[1] - v.getTop();
+				float sx = (float) before[2] / w;
+				float sy = (float) before[3] / h;
+				if ((dx == 0) && (dy == 0) && (sx == 1f) && (sy == 1f)) return true;
+
+				v.animate().cancel();
+				v.setPivotX(0);
+				v.setPivotY(0);
+				v.setTranslationX(dx);
+				v.setTranslationY(dy);
+				v.setScaleX(sx);
+				v.setScaleY(sy);
+				v.animate().translationX(0).translationY(0).scaleX(1f).scaleY(1f)
+						.setDuration(duration).start();
+				return true;
+			}
+		});
 	}
 
 	private static final class PaintHolder {

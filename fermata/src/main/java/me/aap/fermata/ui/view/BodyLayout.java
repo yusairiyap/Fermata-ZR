@@ -16,8 +16,6 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.Guideline;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.transition.ChangeBounds;
-import androidx.transition.TransitionManager;
 
 import me.aap.fermata.R;
 import me.aap.fermata.media.engine.MediaEngine;
@@ -34,6 +32,7 @@ import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.async.Promise;
 import me.aap.utils.function.DoubleSupplier;
 import me.aap.utils.pref.PreferenceStore.Pref;
+import me.aap.utils.ui.UiUtils;
 import me.aap.utils.ui.fragment.ActivityFragment;
 
 /**
@@ -95,6 +94,14 @@ public class BodyLayout extends SplitLayout
 		ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) gl.getLayoutParams();
 		MainActivityDelegate a = getActivity();
 		VideoView vv = getVideoView();
+		View sr = getSwipeRefresh();
+		// Captured before the switch below touches visibility/bounds, so the animation after it can
+		// FLIP from exactly what was on screen a moment ago. Left null (skipping the animation) for
+		// a view that's about to newly appear or disappear -- UiUtils.flipAnimate no-ops on a 0-size
+		// end, and there's nothing meaningful to animate from/to there anyway.
+		boolean animate = isAttachedToWindow() && (getWidth() > 0);
+		int[] vvBounds = animate ? UiUtils.captureBounds(vv) : null;
+		int[] srBounds = animate ? UiUtils.captureBounds(sr) : null;
 
 		switch (mode) {
 			case FRAME -> {
@@ -127,13 +134,14 @@ public class BodyLayout extends SplitLayout
 			}
 		}
 
-		// Animates the video pane growing/shrinking against the guideline instead of snapping to its
-		// new split, e.g. when entering/leaving fullscreen video playback. No-ops harmlessly if this
-		// layout hasn't been through a first layout pass yet (attachedToWindow guards that).
-		if (isAttachedToWindow()) {
-			TransitionManager.beginDelayedTransition(this, new ChangeBounds().setDuration(300));
-		}
 		gl.setLayoutParams(lp);
+
+		// Animates the video pane/list growing or shrinking against the guideline's new split
+		// instead of snapping there instantly, e.g. when entering/leaving fullscreen video playback.
+		if (animate) {
+			UiUtils.flipAnimate(vv, vvBounds, 300L);
+			UiUtils.flipAnimate(sr, srBounds, 300L);
+		}
 		a.fireBroadcastEvent(MODE_CHANGED);
 	}
 
