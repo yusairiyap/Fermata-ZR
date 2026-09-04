@@ -56,7 +56,10 @@
         <item name="colorPrimary">#445D8F</item>
         <item name="colorOnPrimary">#F5F5F5</item>
         <item name="colorSecondary">#FFFFFF</item>
-        <item name="colorOnSecondary">#F5F5F5</item>
+        <!-- Overridden to a dark ink tone, unlike AppTheme.Dynamic's near-white default: content
+        drawn on colorSecondary (list-item icons, checkboxes, ...) needs to read against this
+        theme's actual near-white colorSecondary above, not the dark theme's near-black one. -->
+        <item name="colorOnSecondary">#1C1B1F</item>
         <item name="colorSurface">#445D8F</item>
         <item name="colorOnSurface">#F5F5F5</item>
         <item name="colorSurfaceVariant">#445D8F</item>

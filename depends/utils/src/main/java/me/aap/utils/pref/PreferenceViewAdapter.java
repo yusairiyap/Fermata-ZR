@@ -82,6 +82,16 @@ public class PreferenceViewAdapter extends RecyclerView.Adapter<PreferenceViewAd
 
 		this.set = set;
 		set.setAdapter(this);
+
+		// Fades the new page in instead of the instant content swap RecyclerView otherwise shows.
+		// Resetting alpha to 0 before notifyDataSetChanged() means the outgoing rows are never drawn
+		// mid-fade -- they're simply replaced within the same frame, and only the new page animates.
+		if ((recyclerView != null) && (old != set)) {
+			recyclerView.animate().cancel();
+			recyclerView.setAlpha(0f);
+			recyclerView.animate().alpha(1f).setDuration(200).start();
+		}
+
 		notifyDataSetChanged();
 
 		if ((old != null) && (recyclerView != null)) {

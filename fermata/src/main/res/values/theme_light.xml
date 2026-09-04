@@ -1,27 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="AppTheme.Light">
 
         <item name="android:colorBackground">#FFFFFF</item>
+        <!-- The base AppTheme hardcodes this false (assuming a dark theme), which left the system
+        status bar drawing light/white icons here too, invisible once the area behind it (the
+        toolbar) went white instead of navy. AppTheme.DynamicLight already overrides this the same
+        way. -->
+        <item name="android:isLightTheme" tools:targetApi="q">true</item>
 
         <!-- Status bar-->
         <item name="colorPrimaryDark">#445D8F</item>
 
-        <!-- Tool/Nav bars -->
-        <item name="colorPrimary">?colorPrimaryDark</item>
-        <item name="colorOnPrimary">#40C4FF</item>
+        <!-- Tool/Nav bars: white background (colorPrimary, decoupled from colorPrimaryDark so the
+        status bar stays its own blue), keeping the existing blue colorOnPrimary for icons/text
+        drawn on top of them. -->
+        <item name="colorPrimary">?android:colorBackground</item>
+        <item name="colorOnPrimary">#0288D1</item>
         <item name="android:textColorPrimary">?colorOnPrimary</item>
 
-        <!-- List/Media items -->
+        <!-- List/Media items: dark ink icon tint and title/subtitle text, rather than the blue icon
+        tint and (illegible, white-on-white) textColorSecondary this theme previously had here.
+        (The actual card background color is colorSurfaceVariant, below.) -->
         <item name="colorSecondary">?android:colorBackground</item>
-        <item name="colorOnSecondary">?colorOnPrimary</item>
-        <item name="android:textColorSecondary">#FFFFFF</item>
+        <item name="colorOnSecondary">#1C1B1F</item>
+        <item name="android:textColorSecondary">#1C1B1F</item>
         <item name="boxStrokeColor">#445D8F</item>
 
-        <!-- Active media item -->
+        <!-- Active/selected/focused item highlight: was #A11477 (pink), now the theme's own blue
+        accent (colorOnPrimary). This also drives colorAccent below, and in turn the row focus
+        highlight (focus_color.xml) and touch ripple (rippleColor). -->
         <item name="alpha">1</item>
-        <item name="colorSecondaryVariant">#A11477</item>
+        <item name="colorSecondaryVariant">?colorOnPrimary</item>
         <item name="android:textColorTertiary">#FFFFFF</item>
 
         <!-- Popup menu -->
@@ -40,7 +51,13 @@
         <item name="colorControlActivated">?colorOnPrimary</item>
 
         <!-- Material 3 roles -->
-        <item name="colorSurfaceVariant">?colorPrimaryDark</item>
+        <!-- Was ?colorPrimaryDark (the same navy blue as the toolbar/nav bar): colorSurfaceVariant
+        is what actually paints settings/media-item card backgrounds (box_secondary.xml,
+        media_item.xml), not colorSecondary. So every card was rendering navy blue instead of the
+        near-white card look this theme is meant to have (a light gray, close to but distinct from
+        the white android:colorBackground page behind it, is the same relationship the dark themes
+        use between their own colorSurfaceVariant and colorBackground). -->
+        <item name="colorSurfaceVariant">#F0F0F0</item>
         <item name="colorOnSurfaceVariant">?colorOnPrimary</item>
         <item name="colorOutline">?colorPrimaryDark</item>
         <item name="colorError">#BA1A1A</item>

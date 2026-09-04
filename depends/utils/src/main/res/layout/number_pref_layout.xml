@@ -21,7 +21,7 @@
 
     <androidx.appcompat.widget.AppCompatSeekBar
         android:id="@+id/pref_footer"
-        style="?android:attr/preferenceStyle"
+        style="@style/Theme.Utils.Base.SliderStyle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@drawable/focusable_shape_transparent"

@@ -6,9 +6,9 @@ zrAuto is a free, open source media player built for Android Auto, made by [Yusa
 ## What makes zrAuto different
 zrAuto is built on top of the original Fermata Auto, with a few changes to make it nicer to use:
 
-* **A fresher look** — redesigned menus with a cleaner, card-style layout
+* **A fresher look** — redesigned menus with a cleaner, card-style layout, plus smoother animations when switching tabs, entering or leaving fullscreen video, and navigating Settings
 * **Bigger, easier-to-tap controls** — the toolbar, navigation bar, and control panel are sized with driving in mind, so you're not squinting or fumbling for buttons on the road
-* **A customizable second floating button** — pick its tap action (fullscreen, mute, play/pause, or screen dimming) from Settings, and long-press it any time for a quick menu of all four
+* **Customizable floating buttons** — add up to two extra floating buttons alongside the main one, each fully optional and independently configurable from Settings: pick its tap action (fullscreen, mute, play/pause, or screen dimming), long-press any of them for a quick menu of all four, resize them all with a single slider, and drag them anywhere on screen
 * **Night-friendly video dimming** — a translucent overlay over the video, with adjustable opacity and color (presets or your own custom color), to keep the screen easier on your eyes when watching or driving at night. Turn it on and off from Settings, the secondary floating button, or the video screen's menu
 * **YouTube in your Favorites and Playlists** — save YouTube videos alongside your other media, not just browse them live
 * **No donation nagging** — the app doesn't interrupt you asking for money

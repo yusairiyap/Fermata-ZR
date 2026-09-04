@@ -15,7 +15,10 @@
 
         <!-- List/Media items -->
         <item name="colorSecondary">#243447</item>
-        <item name="colorOnSecondary">#095381</item>
+        <!-- Was #095381, a dark saturated blue that barely stood out against this dark navy
+        colorSecondary. Matches colorOnPrimary (the nav-bar icon color) instead, for icons drawn
+        on list/media item and preference cards to actually read against them. -->
+        <item name="colorOnSecondary">#a1a5a9</item>
         <item name="android:textColorSecondary">#bec2c8</item>
 
         <!-- Active media item -->
@@ -35,7 +38,10 @@
         <item name="android:textColorHint">#0F0F0F</item>
 
         <item name="colorControlNormal">#999CA1</item>
-        <item name="colorControlActivated">#095381</item>
+        <!-- Was #095381, the same low-contrast dark blue as colorOnSecondary above; checkboxes
+        and sliders tinted with it were nearly invisible against colorSecondary. Reuses the
+        theme's own brighter accent instead. -->
+        <item name="colorControlActivated">#4B78AF</item>
 
         <!-- Material 3 roles -->
         <item name="colorSurfaceVariant">#27394A</item>

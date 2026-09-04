@@ -300,7 +300,7 @@ public class SettingsFragment extends MainActivityFragment
 		var subGenSet = set.subSet(o -> {
 			o.title = R.string.subtitles_auto;
 			o.visibility = cond;
-			if (!isGlobalSettings) o.icon = R.drawable.subgen;
+			o.icon = R.drawable.subgen;
 		});
 		subGenSet.addBooleanPref(o -> {
 			o.store = ps;
@@ -321,16 +321,28 @@ public class SettingsFragment extends MainActivityFragment
 		PreferenceSet sub1;
 		PreferenceSet sub2;
 
-		sub1 = set.subSet(o -> o.title = R.string.interface_prefs);
+		sub1 = set.subSet(o -> {
+			o.title = R.string.interface_prefs;
+			o.icon = R.drawable.view_grid;
+		});
 
 		if (BuildConfig.AUTO && a.isCarActivityNotMirror()) {
+			addSecondaryFabPrefs(a, sub1.subSet(o -> {
+				o.title = R.string.secondary_fab_prefs;
+				o.icon = R.drawable.fab;
+			}));
 			addAAInterface(a, sub1);
-			addSecondaryFabPrefs(a, sub1.subSet(o -> o.title = R.string.secondary_fab_prefs));
 		} else {
+			addSecondaryFabPrefs(a, sub1.subSet(o -> {
+				o.title = R.string.secondary_fab_prefs;
+				o.icon = R.drawable.fab;
+			}));
 			if (BuildConfig.AUTO) {
-				addAAInterface(a, sub1.subSet(o -> o.title = R.string.interface_prefs_aa));
+				addAAInterface(a, sub1.subSet(o -> {
+					o.title = R.string.interface_prefs_aa;
+					o.icon = R.drawable.tv;
+				}));
 			}
-			addSecondaryFabPrefs(a, sub1.subSet(o -> o.title = R.string.secondary_fab_prefs));
 			addInterface(a, sub1, MainActivityPrefs.THEME_MAIN, MainActivityPrefs.HIDE_BARS,
 					MainActivityPrefs.FULLSCREEN, MainActivityPrefs.SHOW_PG_UP_DOWN, null,
 					MainActivityPrefs.NAV_BAR_POS, MainActivityPrefs.NAV_BAR_SIZE,
@@ -355,7 +367,10 @@ public class SettingsFragment extends MainActivityFragment
 					v -> v.locale.getDisplayName(), String[]::new);
 		});
 
-		sub1 = set.subSet(o -> o.title = R.string.key_bindings);
+		sub1 = set.subSet(o -> {
+			o.title = R.string.key_bindings;
+			o.icon = R.drawable.keyboard;
+		});
 		var actions = Action.getAll();
 		var actionNames = new int[actions.size()];
 		var actionOrdinals = new int[actions.size()];
@@ -365,7 +380,10 @@ public class SettingsFragment extends MainActivityFragment
 		}
 
 		for (var k : Key.getAll()) {
-			sub2 = sub1.subSet(o -> o.ctitle = k.name());
+			sub2 = sub1.subSet(o -> {
+				o.ctitle = k.name();
+				o.icon = R.drawable.keyboard;
+			});
 			sub2.addListPref(o -> {
 				o.store = Key.getPrefs();
 				o.pref = k.getActionPref();
@@ -396,16 +414,25 @@ public class SettingsFragment extends MainActivityFragment
 		}
 
 
-		sub1 = set.subSet(o -> o.title = R.string.playback_settings);
+		sub1 = set.subSet(o -> {
+			o.title = R.string.playback_settings;
+			o.icon = R.drawable.playback_settings;
+		});
 		sub1.addBooleanPref(o -> {
 			o.store = mediaPrefs;
 			o.pref = BrowsableItemPrefs.PLAY_NEXT;
 			o.title = R.string.play_next_on_completion;
 		});
 
-		sub1 = set.subSet(o -> o.title = R.string.playback_control);
+		sub1 = set.subSet(o -> {
+			o.title = R.string.playback_control;
+			o.icon = R.drawable.speed;
+		});
 
-		sub2 = sub1.subSet(o -> o.title = R.string.rw_ff_click);
+		sub2 = sub1.subSet(o -> {
+			o.title = R.string.rw_ff_click;
+			o.icon = R.drawable.ff;
+		});
 		sub2.addIntPref(o -> {
 			o.store = a.getPlaybackControlPrefs();
 			o.pref = PlaybackControlPrefs.RW_FF_TIME;
@@ -421,7 +448,10 @@ public class SettingsFragment extends MainActivityFragment
 			o.values = timeUnits;
 		});
 
-		sub2 = sub1.subSet(o -> o.title = R.string.rw_ff_long_click);
+		sub2 = sub1.subSet(o -> {
+			o.title = R.string.rw_ff_long_click;
+			o.icon = R.drawable.ff;
+		});
 		sub2.addIntPref(o -> {
 			o.store = a.getPlaybackControlPrefs();
 			o.pref = PlaybackControlPrefs.RW_FF_LONG_TIME;
@@ -437,7 +467,10 @@ public class SettingsFragment extends MainActivityFragment
 			o.values = timeUnits;
 		});
 
-		sub2 = sub1.subSet(o -> o.title = R.string.prev_next_long_click);
+		sub2 = sub1.subSet(o -> {
+			o.title = R.string.prev_next_long_click;
+			o.icon = R.drawable.next;
+		});
 		sub2.addIntPref(o -> {
 			o.store = a.getPlaybackControlPrefs();
 			o.pref = PlaybackControlPrefs.PREV_NEXT_LONG_TIME;
@@ -459,7 +492,10 @@ public class SettingsFragment extends MainActivityFragment
 			o.title = R.string.play_pause_stop;
 		});
 
-		sub2 = sub1.subSet(o -> o.title = R.string.video_control);
+		sub2 = sub1.subSet(o -> {
+			o.title = R.string.video_control;
+			o.icon = R.drawable.video;
+		});
 		sub2.addIntPref(o -> {
 			o.store = a.getPlaybackControlPrefs();
 			o.pref = PlaybackControlPrefs.VIDEO_CONTROL_START_DELAY;
@@ -488,7 +524,10 @@ public class SettingsFragment extends MainActivityFragment
 		}
 
 		if (!a.isCarActivityNotMirror()) {
-			sub1 = set.subSet(o -> o.title = R.string.voice_control);
+			sub1 = set.subSet(o -> {
+				o.title = R.string.voice_control;
+				o.icon = R.drawable.record_voice;
+			});
 			sub1.addBooleanPref(o -> {
 				o.title = R.string.enable;
 				o.pref = VOICE_CONTROl_ENABLED;
@@ -536,7 +575,10 @@ public class SettingsFragment extends MainActivityFragment
 				return true;
 			};
 		};
-		sub1 = set.subSet(o -> o.title = R.string.engine_prefs);
+		sub1 = set.subSet(o -> {
+			o.title = R.string.engine_prefs;
+			o.icon = R.drawable.media_engine;
+		});
 		sub1.addBooleanPref(o -> {
 			o.store = mediaPrefs;
 			o.removeDefault = false;
@@ -580,7 +622,10 @@ public class SettingsFragment extends MainActivityFragment
 			o.valuesMap = new int[]{MEDIA_SCANNER_DEFAULT, MEDIA_SCANNER_SYSTEM, MEDIA_SCANNER_VLC};
 		});
 
-		sub1 = set.subSet(o -> o.title = R.string.video_settings);
+		sub1 = set.subSet(o -> {
+			o.title = R.string.video_settings;
+			o.icon = R.drawable.video;
+		});
 		sub1.addListPref(o -> {
 			o.store = mediaPrefs;
 			o.pref = MediaLibPrefs.VIDEO_SCALE;
@@ -636,12 +681,6 @@ public class SettingsFragment extends MainActivityFragment
 			o.visibility = PrefCondition.create(a.getPrefs(), MainActivityPrefs.CHANGE_BRIGHTNESS);
 		});
 
-		sub2 = sub1.subSet(o -> {
-			o.title = R.string.audio;
-			o.visibility = vlcCond;
-		});
-		addAudioPrefs(sub2, mediaPrefs, isCar);
-
 		sub1.addIntPref(o -> {
 			o.store = mediaPrefs;
 			o.pref = MediaPrefs.WATCHED_THRESHOLD;
@@ -652,7 +691,10 @@ public class SettingsFragment extends MainActivityFragment
 			o.seekScale = 5;
 		});
 
-		dimSettingsSet = sub2 = sub1.subSet(o -> o.title = R.string.dim_prefs);
+		dimSettingsSet = sub2 = sub1.subSet(o -> {
+			o.title = R.string.dim_prefs;
+			o.icon = R.drawable.dim_screen;
+		});
 		sub2.addBooleanPref(o -> {
 			o.store = a.getPrefs();
 			o.pref = MainActivityPrefs.DIM_ENABLED;
@@ -702,12 +744,25 @@ public class SettingsFragment extends MainActivityFragment
 			o.visibility = dimCustomColorCond(a);
 		});
 
-		sub1 = set.subSet(o -> o.title = R.string.subtitles);
+		sub2 = sub1.subSet(o -> {
+			o.title = R.string.audio;
+			o.visibility = vlcCond;
+			o.icon = R.drawable.audiotrack;
+		});
+		addAudioPrefs(sub2, mediaPrefs, isCar);
+
+		sub1 = set.subSet(o -> {
+			o.title = R.string.subtitles;
+			o.icon = R.drawable.subtitles;
+		});
 		addSubtitlePrefs(a.getContext(), sub1, mediaPrefs, isCar);
 
 		addAddons(set);
 
-		sub1 = set.subSet(o -> o.title = R.string.other);
+		sub1 = set.subSet(o -> {
+			o.title = R.string.other;
+			o.icon = R.drawable.settings;
+		});
 		if (!a.isCarActivityNotMirror()) {
 			sub1.addButton(o -> {
 				o.title = R.string.export_prefs;
@@ -756,13 +811,13 @@ public class SettingsFragment extends MainActivityFragment
 	}
 
 	private void addSecondaryFabPrefs(MainActivityDelegate a, PreferenceSet ps) {
-		var fab2Actions = new Action[]{Action.FULLSCREEN_TOGGLE, Action.VOLUME_MUTE_UNMUTE,
+		var fabActions = new Action[]{Action.FULLSCREEN_TOGGLE, Action.VOLUME_MUTE_UNMUTE,
 				Action.PLAY_PAUSE, Action.DIM_TOGGLE};
-		var fab2ActionNames = new int[fab2Actions.length];
-		var fab2ActionOrdinals = new int[fab2Actions.length];
-		for (int i = 0; i < fab2Actions.length; i++) {
-			fab2ActionNames[i] = fab2Actions[i].getName();
-			fab2ActionOrdinals[i] = fab2Actions[i].ordinal();
+		var fabActionNames = new int[fabActions.length];
+		var fabActionOrdinals = new int[fabActions.length];
+		for (int i = 0; i < fabActions.length; i++) {
+			fabActionNames[i] = fabActions[i].getName();
+			fabActionOrdinals[i] = fabActions[i].ordinal();
 		}
 
 		ps.addBooleanPref(o -> {
@@ -777,15 +832,39 @@ public class SettingsFragment extends MainActivityFragment
 			o.title = R.string.fab2_action;
 			o.subtitle = R.string.string_format;
 			o.formatSubtitle = true;
-			o.values = fab2ActionNames;
-			o.valuesMap = fab2ActionOrdinals;
+			o.values = fabActionNames;
+			o.valuesMap = fabActionOrdinals;
 			o.visibility = fab2EnabledCond;
+		});
+		ps.addBooleanPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.FAB3_ENABLED;
+			o.title = R.string.fab3_enable;
+		});
+		var fab3EnabledCond = PrefCondition.create(a.getPrefs(), MainActivityPrefs.FAB3_ENABLED);
+		ps.addListPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.FAB3_ACTION;
+			o.title = R.string.fab3_action;
+			o.subtitle = R.string.string_format;
+			o.formatSubtitle = true;
+			o.values = fabActionNames;
+			o.valuesMap = fabActionOrdinals;
+			o.visibility = fab3EnabledCond;
 		});
 		ps.addBooleanPref(o -> {
 			o.store = a.getPrefs();
 			o.pref = MainActivityPrefs.FAB_DRAGGABLE;
 			o.title = R.string.fab_draggable;
 			o.subtitle = R.string.fab_draggable_sub;
+		});
+		ps.addFloatPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.FAB_SIZE;
+			o.title = R.string.fab_size;
+			o.scale = 0.05f;
+			o.seekMin = 10;
+			o.seekMax = 40;
 		});
 	}
 
@@ -892,7 +971,10 @@ public class SettingsFragment extends MainActivityFragment
 
 	private void addAddons(PreferenceSet set) {
 		AddonManager amgr = FermataApplication.get().getAddonManager();
-		PreferenceSet sub = set.subSet(o -> o.title = R.string.addons);
+		PreferenceSet sub = set.subSet(o -> {
+			o.title = R.string.addons;
+			o.icon = R.drawable.more;
+		});
 		PreferenceStore store = FermataApplication.get().getPreferenceStore();
 
 		for (AddonInfo addon : BuildConfig.ADDONS) {

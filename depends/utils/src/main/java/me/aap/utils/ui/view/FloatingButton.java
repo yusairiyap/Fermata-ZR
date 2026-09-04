@@ -12,6 +12,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
@@ -158,14 +160,23 @@ public class FloatingButton extends FloatingActionButton implements ActivityList
 		this.draggable = draggable;
 	}
 
+	private static final long PRESS_ANIM_DURATION = 150L;
+	private static final OvershootInterpolator PRESS_IN_INTERPOLATOR = new OvershootInterpolator(1.8f);
+	private static final DecelerateInterpolator PRESS_OUT_INTERPOLATOR = new DecelerateInterpolator();
+
 	private float downX, downY, dx, dy;
 	private boolean moving;
+
+	private void animateScale(float targetScale, boolean pressing) {
+		animate().cancel();
+		animate().scaleX(targetScale).scaleY(targetScale).setDuration(PRESS_ANIM_DURATION)
+				.setInterpolator(pressing ? PRESS_IN_INTERPOLATOR : PRESS_OUT_INTERPOLATOR).start();
+	}
 
 	private boolean handleTouchEvent(@NonNull MotionEvent e) {
 		switch (e.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN:
-				setScaleX(scale * 1.5f);
-				setScaleY(scale * 1.5f);
+				animateScale(scale * 1.5f, true);
 				downX = e.getRawX();
 				downY = e.getRawY();
 				dx = getX() - downX;
@@ -201,8 +212,7 @@ public class FloatingButton extends FloatingActionButton implements ActivityList
 				moving = true;
 				return true;
 			case MotionEvent.ACTION_UP:
-				setScaleX(scale);
-				setScaleY(scale);
+				animateScale(scale, false);
 
 				if (moving) {
 					moving = false;
@@ -216,6 +226,10 @@ public class FloatingButton extends FloatingActionButton implements ActivityList
 					setPressed(true);
 				}
 
+				return super.onTouchEvent(e);
+			case MotionEvent.ACTION_CANCEL:
+				animateScale(scale, false);
+				moving = false;
 				return super.onTouchEvent(e);
 			default:
 				return super.onTouchEvent(e);

@@ -30,7 +30,10 @@ import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_ENABLED;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.DIM_OPACITY;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB2_ACTION;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB2_ENABLED;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB3_ACTION;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB3_ENABLED;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB_DRAGGABLE;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB_SIZE;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.LOCALE;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROL_SUBST;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROl_ENABLED;
@@ -136,6 +139,7 @@ import me.aap.fermata.ui.fragment.SubtitlesFragment;
 import me.aap.fermata.ui.view.BodyLayout;
 import me.aap.fermata.ui.view.ControlPanelView;
 import me.aap.fermata.ui.view.SecondaryFloatingButton;
+import me.aap.fermata.ui.view.TertiaryFloatingButton;
 import me.aap.fermata.ui.view.VideoView;
 import me.aap.utils.app.App;
 import me.aap.utils.async.FutureSupplier;
@@ -178,6 +182,7 @@ public class MainActivityDelegate extends ActivityDelegate
 	private ControlPanelView controlPanel;
 	private FloatingButton floatingButton;
 	private SecondaryFloatingButton floatingButton2;
+	private TertiaryFloatingButton floatingButton3;
 	private ContentLoadingProgressBar progressBar;
 	private FutureSupplier<?> contentLoading;
 	private boolean barsHidden;
@@ -604,6 +609,11 @@ public class MainActivityDelegate extends ActivityDelegate
 	}
 
 	@Nullable
+	public TertiaryFloatingButton getFloatingButton3() {
+		return floatingButton3;
+	}
+
+	@Nullable
 	public VideoView getActiveVideoView() {
 		return activeVideoView;
 	}
@@ -693,6 +703,7 @@ public class MainActivityDelegate extends ActivityDelegate
 
 		applyVideoOverlayLayout(videoMode);
 		updateSecondaryFabVisibility();
+		updateTertiaryFabVisibility();
 		fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
 	}
 
@@ -722,6 +733,20 @@ public class MainActivityDelegate extends ActivityDelegate
 					tlp.bottomToTop, tlp.bottomToBottom, clp.topToTop, clp.topToBottom, clp.bottomToTop,
 					clp.bottomToBottom};
 		}
+
+		// Animates the bars/body sliding to their new anchors instead of jumping there instantly, via
+		// UiUtils.flipAnimate's manual FLIP technique -- a TransitionManager.beginDelayedTransition
+		// scene transition was tried here first, but it depends on capturing an uninterrupted
+		// before/after layout pass on the whole root, which updateSecondaryFabVisibility() et al.
+		// (called right after this method, changing sibling FAB visibility on the same root) can
+		// intervene on and silently drop, and did so in practice. This works off an explicit
+		// snapshot instead, so it can't be dropped that way. Guarded on attachedToWindow: the very
+		// first call comes from BodyLayout's constructor, before this has ever been laid out, where
+		// there's nothing meaningful to animate from anyway.
+		boolean animate = body.isAttachedToWindow() && (body.getHeight() > 0);
+		int[] bodyBounds = animate ? UiUtils.captureBounds(body) : null;
+		int[] tbBounds = animate ? UiUtils.captureBounds(tb) : null;
+		int[] cpBounds = animate ? UiUtils.captureBounds(cp) : null;
 
 		if (videoMode) {
 			// body_layout fills the screen, and tool_bar/control_panel float over it pinned to the
@@ -760,12 +785,20 @@ public class MainActivityDelegate extends ActivityDelegate
 		tb.setLayoutParams(tlp);
 		cp.setLayoutParams(clp);
 
+		if (animate) {
+			UiUtils.flipAnimate(body, bodyBounds, OVERLAY_ANIM_DURATION);
+			UiUtils.flipAnimate(tb, tbBounds, OVERLAY_ANIM_DURATION);
+			UiUtils.flipAnimate(cp, cpBounds, OVERLAY_ANIM_DURATION);
+		}
+
 		ToolBarView tbv = getToolBar();
 		int c = MaterialColors.getColor(getContext(), androidx.appcompat.R.attr.colorPrimary,
 				Color.BLACK);
 		if (videoMode) tbv.setBackground(ControlPanelView.buildScrimGradient(c, false));
 		else tbv.setBackgroundColor(c);
 	}
+
+	private static final long OVERLAY_ANIM_DURATION = 300L;
 
 	private boolean checkMirroringMode(boolean clearFlags) {
 		if (!AUTO) return false;
@@ -842,6 +875,7 @@ public class MainActivityDelegate extends ActivityDelegate
 		if (b.isVideoMode()) b.setMode(BodyLayout.Mode.BOTH);
 		ActivityFragment f = super.showFragment(id, input);
 		updateSecondaryFabVisibility();
+		updateTertiaryFabVisibility();
 		return f;
 	}
 
@@ -1132,9 +1166,11 @@ public class MainActivityDelegate extends ActivityDelegate
 		body = a.findViewById(R.id.body_layout);
 		controlPanel = a.findViewById(R.id.control_panel);
 		floatingButton = a.findViewById(R.id.floating_button);
-		floatingButton.setScale(getPrefs().getTextIconSizePref(this));
+		floatingButton.setScale(getPrefs().getFabSizePref());
 		floatingButton2 = a.findViewById(R.id.floating_button2);
-		floatingButton2.setScale(getPrefs().getTextIconSizePref(this));
+		floatingButton2.setScale(getPrefs().getFabSizePref());
+		floatingButton3 = a.findViewById(R.id.floating_button3);
+		floatingButton3.setScale(getPrefs().getFabSizePref());
 		updateFabDraggable();
 		controlPanel.bind(getMediaServiceBinder());
 
@@ -1186,9 +1222,10 @@ public class MainActivityDelegate extends ActivityDelegate
 			recreate();
 		} else if (MainActivityPrefs.hasNavBarPosPref(this, prefs)) {
 			recreate();
-		} else if (MainActivityPrefs.hasTextIconSizePref(this, prefs)) {
-			if (floatingButton != null) floatingButton.setScale(getPrefs().getTextIconSizePref(this));
-			if (floatingButton2 != null) floatingButton2.setScale(getPrefs().getTextIconSizePref(this));
+		} else if (prefs.contains(FAB_SIZE)) {
+			if (floatingButton != null) floatingButton.setScale(getPrefs().getFabSizePref());
+			if (floatingButton2 != null) floatingButton2.setScale(getPrefs().getFabSizePref());
+			if (floatingButton3 != null) floatingButton3.setScale(getPrefs().getFabSizePref());
 		} else if (MainActivityPrefs.hasNavBarSizePref(this, prefs)) {
 			if (navBar != null) navBar.setSize(getPrefs().getNavBarSizePref(this));
 		} else if (MainActivityPrefs.hasToolBarSizePref(this, prefs)) {
@@ -1242,6 +1279,10 @@ public class MainActivityDelegate extends ActivityDelegate
 			updateSecondaryFabVisibility();
 		} else if (prefs.contains(FAB2_ACTION)) {
 			if (floatingButton2 != null) fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
+		} else if (prefs.contains(FAB3_ENABLED)) {
+			updateTertiaryFabVisibility();
+		} else if (prefs.contains(FAB3_ACTION)) {
+			if (floatingButton3 != null) fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
 		} else if (prefs.contains(FAB_DRAGGABLE)) {
 			updateFabDraggable();
 		}
@@ -1251,6 +1292,21 @@ public class MainActivityDelegate extends ActivityDelegate
 		boolean draggable = getPrefs().getBooleanPref(FAB_DRAGGABLE);
 		if (floatingButton != null) floatingButton.setDraggable(draggable);
 		if (floatingButton2 != null) floatingButton2.setDraggable(draggable);
+		if (floatingButton3 != null) floatingButton3.setDraggable(draggable);
+
+		// Previously a dragged FAB only snapped back to its default layout position on the next app
+		// restart (a fresh Activity/View never picked up the leftover drag translation to begin
+		// with). Reset it live the moment dragging is turned off instead.
+		if (!draggable) {
+			resetFabPosition(floatingButton);
+			resetFabPosition(floatingButton2);
+			resetFabPosition(floatingButton3);
+		}
+	}
+
+	private static void resetFabPosition(@Nullable FloatingButton fb) {
+		if (fb == null) return;
+		fb.animate().translationX(0f).translationY(0f).setDuration(200L).start();
 	}
 
 	private void updateSecondaryFabVisibility() {
@@ -1268,6 +1324,20 @@ public class MainActivityDelegate extends ActivityDelegate
 			floatingButton2.setVisibility(floatingButton.getVisibility());
 		} else {
 			floatingButton2.setVisibility(isWebBrowserActive() ? VISIBLE : GONE);
+		}
+	}
+
+	private void updateTertiaryFabVisibility() {
+		if (floatingButton3 == null) return;
+		if (!getPrefs().getBooleanPref(FAB3_ENABLED)) {
+			floatingButton3.setVisibility(GONE);
+			return;
+		}
+
+		if (isVideoMode()) {
+			floatingButton3.setVisibility(floatingButton.getVisibility());
+		} else {
+			floatingButton3.setVisibility(isWebBrowserActive() ? VISIBLE : GONE);
 		}
 	}
 
