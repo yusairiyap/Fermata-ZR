@@ -19,9 +19,11 @@
         <item name="android:textColorSecondary">#FFFFFF</item>
         <item name="boxStrokeColor">#804E6AA2</item>
 
-        <!-- Active media item -->
+        <!-- Active/selected/focused item highlight: was #A11477 (pink), now the theme's own blue
+        accent (colorOnPrimary). This also drives colorAccent below, and in turn the row focus
+        highlight (focus_color.xml) and touch ripple (rippleColor). -->
         <item name="alpha">1</item>
-        <item name="colorSecondaryVariant">#A11477</item>
+        <item name="colorSecondaryVariant">?colorOnPrimary</item>
         <item name="android:textColorTertiary">#F6F4FA</item>
 
         <!-- Popup menu -->

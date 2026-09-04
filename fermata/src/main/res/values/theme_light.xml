@@ -8,8 +8,10 @@
         <!-- Status bar-->
         <item name="colorPrimaryDark">#445D8F</item>
 
-        <!-- Tool/Nav bars -->
-        <item name="colorPrimary">?colorPrimaryDark</item>
+        <!-- Tool/Nav bars: white background (colorPrimary, decoupled from colorPrimaryDark so the
+        status bar stays its own blue), keeping the existing blue colorOnPrimary for icons/text
+        drawn on top of them. -->
+        <item name="colorPrimary">?android:colorBackground</item>
         <item name="colorOnPrimary">#40C4FF</item>
         <item name="android:textColorPrimary">?colorOnPrimary</item>
 
@@ -21,9 +23,11 @@
         <item name="android:textColorSecondary">#1C1B1F</item>
         <item name="boxStrokeColor">#445D8F</item>
 
-        <!-- Active media item -->
+        <!-- Active/selected/focused item highlight: was #A11477 (pink), now the theme's own blue
+        accent (colorOnPrimary). This also drives colorAccent below, and in turn the row focus
+        highlight (focus_color.xml) and touch ripple (rippleColor). -->
         <item name="alpha">1</item>
-        <item name="colorSecondaryVariant">#A11477</item>
+        <item name="colorSecondaryVariant">?colorOnPrimary</item>
         <item name="android:textColorTertiary">#FFFFFF</item>
 
         <!-- Popup menu -->
