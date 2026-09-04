@@ -5,15 +5,21 @@ import static me.aap.utils.ui.activity.ActivityListener.FRAGMENT_CONTENT_CHANGED
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.webkit.WebResourceErrorCompat;
 import androidx.webkit.WebViewClientCompat;
 import androidx.webkit.WebViewFeature;
 
+import java.io.ByteArrayInputStream;
+import java.util.Set;
+
 import me.aap.fermata.addon.web.yt.YoutubeFragment;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
+import me.aap.fermata.ui.activity.MainActivityPrefs;
 import me.aap.utils.async.Completed;
 import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.async.Promise;
@@ -24,7 +30,39 @@ import me.aap.utils.log.Log;
  * @author Andrey Pavlenko
  */
 public class FermataWebClient extends WebViewClientCompat {
+	// A small, well-known set of ad/analytics/tracking domains blocked while Private Mode's
+	// "Block trackers & ads" setting is on. Not exhaustive -- it's meant to cut the most common
+	// cross-site tracking, not to be a full ad blocker.
+	private static final Set<String> TRACKER_HOSTS = Set.of(
+			"doubleclick.net", "googlesyndication.com", "googleadservices.com",
+			"google-analytics.com", "googletagmanager.com", "googletagservices.com",
+			"adservice.google.com", "scorecardresearch.com", "facebook.net",
+			"connect.facebook.net", "amazon-adsystem.com", "adnxs.com", "criteo.com",
+			"outbrain.com", "taboola.com");
 	BooleanConsumer loading;
+
+	@Nullable
+	@Override
+	public WebResourceResponse shouldInterceptRequest(@NonNull WebView view,
+																										 @NonNull WebResourceRequest request) {
+		if (isTrackerBlockingEnabled() && isTrackerHost(request.getUrl().getHost())) {
+			return new WebResourceResponse("text/plain", "UTF-8", new ByteArrayInputStream(new byte[0]));
+		}
+		return super.shouldInterceptRequest(view, request);
+	}
+
+	private static boolean isTrackerBlockingEnabled() {
+		MainActivityPrefs p = MainActivityPrefs.get();
+		return p.isPrivateModeEnabled() && p.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_BLOCK_TRACKERS);
+	}
+
+	private static boolean isTrackerHost(@Nullable String host) {
+		if (host == null) return false;
+		for (String h : TRACKER_HOSTS) {
+			if (host.equals(h) || host.endsWith("." + h)) return true;
+		}
+		return false;
+	}
 
 	@Override
 	public void onPageStarted(WebView view, String url, Bitmap favicon) {

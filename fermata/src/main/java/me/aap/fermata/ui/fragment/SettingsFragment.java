@@ -96,9 +96,12 @@ public class SettingsFragment extends MainActivityFragment
 	/** Pass to {@code showFragment(R.id.settings_fragment, SHOW_DIM_SETTINGS)} to jump straight to
 	 * the dim-screen settings subsection instead of landing on the settings root page. */
 	public static final Object SHOW_DIM_SETTINGS = "dim_settings";
+	/** Same as {@link #SHOW_DIM_SETTINGS}, but for the Private Mode settings subsection. */
+	public static final Object SHOW_PRIVATE_MODE_SETTINGS = "private_mode_settings";
 
 	private PreferenceViewAdapter adapter;
 	private PreferenceSet dimSettingsSet;
+	private PreferenceSet privateModeSettingsSet;
 	@Nullable
 	private Object pendingInput;
 
@@ -116,6 +119,8 @@ public class SettingsFragment extends MainActivityFragment
 	private void applyPendingInput() {
 		if ((pendingInput == SHOW_DIM_SETTINGS) && (dimSettingsSet != null)) {
 			adapter.setPreferenceSet(dimSettingsSet);
+		} else if ((pendingInput == SHOW_PRIVATE_MODE_SETTINGS) && (privateModeSettingsSet != null)) {
+			adapter.setPreferenceSet(privateModeSettingsSet);
 		}
 		pendingInput = null;
 	}
@@ -715,8 +720,9 @@ public class SettingsFragment extends MainActivityFragment
 			o.title = R.string.dim_color;
 			o.subtitle = R.string.string_format;
 			o.formatSubtitle = true;
-			o.values = new int[]{R.string.color_black, R.string.color_red, R.string.color_deep_red,
-					R.string.color_amber, R.string.color_yellow, R.string.color_custom};
+			o.values = new int[]{R.string.color_black, R.string.color_blue_light, R.string.color_red,
+					R.string.color_deep_red, R.string.color_amber, R.string.color_yellow,
+					R.string.color_custom};
 			o.visibility = dimEnabledCond.copy();
 		});
 		sub2.addIntPref(o -> {
@@ -758,6 +764,45 @@ public class SettingsFragment extends MainActivityFragment
 		addSubtitlePrefs(a.getContext(), sub1, mediaPrefs, isCar);
 
 		addAddons(set);
+
+		privateModeSettingsSet = sub1 = set.subSet(o -> {
+			o.title = R.string.private_mode_prefs;
+			o.icon = R.drawable.private_mode;
+		});
+		sub1.addBooleanPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.PRIVATE_MODE_ENABLED;
+			o.title = R.string.private_mode;
+		});
+		sub1.addBooleanPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.PRIVATE_MODE_ALWAYS;
+			o.title = R.string.private_mode_always;
+			o.subtitle = R.string.private_mode_always_sub;
+		});
+		sub1.addBooleanPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.PRIVATE_MODE_BLOCK_TRACKERS;
+			o.title = R.string.private_mode_block_trackers;
+			o.subtitle = R.string.private_mode_block_trackers_sub;
+		});
+		sub1.addBooleanPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES;
+			o.title = R.string.private_mode_block_3rd_party_cookies;
+			o.subtitle = R.string.private_mode_block_3rd_party_cookies_sub;
+		});
+		sub1.addBooleanPref(o -> {
+			o.store = a.getPrefs();
+			o.pref = MainActivityPrefs.PRIVATE_MODE_CLEAR_ON_EXIT;
+			o.title = R.string.private_mode_clear_on_exit;
+			o.subtitle = R.string.private_mode_clear_on_exit_sub;
+		});
+		sub1.addButton(o -> {
+			o.title = R.string.private_mode_clear_now;
+			o.subtitle = R.string.private_mode_clear_now_sub;
+			o.onClick = () -> a.getPrefs().requestPrivateDataClear();
+		});
 
 		sub1 = set.subSet(o -> {
 			o.title = R.string.other;
@@ -812,7 +857,7 @@ public class SettingsFragment extends MainActivityFragment
 
 	private void addSecondaryFabPrefs(MainActivityDelegate a, PreferenceSet ps) {
 		var fabActions = new Action[]{Action.FULLSCREEN_TOGGLE, Action.VOLUME_MUTE_UNMUTE,
-				Action.PLAY_PAUSE, Action.DIM_TOGGLE};
+				Action.PLAY_PAUSE, Action.DIM_TOGGLE, Action.PRIVATE_MODE_TOGGLE};
 		var fabActionNames = new int[fabActions.length];
 		var fabActionOrdinals = new int[fabActions.length];
 		for (int i = 0; i < fabActions.length; i++) {

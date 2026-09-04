@@ -9,15 +9,19 @@ import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.LEFT;
 import static java.util.Objects.requireNonNull;
 import static me.aap.fermata.util.Utils.dynCtx;
+import static me.aap.utils.ui.activity.ActivityListener.FRAGMENT_CONTENT_CHANGED;
 import static me.aap.utils.ui.UiUtils.toPx;
 
 import android.content.Context;
 import android.view.KeyEvent;
 import android.widget.EditText;
+import android.widget.ImageButton;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import me.aap.fermata.ui.activity.MainActivityPrefs;
 import me.aap.utils.ui.UiUtils;
+import me.aap.utils.ui.activity.ActivityDelegate;
 import me.aap.utils.ui.fragment.ActivityFragment;
 import me.aap.utils.ui.view.ToolBarView;
 
@@ -46,13 +50,40 @@ public class WebToolBarMediator implements ToolBarView.Mediator {
 		addButton(tb, R.drawable.clear, v -> t.setText(""), R.id.browser_addr_clear);
 		addButton(tb, me.aap.fermata.R.drawable.bookmark_filled, v ->
 				onBookmarksButtonClick(b), me.aap.fermata.R.id.bookmarks);
+		ImageButton pm = addButton(tb, me.aap.fermata.R.drawable.private_mode, v ->
+				onPrivateModeButtonClick((ImageButton) v), me.aap.fermata.R.id.private_mode);
+		updatePrivateModeButton(pm);
 		FermataWebView wv = b.getWebView();
 		setButtonsVisibility(tb, (wv != null) && wv.canGoBack(), (wv != null) && wv.canGoForward());
 		ToolBarView.Mediator.super.enable(tb, f);
 	}
 
+	@Override
+	public void onActivityEvent(ToolBarView tb, ActivityDelegate a, long e) {
+		if (e == FRAGMENT_CONTENT_CHANGED) {
+			ImageButton pm = tb.findViewById(me.aap.fermata.R.id.private_mode);
+			if (pm != null) updatePrivateModeButton(pm);
+		}
+	}
+
 	private void onBookmarksButtonClick(WebBrowserFragment f) {
 		f.getActivityDelegate().getToolBarMenu().show(f::bookmarksMenu);
+	}
+
+	private void onPrivateModeButtonClick(ImageButton b) {
+		MainActivityPrefs p = MainActivityPrefs.get();
+		p.setPrivateModeEnabled(!p.isPrivateModeEnabled());
+		updatePrivateModeButton(b);
+	}
+
+	private void updatePrivateModeButton(ImageButton b) {
+		if (MainActivityPrefs.get().isPrivateModeEnabled()) {
+			b.setColorFilter(0xFF8A5CF6);
+			b.setContentDescription(b.getContext().getString(me.aap.fermata.R.string.private_mode_on));
+		} else {
+			b.clearColorFilter();
+			b.setContentDescription(b.getContext().getString(me.aap.fermata.R.string.private_mode_off));
+		}
 	}
 
 	public void setAddress(ToolBarView tb, String addr) {

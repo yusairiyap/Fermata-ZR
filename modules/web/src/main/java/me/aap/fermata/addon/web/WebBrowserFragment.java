@@ -234,6 +234,13 @@ public class WebBrowserFragment extends MainActivityFragment
 				ResourcesCompat.getDrawable(res, me.aap.fermata.R.drawable.refresh, theme),
 				res.getString(me.aap.fermata.R.string.refresh)).setHandler(this);
 
+		me.aap.fermata.ui.activity.MainActivityPrefs mp =
+				me.aap.fermata.ui.activity.MainActivityPrefs.get();
+		b.addItem(me.aap.fermata.R.id.private_mode,
+						ResourcesCompat.getDrawable(res, me.aap.fermata.R.drawable.private_mode, theme),
+						res.getString(me.aap.fermata.R.string.private_mode))
+				.setChecked(mp.isPrivateModeEnabled()).setHandler(this);
+
 		if (isDesktopVersionSupported()) {
 			b.addItem(R.id.desktop_version,
 							ResourcesCompat.getDrawable(res, R.drawable.desktop, theme),
@@ -274,6 +281,11 @@ public class WebBrowserFragment extends MainActivityFragment
 
 		if (id == me.aap.fermata.R.id.refresh) {
 			v.reload();
+			return true;
+		} else if (id == me.aap.fermata.R.id.private_mode) {
+			me.aap.fermata.ui.activity.MainActivityPrefs mp =
+					me.aap.fermata.ui.activity.MainActivityPrefs.get();
+			mp.setPrivateModeEnabled(!mp.isPrivateModeEnabled());
 			return true;
 		} else if (id == R.id.desktop_version) {
 			WebBrowserAddon addon = getAddon();

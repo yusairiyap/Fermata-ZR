@@ -40,6 +40,7 @@ import me.aap.fermata.BuildConfig;
 import me.aap.fermata.ui.activity.ZrAutoActivity;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
 import me.aap.fermata.ui.activity.MainActivityListener;
+import me.aap.fermata.ui.activity.MainActivityPrefs;
 import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.log.Log;
 import me.aap.utils.pref.PreferenceStore;
@@ -94,9 +95,18 @@ public class FermataWebView extends WebView
 		s.setJavaScriptCanOpenWindowsAutomatically(true);
 
 		addJavascriptInterface(createJsInterface(), FermataJsInterface.NAME);
-		CookieManager.getInstance().setAcceptThirdPartyCookies(this, true);
+
+		// "Always use Private Mode" is enforced here, on every WebView (re)creation, rather than
+		// once at app startup, so it also takes effect when the user has left Private Mode manually
+		// and then comes back to the Browser/YouTube tab, and after restarting the app.
+		MainActivityPrefs mp = MainActivityPrefs.get();
+		if (mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_ALWAYS) && !mp.isPrivateModeEnabled()) {
+			mp.setPrivateModeEnabled(true);
+		}
+		applyPrivateModeCookiePolicy();
 
 		addon.getPreferenceStore().addBroadcastListener(this);
+		mp.addBroadcastListener(this);
 		getActivity().onSuccess(a -> a.addBroadcastListener(this));
 
 		setDesktopMode(addon, false);
@@ -111,6 +121,18 @@ public class FermataWebView extends WebView
 
 	@Override
 	public void onPreferenceChanged(PreferenceStore store, List<PreferenceStore.Pref<?>> prefs) {
+		if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED) ||
+				prefs.contains(MainActivityPrefs.PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES)) {
+			applyPrivateModeCookiePolicy();
+			if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED)) {
+				MainActivityPrefs mp = MainActivityPrefs.get();
+				if (mp.isPrivateModeEnabled() || mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_CLEAR_ON_EXIT)) {
+					onPrivateModeChanged();
+				}
+			}
+			return;
+		}
+
 		WebBrowserAddon a = getAddon();
 		if (a == null) return;
 
@@ -127,10 +149,27 @@ public class FermataWebView extends WebView
 		}
 	}
 
+	private void applyPrivateModeCookiePolicy() {
+		MainActivityPrefs mp = MainActivityPrefs.get();
+		boolean blockThirdParty = mp.isPrivateModeEnabled() &&
+				mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES);
+		CookieManager.getInstance().setAcceptThirdPartyCookies(this, !blockThirdParty);
+	}
+
+	/** Wipes this WebView's own cache/history when Private Mode is entered, or left while
+	 * "clear on exit" is on. Global stores (cookies, DOM storage) are cleared separately by
+	 * {@code WebBrowserAddon}, which reacts to the same preference. */
+	protected void onPrivateModeChanged() {
+		clearCache(true);
+		clearHistory();
+		reload();
+	}
+
 	@Override
 	public void onActivityEvent(MainActivityDelegate a, long e) {
 		if (handleActivityDestroyEvent(a, e)) {
 			getAddon().getPreferenceStore().removeBroadcastListener(this);
+			MainActivityPrefs.get().removeBroadcastListener(this);
 		}
 	}
 
@@ -235,7 +274,9 @@ public class FermataWebView extends WebView
 				wm.setButtonsVisibility(tb, canGoBack(), canGoForward());
 			}
 
-			CookieManager.getInstance().flush();
+			// Skip persisting cookies to disk while browsing privately -- they still work normally
+			// in-memory for the rest of the session, they just won't survive it.
+			if (!MainActivityPrefs.get().isPrivateModeEnabled()) CookieManager.getInstance().flush();
 		});
 	}
 

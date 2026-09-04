@@ -132,6 +132,9 @@
     <item name="dim_settings" type="id" />
     <item name="mute_toggle" type="id" />
 
+    <item name="private_mode" type="id" />
+    <item name="private_mode_settings" type="id" />
+
     <item name="speed" type="id" />
     <item name="timer" type="id" />
 

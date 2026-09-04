@@ -20,12 +20,17 @@ import me.aap.fermata.BuildConfig;
 import me.aap.fermata.addon.web.FermataChromeClient;
 import me.aap.fermata.addon.web.FermataJsInterface;
 import me.aap.fermata.addon.web.FermataWebView;
+import me.aap.fermata.addon.web.WebToolBarMediator;
 import me.aap.fermata.media.service.MediaSessionCallback;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
+import me.aap.fermata.ui.activity.MainActivityPrefs;
 import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.async.Promise;
 import me.aap.utils.log.Log;
 import me.aap.utils.pref.PreferenceStore;
+import me.aap.utils.text.TextUtils;
+import me.aap.utils.ui.fragment.ActivityFragment;
+import me.aap.utils.ui.view.ToolBarView;
 
 /**
  * @author Andrey Pavlenko
@@ -96,7 +101,40 @@ public class YoutubeWebView extends FermataWebView {
 		injectSponsorBlock();
 		hideAppPromoBanners();
 		addFocusHighlight();
-		CookieManager.getInstance().flush();
+		if (!MainActivityPrefs.get().isPrivateModeEnabled()) CookieManager.getInstance().flush();
+		refreshAddressBarTitle();
+	}
+
+	/**
+	 * Shows the current video's title in the address bar instead of the raw URL (falls back to
+	 * "YouTube" while no title is available yet, e.g. right after navigating home). Uses
+	 * {@code document.title} rather than {@link #getTitle()}, which can lag behind on YouTube's
+	 * single-page-app navigation between videos.
+	 */
+	void refreshAddressBarTitle() {
+		getVideoTitle().onSuccess(title ->
+				MainActivityDelegate.getActivityDelegate(getContext()).onSuccess(a -> {
+					ActivityFragment f = a.getActiveFragment();
+					if (f == null) return;
+					if (!(f.getToolBarMediator() instanceof WebToolBarMediator wm)) return;
+					String t = unquoteJsResult(title);
+					String display = TextUtils.isNullOrBlank(t)
+							? getContext().getString(me.aap.fermata.R.string.youtube) : t;
+					wm.setAddress(a.getToolBar(), display);
+				}));
+	}
+
+	/** {@link #evaluateJavascript} returns string results JSON-encoded (quoted, with escapes). */
+	private static String unquoteJsResult(String s) {
+		if ((s == null) || (s.length() < 2) || !s.startsWith("\"") || !s.endsWith("\"")) return s;
+		return s.substring(1, s.length() - 1).replace("\\\"", "\"").replace("\\\\", "\\");
+	}
+
+	@Override
+	protected void onPrivateModeChanged() {
+		clearCache(true);
+		clearHistory();
+		loadUrl(YoutubeFragment.DEFAULT_URL);
 	}
 
 	protected void submitForm() {

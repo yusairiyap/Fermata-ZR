@@ -68,6 +68,8 @@ public enum Action {
 	DIM_TOGGLE(R.string.action_dim_toggle, a(a ->
 			a.getPrefs().applyBooleanPref(MainActivityPrefs.DIM_ENABLED,
 					!a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED)))),
+	PRIVATE_MODE_TOGGLE(R.string.action_private_mode_toggle, a(a ->
+			a.getPrefs().setPrivateModeEnabled(!a.getPrefs().isPrivateModeEnabled()))),
 	;
 
 	private static final List<Action> all = unmodifiableList(asList(values()));

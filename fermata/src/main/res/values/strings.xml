@@ -97,6 +97,7 @@
     <string name="action_vol_mute_unmute">Mute/Unmute</string>
     <string name="action_fullscreen_toggle">Toggle fullscreen</string>
     <string name="action_dim_toggle">Toggle dim screen</string>
+    <string name="action_private_mode_toggle">Toggle Private Mode</string>
     <string name="action_activate_voice_ctrl">Activate voice control</string>
     <string name="action_menu">Menu</string>
     <string name="action_cp_menu">Control panel menu</string>
@@ -371,12 +372,30 @@
     <string name="dim_color_b">Custom color: blue</string>
     <string name="dim_screen">Dim screen</string>
     <string name="dim_settings">Dim screen settings</string>
+    <string name="private_mode">Private Mode</string>
+    <string name="private_mode_on">Private Mode is on</string>
+    <string name="private_mode_off">Private Mode is off</string>
+    <string name="private_mode_settings">Private Mode settings</string>
+    <string name="youtube">YouTube</string>
     <string name="color_black">Black</string>
+    <string name="color_blue_light">Blue light filter</string>
     <string name="color_red">Red</string>
     <string name="color_deep_red">Deep red</string>
     <string name="color_amber">Amber</string>
     <string name="color_yellow">Yellow</string>
     <string name="color_custom">Custom</string>
+
+    <string name="private_mode_prefs">Private Mode</string>
+    <string name="private_mode_always">Always use Private Mode</string>
+    <string name="private_mode_always_sub">Browser and YouTube tabs start in Private Mode every time, even after restarting the app</string>
+    <string name="private_mode_block_trackers">Block trackers &amp; ads</string>
+    <string name="private_mode_block_trackers_sub">Block requests to known ad and tracking domains while Private Mode is on</string>
+    <string name="private_mode_block_3rd_party_cookies">Block third-party cookies</string>
+    <string name="private_mode_block_3rd_party_cookies_sub">Stop cross-site cookies from being sent while Private Mode is on</string>
+    <string name="private_mode_clear_on_exit">Clear data when leaving Private Mode</string>
+    <string name="private_mode_clear_on_exit_sub">Also wipe cookies, cache and site data when Private Mode is turned off, not just when it\'s turned on</string>
+    <string name="private_mode_clear_now">Clear private browsing data now</string>
+    <string name="private_mode_clear_now_sub">Immediately clears cookies, cache, form data and site storage for the Browser and YouTube tabs</string>
 
     <string name="other">Other</string>
     <string name="check_updates">Check for updates on startup</string>

@@ -45,6 +45,7 @@ public interface MainActivityPrefs
 	// user-defined RGB sliders instead of a preset.
 	int[] DIM_COLOR_PRESETS = {
 			Color.BLACK,
+			Color.rgb(255, 147, 41), // Blue light filter (warm candle tone; cuts blue wavelengths)
 			Color.rgb(255, 0, 0),   // Red
 			Color.rgb(139, 0, 0),   // Deep Red
 			Color.rgb(255, 191, 0), // Amber
@@ -98,6 +99,19 @@ public interface MainActivityPrefs
 	Pref<IntSupplier> DIM_COLOR_CUSTOM_R = Pref.i("DIM_COLOR_CUSTOM_R", 0);
 	Pref<IntSupplier> DIM_COLOR_CUSTOM_G = Pref.i("DIM_COLOR_CUSTOM_G", 0);
 	Pref<IntSupplier> DIM_COLOR_CUSTOM_B = Pref.i("DIM_COLOR_CUSTOM_B", 0);
+	// Whether the Browser/YouTube tabs are currently running in Private Mode. Persisted (rather
+	// than session-only) so a session left active survives an app restart, matching
+	// PRIVATE_MODE_ALWAYS's "stay private even after exiting the app" contract.
+	Pref<BooleanSupplier> PRIVATE_MODE_ENABLED = Pref.b("PRIVATE_MODE_ENABLED", false);
+	Pref<BooleanSupplier> PRIVATE_MODE_ALWAYS = Pref.b("PRIVATE_MODE_ALWAYS", false);
+	Pref<BooleanSupplier> PRIVATE_MODE_BLOCK_TRACKERS = Pref.b("PRIVATE_MODE_BLOCK_TRACKERS", true);
+	Pref<BooleanSupplier> PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES =
+			Pref.b("PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES", true);
+	Pref<BooleanSupplier> PRIVATE_MODE_CLEAR_ON_EXIT = Pref.b("PRIVATE_MODE_CLEAR_ON_EXIT", true);
+	// Bumped to request an immediate data wipe regardless of whether PRIVATE_MODE_ENABLED actually
+	// changes value (e.g. the Settings "clear now" button while already in Private Mode) -- a plain
+	// boolean pref only broadcasts on a real value change, so a timestamp is used instead.
+	Pref<LongSupplier> PRIVATE_MODE_CLEAR_REQUEST = Pref.l("PRIVATE_MODE_CLEAR_REQUEST", 0L);
 	Pref<BooleanSupplier> VOICE_CONTROl_ENABLED = Pref.b("VOICE_CONTROl_ENABLED", false);
 	Pref<BooleanSupplier> VOICE_CONTROl_FB = Pref.b("VOICE_CONTROl_FB", false);
 	Pref<Supplier<String>> VOICE_CONTROL_SUBST = Pref.s("VOICE_CONTROL_SUBST", "");
@@ -290,6 +304,23 @@ public interface MainActivityPrefs
 					getIntPref(DIM_COLOR_CUSTOM_B));
 		}
 		return ((idx >= 0) && (idx < DIM_COLOR_PRESETS.length)) ? DIM_COLOR_PRESETS[idx] : Color.BLACK;
+	}
+
+	default boolean isPrivateModeEnabled() {
+		return getBooleanPref(PRIVATE_MODE_ENABLED);
+	}
+
+	/**
+	 * Toggles Private Mode. Actually clearing cookies/site data on the transition is left to
+	 * whoever owns the WebViews (the web addon module, which this interface -- part of core -- must
+	 * not depend on); those modules react to the {@code PRIVATE_MODE_ENABLED} broadcast themselves.
+	 */
+	default void setPrivateModeEnabled(boolean enabled) {
+		applyBooleanPref(PRIVATE_MODE_ENABLED, enabled);
+	}
+
+	default void requestPrivateDataClear() {
+		applyLongPref(PRIVATE_MODE_CLEAR_REQUEST, System.currentTimeMillis());
 	}
 
 	default boolean getVoiceControlEnabledPref() {

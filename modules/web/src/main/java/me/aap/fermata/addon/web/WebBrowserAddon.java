@@ -2,6 +2,9 @@ package me.aap.fermata.addon.web;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.webkit.CookieManager;
+import android.webkit.WebStorage;
+import android.webkit.WebViewDatabase;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.Keep;
@@ -23,6 +26,7 @@ import me.aap.utils.app.App;
 import me.aap.utils.function.BooleanSupplier;
 import me.aap.utils.function.IntSupplier;
 import me.aap.utils.function.Supplier;
+import me.aap.utils.log.Log;
 import me.aap.utils.misc.ChangeableCondition;
 import me.aap.utils.pref.PreferenceSet;
 import me.aap.utils.pref.PreferenceStore;
@@ -59,6 +63,38 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 
 	public WebBrowserAddon() {
 		prefs = App.get().getSharedPreferences("web", Context.MODE_PRIVATE);
+		// Registered here rather than in contributeSettings() (only wired up once the user actually
+		// opens Settings) so a Private Mode toggle flipped from the toolbar or the nav-bar menu -
+		// without ever visiting Settings - still clears browsing data.
+		MainActivityPrefs.get().addBroadcastListener(this::onPrivateModePrefsChanged);
+	}
+
+	private void onPrivateModePrefsChanged(PreferenceStore store, List<Pref<?>> changed) {
+		boolean cleared = changed.contains(MainActivityPrefs.PRIVATE_MODE_CLEAR_REQUEST);
+		if (!cleared && !changed.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED)) return;
+
+		MainActivityPrefs mp = MainActivityPrefs.get();
+		if (cleared || mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_ENABLED) ||
+				mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_CLEAR_ON_EXIT)) {
+			clearBrowsingData();
+		}
+	}
+
+	/**
+	 * Wipes cookies, DOM/IndexedDB/WebSQL storage and saved form data for every WebView in the
+	 * app -- there's no per-instance cookie jar in Android's WebView, so this is the closest
+	 * approximation of "forget this session" available without a custom WebView data directory.
+	 */
+	private void clearBrowsingData() {
+		CookieManager cm = CookieManager.getInstance();
+		cm.removeAllCookies(null);
+		cm.flush();
+		WebStorage.getInstance().deleteAllData();
+		try {
+			WebViewDatabase.getInstance(FermataApplication.get()).clearFormData();
+		} catch (Exception ex) {
+			Log.e(ex, "Failed to clear WebView form data");
+		}
 	}
 
 	@IdRes
