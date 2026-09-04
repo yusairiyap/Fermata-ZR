@@ -36,6 +36,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.DrawableRes;
@@ -44,8 +45,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.annotation.StyleRes;
 import androidx.constraintlayout.widget.ConstraintLayout;
-
-import com.google.android.material.slider.Slider;
 
 import java.io.File;
 import java.util.Collections;
@@ -362,10 +361,10 @@ public class PreferenceView extends ConstraintLayout {
 
 	private <S> void setNumberPreference(NumberOpts<S> o, Supplier<String> get, Consumer<String> set,
 																			 IntFunction<String> fromInt, ToIntFunction<String> toInt,
-																			 BiConsumer<EditText, Slider> viewConfigurator) {
+																			 BiConsumer<EditText, SeekBar> viewConfigurator) {
 		setPreference(R.layout.number_pref_layout, o);
 		EditText t = findViewById(R.id.pref_value);
-		Slider sb = findViewById(R.id.pref_footer);
+		SeekBar sb = findViewById(R.id.pref_footer);
 		boolean[] ignoreChange = new boolean[1];
 		String initValue = get.get();
 
@@ -382,13 +381,8 @@ public class PreferenceView extends ConstraintLayout {
 						ignoreChange[0] = true;
 						String value = s.toString();
 						set.accept(value);
-						// Slider.setValue() throws for anything outside [valueFrom, valueTo], unlike
-						// SeekBar.setProgress() (which just clamped): typing e.g. "255" one digit at a
-						// time can transiently produce an out-of-range value before the last keystroke,
-						// so a RuntimeException here is expected and safe to ignore -- the slider simply
-						// doesn't move for that intermediate keystroke, and settles once typing finishes.
-						sb.setValue(Math.max(0, toInt.applyAsInt(value) - o.seekMin) / (float) o.seekScale);
-					} catch (RuntimeException ignore) {
+						sb.setProgress(Math.max(0, toInt.applyAsInt(value) - o.seekMin) / o.seekScale);
+					} catch (NumberFormatException ignore) {
 					} finally {
 						ignoreChange[0] = false;
 					}
@@ -409,24 +403,24 @@ public class PreferenceView extends ConstraintLayout {
 			sb.setVisibility(VISIBLE);
 			sb.setNextFocusUpId(t.getId());
 			t.setNextFocusDownId(sb.getId());
-			// Slider requires valueTo > valueFrom, and setters validate against whatever range is
-			// already set -- keep valueFrom(0)/valueTo/stepSize/value in that order so every
-			// intermediate state stays valid, and floor valueTo at 1 as a defensive guard against a
-			// degenerate seekMin==seekMax range that would otherwise throw.
-			float valueTo = Math.max(1, (o.seekMax - o.seekMin) / o.seekScale);
-			float initialValue =
-					Math.max(0, toInt.applyAsInt(initValue) - o.seekMin) / (float) o.seekScale;
-			sb.setValueFrom(0f);
-			sb.setValueTo(valueTo);
-			sb.setStepSize(1f);
-			// Clamped rather than left to throw: a persisted value from before seekMin/seekMax
-			// changed, or an import from an older version, could otherwise crash this row outright.
-			sb.setValue(Math.min(Math.round(initialValue), Math.round(valueTo)));
+			sb.setMax((o.seekMax - o.seekMin) / o.seekScale);
+			sb.setProgress(Math.max(0, toInt.applyAsInt(initValue) - o.seekMin) / o.seekScale);
 
-			sb.addOnChangeListener((slider, value, fromUser) -> {
-				if (fromUser) {
-					t.setText(fromInt.apply(Math.round(value) * o.seekScale + o.seekMin));
-					if (sb.isFocused()) App.get().getHandler().post(sb::requestFocus);
+			sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+				@Override
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+					if (fromUser) {
+						t.setText(fromInt.apply(progress * o.seekScale + o.seekMin));
+						if (sb.isFocused()) App.get().getHandler().post(sb::requestFocus);
+					}
+				}
+
+				@Override
+				public void onStartTrackingTouch(SeekBar seekBar) {
+				}
+
+				@Override
+				public void onStopTrackingTouch(SeekBar seekBar) {
 				}
 			});
 

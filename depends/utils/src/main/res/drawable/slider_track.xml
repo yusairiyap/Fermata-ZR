@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A rounded-pill SeekBar track (Material-3-slider-like) used in place of the plain flat line the
-     platform default progressDrawable draws. The background segment is theme-aware so it stays
-     legible on both light and dark app themes; the progress/secondaryProgress segments are plain
-     white so that android:progressTint/secondaryProgressTint (set per-style) recolor them.
-     progress/secondaryProgress only round their left corners: ClipDrawable clips growing from the
-     left, so the left edge is the pill's true, fixed start, but the right edge is the moving cut
-     where the thumb sits, and rounding that edge too made the corner curve poke out as an odd bump
-     right at the thumb, so it's left square there. Only the (unclipped) background needs rounding
-     on all four corners, since its edges are the track's real, fixed ends. -->
+<!-- A thicker, solid-color SeekBar track in place of the plain thin flat line the platform default
+     progressDrawable draws. Unlike an earlier version of this file, none of the three layers here
+     round any corner: rounding a shape that ClipDrawable then clips to a moving width (progress/
+     secondaryProgress) turned out to render an odd bump on some devices right where the clip
+     boundary falls, under the thumb. Keeping every layer a plain flat-edged rectangle sidesteps
+     that entirely. The background is theme-aware so it stays legible on both light and dark app
+     themes; the progress/secondaryProgress segments are plain white so that
+     android:progressTint/secondaryProgressTint (set per-style) recolor them. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:id="@android:id/background">
         <shape android:shape="rectangle">
-            <corners android:radius="3dp" />
             <solid android:color="?attr/colorControlNormal" />
             <size android:height="6dp" />
         </shape>
@@ -21,11 +19,6 @@
     <item android:id="@android:id/secondaryProgress">
         <clip>
             <shape android:shape="rectangle">
-                <corners
-                    android:topLeftRadius="3dp"
-                    android:bottomLeftRadius="3dp"
-                    android:topRightRadius="0dp"
-                    android:bottomRightRadius="0dp" />
                 <solid android:color="@android:color/white" />
                 <size android:height="6dp" />
             </shape>
@@ -35,11 +28,6 @@
     <item android:id="@android:id/progress">
         <clip>
             <shape android:shape="rectangle">
-                <corners
-                    android:topLeftRadius="3dp"
-                    android:bottomLeftRadius="3dp"
-                    android:topRightRadius="0dp"
-                    android:bottomRightRadius="0dp" />
                 <solid android:color="@android:color/white" />
                 <size android:height="6dp" />
             </shape>
