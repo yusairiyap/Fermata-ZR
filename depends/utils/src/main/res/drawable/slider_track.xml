@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- A thicker, solid-color SeekBar track in place of the plain thin flat line the platform default
-     progressDrawable draws. Unlike an earlier version of this file, none of the three layers here
-     round any corner: rounding a shape that ClipDrawable then clips to a moving width (progress/
-     secondaryProgress) turned out to render an odd bump on some devices right where the clip
-     boundary falls, under the thumb. Keeping every layer a plain flat-edged rectangle sidesteps
-     that entirely. The background is theme-aware so it stays legible on both light and dark app
-     themes; the progress/secondaryProgress segments are plain white so that
+     progressDrawable draws, with a rounded-pill outline. Only the background layer (item below) is
+     rounded: it's drawn at its own fixed, full-width bounds, never clipped, so rounding it is safe.
+     The progress/secondaryProgress layers stay flat-edged rectangles: rounding a shape that
+     ClipDrawable then clips to a moving width turned out to render an odd bump on some devices
+     right where the clip boundary falls, under the thumb, so those two are left square. The
+     background is theme-aware so it stays legible on both light and dark app themes; the
+     progress/secondaryProgress segments are plain white so that
      android:progressTint/secondaryProgressTint (set per-style) recolor them. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:id="@android:id/background">
         <shape android:shape="rectangle">
+            <corners android:radius="3dp" />
             <solid android:color="?attr/colorControlNormal" />
             <size android:height="6dp" />
         </shape>
