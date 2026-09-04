@@ -104,6 +104,16 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 		}
 
 		MainActivityPrefs mp = MainActivityPrefs.get();
+
+		// Keep "Always use Private Mode" honest: it's meant to reflect an active choice, not linger
+		// on once Private Mode has actually been turned off -- whether from the toolbar, a FAB, the
+		// nav-bar menu, or the Settings toggle itself (which writes PRIVATE_MODE_ENABLED directly,
+		// bypassing MainActivityPrefs.setPrivateModeEnabled(), so this broadcast reaction is the one
+		// place all of those paths funnel through).
+		if (changed.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED) && !mp.isPrivateModeEnabled()) {
+			mp.applyBooleanPref(MainActivityPrefs.PRIVATE_MODE_ALWAYS, false);
+		}
+
 		if (PrivateProfile.isSupported()) {
 			// The private profile is a separate, isolated cookie jar/storage that the default
 			// profile's WebViews never touch -- see PrivateProfile -- so there's nothing to restore

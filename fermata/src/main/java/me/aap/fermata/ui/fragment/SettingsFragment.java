@@ -775,27 +775,32 @@ public class SettingsFragment extends MainActivityFragment
 			o.title = R.string.private_mode;
 			o.subtitle = R.string.private_mode_sub;
 		});
+		var privateModeCond = PrefCondition.create(a.getPrefs(), MainActivityPrefs.PRIVATE_MODE_ENABLED);
 		sub1.addBooleanPref(o -> {
 			o.store = a.getPrefs();
 			o.pref = MainActivityPrefs.PRIVATE_MODE_ALWAYS;
 			o.title = R.string.private_mode_always;
 			o.subtitle = R.string.private_mode_always_sub;
+			o.visibility = privateModeCond.copy();
 		});
 		sub1.addBooleanPref(o -> {
 			o.store = a.getPrefs();
 			o.pref = MainActivityPrefs.PRIVATE_MODE_BLOCK_TRACKERS;
 			o.title = R.string.private_mode_block_trackers;
 			o.subtitle = R.string.private_mode_block_trackers_sub;
+			o.visibility = privateModeCond.copy();
 		});
 		sub1.addBooleanPref(o -> {
 			o.store = a.getPrefs();
 			o.pref = MainActivityPrefs.PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES;
 			o.title = R.string.private_mode_block_3rd_party_cookies;
 			o.subtitle = R.string.private_mode_block_3rd_party_cookies_sub;
+			o.visibility = privateModeCond.copy();
 		});
 		sub1.addButton(o -> {
 			o.title = R.string.private_mode_clear_now;
 			o.subtitle = R.string.private_mode_clear_now_sub;
+			o.visibility = privateModeCond.copy();
 			o.onClick = () -> {
 				Log.i("Clear private browsing data now: button tapped");
 				a.getPrefs().requestPrivateDataClear();
