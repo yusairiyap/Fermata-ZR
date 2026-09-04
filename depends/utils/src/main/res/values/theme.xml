@@ -85,21 +85,6 @@
         <item name="subtitleTextAppearance">?attr/textAppearanceCaption</item>
     </style>
 
-    <!-- Rounded-pill track + bigger thumb in place of the plain platform SeekBar look, used for
-    numeric preference sliders (see number_pref_layout.xml). Colors come from the standard
-    AppCompat/Material control attrs so this stays correct across every app theme without needing
-    an app-specific attr. -->
-    <style name="Theme.Utils.Base.SliderStyle">
-        <item name="android:progressDrawable">@drawable/slider_track</item>
-        <item name="android:thumb">@drawable/slider_thumb</item>
-        <item name="android:splitTrack">false</item>
-        <item name="android:thumbTint">?attr/colorControlActivated</item>
-        <item name="android:progressTint">?attr/colorControlActivated</item>
-        <item name="android:secondaryProgressTint">?android:attr/textColorHint</item>
-        <item name="android:paddingTop">10dp</item>
-        <item name="android:paddingBottom">10dp</item>
-    </style>
-
     <style name="Theme.Utils.Base.FileListViewStyle">
         <item name="android:textColor">?android:attr/textColorSecondary</item>
         <item name="android:textAppearance">?attr/textAppearanceListItem</item>

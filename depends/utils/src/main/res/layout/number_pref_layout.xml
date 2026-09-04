@@ -19,9 +19,12 @@
         app:layout_constraintStart_toEndOf="@id/pref_title"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.appcompat.widget.AppCompatSeekBar
+    <!-- Material's own Slider widget: it draws its track/thumb with custom Canvas code rather than
+    a ClipDrawable-clipped progressDrawable, so it doesn't have the corner-rounding-at-the-clip-edge
+    glitch a hand-rolled SeekBar drawable ran into here. Colors match the app's other sliders
+    (AppTheme.SeekBarStyle uses the same colorControlActivated/colorControlNormal pairing). -->
+    <com.google.android.material.slider.Slider
         android:id="@+id/pref_footer"
-        style="@style/Theme.Utils.Base.SliderStyle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@drawable/focusable_shape_transparent"
@@ -30,5 +33,11 @@
         app:layout_constraintEnd_toStartOf="@id/pref_value"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/pref_subtitle" />
+        app:labelBehavior="gone"
+        app:layout_constraintTop_toBottomOf="@id/pref_subtitle"
+        app:thumbColor="?attr/colorControlActivated"
+        app:thumbRadius="10dp"
+        app:trackColorActive="?attr/colorControlActivated"
+        app:trackColorInactive="?attr/colorControlNormal"
+        app:trackHeight="6dp" />
 </merge>
