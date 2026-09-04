@@ -7,31 +7,43 @@
      right where the clip boundary falls, under the thumb, so those two are left square. The
      background is theme-aware so it stays legible on both light and dark app themes; the
      progress/secondaryProgress segments are plain white so that
-     android:progressTint/secondaryProgressTint (set per-style) recolor them. -->
+     android:progressTint/secondaryProgressTint (set per-style) recolor them.
+
+     Each <item> below fixes its own android:height/android:gravity: without that, a <shape>'s own
+     <size> is only an intrinsic-size hint, and the item stretches to fill the SeekBar's whole track
+     allocation (usually much taller than 10dp) instead, which is what was silently defeating the
+     corner radius on every earlier attempt at this file (a tiny radius on a much taller, stretched
+     rectangle reads as flat). -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:id="@android:id/background">
+    <item
+        android:id="@android:id/background"
+        android:height="10dp"
+        android:gravity="center_vertical">
         <shape android:shape="rectangle">
             <corners android:radius="5dp" />
             <solid android:color="?attr/colorControlNormal" />
-            <size android:height="10dp" />
         </shape>
     </item>
 
-    <item android:id="@android:id/secondaryProgress">
+    <item
+        android:id="@android:id/secondaryProgress"
+        android:height="10dp"
+        android:gravity="center_vertical">
         <clip>
             <shape android:shape="rectangle">
                 <solid android:color="@android:color/white" />
-                <size android:height="10dp" />
             </shape>
         </clip>
     </item>
 
-    <item android:id="@android:id/progress">
+    <item
+        android:id="@android:id/progress"
+        android:height="10dp"
+        android:gravity="center_vertical">
         <clip>
             <shape android:shape="rectangle">
                 <solid android:color="@android:color/white" />
-                <size android:height="10dp" />
             </shape>
         </clip>
     </item>
