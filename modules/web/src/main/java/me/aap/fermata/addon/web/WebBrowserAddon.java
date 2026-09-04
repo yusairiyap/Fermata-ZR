@@ -91,9 +91,20 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 		// every cold start, before any WebView exists, so the resulting restore (via the same path a
 		// manual toggle-off uses) finishes before anything actually loads a page.
 		MainActivityPrefs mp = MainActivityPrefs.get();
-		if (mp.isPrivateModeEnabled() && !mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_ALWAYS)) {
-			Log.i("Private Mode: left enabled from a previous session but Always is off, disabling");
-			mp.setPrivateModeEnabled(false);
+		if (mp.isPrivateModeEnabled()) {
+			if (mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_ALWAYS)) {
+				// "Always" is meant to survive a restart, but each *session* still shouldn't carry over
+				// the last one's browsing -- real incognito starts every fresh window clean. Since
+				// PRIVATE_MODE_ENABLED is already true here, a plain toggle wouldn't broadcast a change
+				// (no value flip), so force a clear the same way the Settings "Clear now" button does,
+				// before any WebView exists to load a page with the stale data.
+				Log.i("Private Mode: still enabled via Always on cold start, clearing the previous " +
+						"session's data");
+				mp.requestPrivateDataClear();
+			} else {
+				Log.i("Private Mode: left enabled from a previous session but Always is off, disabling");
+				mp.setPrivateModeEnabled(false);
+			}
 		}
 	}
 
