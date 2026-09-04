@@ -78,22 +78,26 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 		// opens Settings) so a Private Mode toggle flipped from the toolbar or the nav-bar menu -
 		// without ever visiting Settings - still clears/restores browsing data.
 		MainActivityPrefs.get().addBroadcastListener(this::onPrivateModePrefsChanged);
+		Log.i("WebBrowserAddon: Private Mode listener registered");
 	}
 
 	private void onPrivateModePrefsChanged(PreferenceStore store, List<Pref<?>> changed) {
 		if (changed.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED)) {
 			MainActivityPrefs mp = MainActivityPrefs.get();
 			if (mp.isPrivateModeEnabled()) {
+				Log.i("Private Mode enabled: snapshotting cookies, then clearing browsing data");
 				// Snapshot what's there *before* wiping it, so turning Private Mode back off can bring
 				// the user's normal session back instead of just leaving them logged out everywhere.
 				snapshotCookies();
 				clearBrowsingData(mp::notifyPrivateModeDataCleared);
 			} else if (mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_CLEAR_ON_EXIT)) {
+				Log.i("Private Mode disabled: clearing browsing data, discarding snapshot");
 				clearBrowsingData(() -> {
 					clearSnapshot();
 					mp.notifyPrivateModeDataCleared();
 				});
 			} else {
+				Log.i("Private Mode disabled: clearing browsing data, restoring snapshot");
 				clearBrowsingData(() -> restoreCookieSnapshot(mp::notifyPrivateModeDataCleared));
 			}
 		}
@@ -101,6 +105,7 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 		if (changed.contains(MainActivityPrefs.PRIVATE_MODE_CLEAR_REQUEST)) {
 			// A manual "clear now" discards the pending snapshot too -- the user asked for everything
 			// gone right now, not for a later mode-exit to quietly bring old cookies back.
+			Log.i("Private Mode: manual clear-now requested");
 			clearBrowsingData(() -> {
 				clearSnapshot();
 				MainActivityPrefs.get().notifyPrivateModeDataCleared();
@@ -123,6 +128,7 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 	private void clearBrowsingData(Runnable onDone) {
 		CookieManager cm = CookieManager.getInstance();
 		cm.removeAllCookies(cleared -> {
+			Log.i("Private Mode: cookies removed (hadAny=" + cleared + "), clearing storage/form data");
 			cm.flush();
 			WebStorage.getInstance().deleteAllData();
 			try {

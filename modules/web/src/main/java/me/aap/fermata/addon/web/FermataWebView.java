@@ -134,6 +134,7 @@ public class FermataWebView extends WebView
 			// site data have actually finished clearing/restoring -- reloading directly off
 			// PRIVATE_MODE_ENABLED would race CookieManager's asynchronous removal and could still
 			// send the about-to-be-cleared cookies with the request.
+			Log.i(getClass().getSimpleName() + ": data-cleared signal received, resetting WebView");
 			onPrivateModeChanged();
 			return;
 		}

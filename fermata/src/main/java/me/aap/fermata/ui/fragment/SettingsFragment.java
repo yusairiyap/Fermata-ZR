@@ -802,6 +802,7 @@ public class SettingsFragment extends MainActivityFragment
 			o.title = R.string.private_mode_clear_now;
 			o.subtitle = R.string.private_mode_clear_now_sub;
 			o.onClick = () -> {
+				Log.i("Clear private browsing data now: button tapped");
 				a.getPrefs().requestPrivateDataClear();
 				UiUtils.showInfo(a.getContext(), R.string.private_mode_cleared);
 			};

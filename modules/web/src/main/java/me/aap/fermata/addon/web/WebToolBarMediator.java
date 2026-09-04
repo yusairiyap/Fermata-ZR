@@ -20,6 +20,7 @@ import android.widget.ImageButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import me.aap.fermata.ui.activity.MainActivityPrefs;
+import me.aap.utils.log.Log;
 import me.aap.utils.ui.UiUtils;
 import me.aap.utils.ui.activity.ActivityDelegate;
 import me.aap.utils.ui.fragment.ActivityFragment;
@@ -72,7 +73,9 @@ public class WebToolBarMediator implements ToolBarView.Mediator {
 
 	private void onPrivateModeButtonClick(ImageButton b) {
 		MainActivityPrefs p = MainActivityPrefs.get();
-		p.setPrivateModeEnabled(!p.isPrivateModeEnabled());
+		boolean enable = !p.isPrivateModeEnabled();
+		Log.i("Private Mode toolbar button tapped, enabling=" + enable);
+		p.setPrivateModeEnabled(enable);
 		updatePrivateModeButton(b);
 	}
 
