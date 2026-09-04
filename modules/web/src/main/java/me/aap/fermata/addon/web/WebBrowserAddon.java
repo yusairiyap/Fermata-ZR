@@ -87,37 +87,51 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 				// Snapshot what's there *before* wiping it, so turning Private Mode back off can bring
 				// the user's normal session back instead of just leaving them logged out everywhere.
 				snapshotCookies();
-				clearBrowsingData();
+				clearBrowsingData(mp::notifyPrivateModeDataCleared);
+			} else if (mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_CLEAR_ON_EXIT)) {
+				clearBrowsingData(() -> {
+					clearSnapshot();
+					mp.notifyPrivateModeDataCleared();
+				});
 			} else {
-				clearBrowsingData();
-				if (mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_CLEAR_ON_EXIT)) clearSnapshot();
-				else restoreCookieSnapshot();
+				clearBrowsingData(() -> restoreCookieSnapshot(mp::notifyPrivateModeDataCleared));
 			}
 		}
 
 		if (changed.contains(MainActivityPrefs.PRIVATE_MODE_CLEAR_REQUEST)) {
 			// A manual "clear now" discards the pending snapshot too -- the user asked for everything
 			// gone right now, not for a later mode-exit to quietly bring old cookies back.
-			clearBrowsingData();
-			clearSnapshot();
+			clearBrowsingData(() -> {
+				clearSnapshot();
+				MainActivityPrefs.get().notifyPrivateModeDataCleared();
+			});
 		}
 	}
 
 	/**
 	 * Wipes cookies, DOM/IndexedDB/WebSQL storage and saved form data for every WebView in the
-	 * app -- there's no per-instance cookie jar in Android's WebView, so this is the closest
-	 * approximation of "forget this session" available without a custom WebView data directory.
+	 * app, then runs {@code onDone} -- there's no per-instance cookie jar in Android's WebView, so
+	 * this is the closest approximation of "forget this session" available without a custom WebView
+	 * data directory.
+	 * <p>
+	 * {@link CookieManager#removeAllCookies} is asynchronous despite returning immediately, so
+	 * anything that must only happen once cookies are actually gone (e.g. a WebView reloading a
+	 * page that must come back logged out) needs to wait for {@code onDone} rather than running
+	 * right after calling this method -- otherwise the reload can race the clear and the request
+	 * still goes out with the about-to-be-removed cookies attached.
 	 */
-	private void clearBrowsingData() {
+	private void clearBrowsingData(Runnable onDone) {
 		CookieManager cm = CookieManager.getInstance();
-		cm.removeAllCookies(null);
-		cm.flush();
-		WebStorage.getInstance().deleteAllData();
-		try {
-			WebViewDatabase.getInstance(FermataApplication.get()).clearFormData();
-		} catch (Exception ex) {
-			Log.e(ex, "Failed to clear WebView form data");
-		}
+		cm.removeAllCookies(cleared -> {
+			cm.flush();
+			WebStorage.getInstance().deleteAllData();
+			try {
+				WebViewDatabase.getInstance(FermataApplication.get()).clearFormData();
+			} catch (Exception ex) {
+				Log.e(ex, "Failed to clear WebView form data");
+			}
+			onDone.run();
+		});
 	}
 
 	/**
@@ -153,18 +167,19 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 		return origins;
 	}
 
-	private void restoreCookieSnapshot() {
+	private void restoreCookieSnapshot(Runnable onDone) {
 		Map<String, String> snapshot = getSnapshot();
-		if (snapshot.isEmpty()) return;
-
-		CookieManager cm = CookieManager.getInstance();
-		for (Map.Entry<String, String> e : snapshot.entrySet()) {
-			for (String pair : e.getValue().split(";\\s*")) {
-				if (!pair.isEmpty()) cm.setCookie(e.getKey(), pair);
+		if (!snapshot.isEmpty()) {
+			CookieManager cm = CookieManager.getInstance();
+			for (Map.Entry<String, String> e : snapshot.entrySet()) {
+				for (String pair : e.getValue().split(";\\s*")) {
+					if (!pair.isEmpty()) cm.setCookie(e.getKey(), pair);
+				}
 			}
+			cm.flush();
+			clearSnapshot();
 		}
-		cm.flush();
-		clearSnapshot();
+		onDone.run();
 	}
 
 	private Map<String, String> getSnapshot() {

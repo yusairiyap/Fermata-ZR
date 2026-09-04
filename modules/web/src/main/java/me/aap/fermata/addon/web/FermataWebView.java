@@ -96,18 +96,20 @@ public class FermataWebView extends WebView
 
 		addJavascriptInterface(createJsInterface(), FermataJsInterface.NAME);
 
+		addon.getPreferenceStore().addBroadcastListener(this);
+		MainActivityPrefs mp = MainActivityPrefs.get();
+		mp.addBroadcastListener(this);
+		getActivity().onSuccess(a -> a.addBroadcastListener(this));
+
 		// "Always use Private Mode" is enforced here, on every WebView (re)creation, rather than
 		// once at app startup, so it also takes effect when the user has left Private Mode manually
-		// and then comes back to the Browser/YouTube tab, and after restarting the app.
-		MainActivityPrefs mp = MainActivityPrefs.get();
+		// and then comes back to the Browser/YouTube tab, and after restarting the app. This has to
+		// run after subscribing above, or this WebView would miss its own resulting
+		// PRIVATE_MODE_DATA_CLEARED_STAMP broadcast once WebBrowserAddon finishes clearing cookies.
 		if (mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_ALWAYS) && !mp.isPrivateModeEnabled()) {
 			mp.setPrivateModeEnabled(true);
 		}
 		applyPrivateModeCookiePolicy();
-
-		addon.getPreferenceStore().addBroadcastListener(this);
-		mp.addBroadcastListener(this);
-		getActivity().onSuccess(a -> a.addBroadcastListener(this));
 
 		setDesktopMode(addon, false);
 		setForceDark(addon, false);
@@ -124,10 +126,15 @@ public class FermataWebView extends WebView
 		if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED) ||
 				prefs.contains(MainActivityPrefs.PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES)) {
 			applyPrivateModeCookiePolicy();
-			// Reset this WebView's own cache/history on every transition, in or out -- WebBrowserAddon
-			// (a separate broadcast listener on the same preference) is the one deciding whether the
-			// cookies/site data this clears get restored afterwards or discarded for good.
-			if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED)) onPrivateModeChanged();
+			return;
+		}
+
+		if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_DATA_CLEARED_STAMP)) {
+			// WebBrowserAddon (a separate listener on the same prefs) only bumps this once cookies and
+			// site data have actually finished clearing/restoring -- reloading directly off
+			// PRIVATE_MODE_ENABLED would race CookieManager's asynchronous removal and could still
+			// send the about-to-be-cleared cookies with the request.
+			onPrivateModeChanged();
 			return;
 		}
 
@@ -154,9 +161,8 @@ public class FermataWebView extends WebView
 		CookieManager.getInstance().setAcceptThirdPartyCookies(this, !blockThirdParty);
 	}
 
-	/** Wipes this WebView's own cache/history when Private Mode is entered, or left while
-	 * "clear on exit" is on. Global stores (cookies, DOM storage) are cleared separately by
-	 * {@code WebBrowserAddon}, which reacts to the same preference. */
+	/** Wipes this WebView's own cache/history and reloads, once {@code WebBrowserAddon} signals
+	 * that the global cookie/site-data clear (or restore) it triggers is actually done. */
 	protected void onPrivateModeChanged() {
 		clearCache(true);
 		clearHistory();

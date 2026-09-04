@@ -115,6 +115,11 @@ public interface MainActivityPrefs
 	// changes value (e.g. the Settings "clear now" button while already in Private Mode) -- a plain
 	// boolean pref only broadcasts on a real value change, so a timestamp is used instead.
 	Pref<LongSupplier> PRIVATE_MODE_CLEAR_REQUEST = Pref.l("PRIVATE_MODE_CLEAR_REQUEST", 0L);
+	// Bumped by the web addon module once cookies/site data have actually finished clearing --
+	// CookieManager's removal is asynchronous, so a WebView reload triggered directly off
+	// PRIVATE_MODE_ENABLED can race the clear and still show the old (personalized) page. WebViews
+	// wait for this signal instead of reacting to PRIVATE_MODE_ENABLED directly for their reload.
+	Pref<LongSupplier> PRIVATE_MODE_DATA_CLEARED_STAMP = Pref.l("PRIVATE_MODE_DATA_CLEARED_STAMP", 0L);
 	Pref<BooleanSupplier> VOICE_CONTROl_ENABLED = Pref.b("VOICE_CONTROl_ENABLED", false);
 	Pref<BooleanSupplier> VOICE_CONTROl_FB = Pref.b("VOICE_CONTROl_FB", false);
 	Pref<Supplier<String>> VOICE_CONTROL_SUBST = Pref.s("VOICE_CONTROL_SUBST", "");
@@ -324,6 +329,10 @@ public interface MainActivityPrefs
 
 	default void requestPrivateDataClear() {
 		applyLongPref(PRIVATE_MODE_CLEAR_REQUEST, System.currentTimeMillis());
+	}
+
+	default void notifyPrivateModeDataCleared() {
+		applyLongPref(PRIVATE_MODE_DATA_CLEARED_STAMP, System.currentTimeMillis());
 	}
 
 	default boolean getVoiceControlEnabledPref() {

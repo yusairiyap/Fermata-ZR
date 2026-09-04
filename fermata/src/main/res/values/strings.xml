@@ -396,6 +396,7 @@
     <string name="private_mode_clear_on_exit_sub">By default, turning Private Mode off signs you back into YouTube/Google as before. Turn this on to discard that too, so nothing is kept at all</string>
     <string name="private_mode_clear_now">Clear private browsing data now</string>
     <string name="private_mode_clear_now_sub">Immediately clears cookies, cache, form data and site storage for the Browser and YouTube tabs</string>
+    <string name="private_mode_cleared">Private browsing data cleared.</string>
 
     <string name="other">Other</string>
     <string name="check_updates">Check for updates on startup</string>

@@ -801,7 +801,10 @@ public class SettingsFragment extends MainActivityFragment
 		sub1.addButton(o -> {
 			o.title = R.string.private_mode_clear_now;
 			o.subtitle = R.string.private_mode_clear_now_sub;
-			o.onClick = () -> a.getPrefs().requestPrivateDataClear();
+			o.onClick = () -> {
+				a.getPrefs().requestPrivateDataClear();
+				UiUtils.showInfo(a.getContext(), R.string.private_mode_cleared);
+			};
 		});
 
 		sub1 = set.subSet(o -> {
