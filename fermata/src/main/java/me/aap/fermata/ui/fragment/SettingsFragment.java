@@ -327,22 +327,22 @@ public class SettingsFragment extends MainActivityFragment
 		});
 
 		if (BuildConfig.AUTO && a.isCarActivityNotMirror()) {
-			addAAInterface(a, sub1);
 			addSecondaryFabPrefs(a, sub1.subSet(o -> {
 				o.title = R.string.secondary_fab_prefs;
 				o.icon = R.drawable.fab;
 			}));
+			addAAInterface(a, sub1);
 		} else {
+			addSecondaryFabPrefs(a, sub1.subSet(o -> {
+				o.title = R.string.secondary_fab_prefs;
+				o.icon = R.drawable.fab;
+			}));
 			if (BuildConfig.AUTO) {
 				addAAInterface(a, sub1.subSet(o -> {
 					o.title = R.string.interface_prefs_aa;
 					o.icon = R.drawable.tv;
 				}));
 			}
-			addSecondaryFabPrefs(a, sub1.subSet(o -> {
-				o.title = R.string.secondary_fab_prefs;
-				o.icon = R.drawable.fab;
-			}));
 			addInterface(a, sub1, MainActivityPrefs.THEME_MAIN, MainActivityPrefs.HIDE_BARS,
 					MainActivityPrefs.FULLSCREEN, MainActivityPrefs.SHOW_PG_UP_DOWN, null,
 					MainActivityPrefs.NAV_BAR_POS, MainActivityPrefs.NAV_BAR_SIZE,

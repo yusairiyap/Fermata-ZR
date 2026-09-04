@@ -13,10 +13,12 @@
         <item name="colorOnPrimary">#40C4FF</item>
         <item name="android:textColorPrimary">?colorOnPrimary</item>
 
-        <!-- List/Media items -->
+        <!-- List/Media items: white cards (colorSecondary) with dark ink content, the same pairing
+        AppTheme.DynamicLight uses, rather than the blue icon tint and (illegible, white-on-white)
+        textColorSecondary this theme previously had here. -->
         <item name="colorSecondary">?android:colorBackground</item>
-        <item name="colorOnSecondary">?colorOnPrimary</item>
-        <item name="android:textColorSecondary">#FFFFFF</item>
+        <item name="colorOnSecondary">#1C1B1F</item>
+        <item name="android:textColorSecondary">#1C1B1F</item>
         <item name="boxStrokeColor">#445D8F</item>
 
         <!-- Active media item -->

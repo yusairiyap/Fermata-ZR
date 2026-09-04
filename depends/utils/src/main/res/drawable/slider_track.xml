@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- A thicker, solid-color SeekBar track in place of the plain thin flat line the platform default
-     progressDrawable draws, with a rounded-pill outline. Only the background layer (item below) is
-     rounded: it's drawn at its own fixed, full-width bounds, never clipped, so rounding it is safe.
-     The progress/secondaryProgress layers stay flat-edged rectangles: rounding a shape that
-     ClipDrawable then clips to a moving width turned out to render an odd bump on some devices
-     right where the clip boundary falls, under the thumb, so those two are left square. The
-     background is theme-aware so it stays legible on both light and dark app themes; the
-     progress/secondaryProgress segments are plain white so that
-     android:progressTint/secondaryProgressTint (set per-style) recolor them.
+     progressDrawable draws, with a rounded-pill outline on every true (non-moving) edge.
 
-     Each <item> below fixes its own android:height/android:gravity: without that, a <shape>'s own
-     <size> is only an intrinsic-size hint, and the item stretches to fill the SeekBar's whole track
-     allocation (usually much taller than 10dp) instead, which is what was silently defeating the
-     corner radius on every earlier attempt at this file (a tiny radius on a much taller, stretched
-     rectangle reads as flat). -->
+     The background layer rounds all four corners: it's drawn at its own fixed, full-width bounds,
+     never clipped, so that's always safe. The progress/secondaryProgress layers round only their
+     LEFT corners. ClipDrawable clips them growing from the left, so the left edge is the pill's
+     true, fixed start (same as the background's), but the right edge is the moving cut where the
+     thumb sits; rounding that edge too showed as an odd bump right at the thumb, so it's left
+     square there. (An earlier attempt at left-only rounding still looked wrong, but that turned out
+     to be because none of these items pinned their own height yet (see below), which distorted
+     any rounding, not the left/right split itself.)
+
+     Each <item> fixes its own android:height/android:gravity: without that, a <shape>'s own <size>
+     is only an intrinsic-size hint, and the item stretches to fill the SeekBar's whole track
+     allocation (usually much taller than 10dp) instead, which silently defeated the corner radius
+     (and distorted it into a bump when rounded) on every earlier attempt at this file.
+
+     The background is theme-aware so it stays legible on both light and dark app themes; the
+     progress/secondaryProgress segments are plain white so that
+     android:progressTint/secondaryProgressTint (set per-style) recolor them. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
@@ -32,6 +37,11 @@
         android:gravity="center_vertical">
         <clip>
             <shape android:shape="rectangle">
+                <corners
+                    android:topLeftRadius="5dp"
+                    android:bottomLeftRadius="5dp"
+                    android:topRightRadius="0dp"
+                    android:bottomRightRadius="0dp" />
                 <solid android:color="@android:color/white" />
             </shape>
         </clip>
@@ -43,6 +53,11 @@
         android:gravity="center_vertical">
         <clip>
             <shape android:shape="rectangle">
+                <corners
+                    android:topLeftRadius="5dp"
+                    android:bottomLeftRadius="5dp"
+                    android:topRightRadius="0dp"
+                    android:bottomRightRadius="0dp" />
                 <solid android:color="@android:color/white" />
             </shape>
         </clip>

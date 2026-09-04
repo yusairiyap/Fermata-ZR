@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Thinner counterpart of slider_track.xml, paired with slider_thumb_small.xml for tight,
-     fixed-height rows. See slider_track.xml for why only the background layer is rounded, and why
-     each <item> fixes its own android:height/android:gravity instead of relying on the child
-     <shape>'s <size>. -->
+     fixed-height rows. See slider_track.xml for why the background rounds all four corners while
+     progress/secondaryProgress round only their left ones, and why every <item> fixes its own
+     android:height/android:gravity instead of relying on the child <shape>'s <size>. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
@@ -21,6 +21,11 @@
         android:gravity="center_vertical">
         <clip>
             <shape android:shape="rectangle">
+                <corners
+                    android:topLeftRadius="3dp"
+                    android:bottomLeftRadius="3dp"
+                    android:topRightRadius="0dp"
+                    android:bottomRightRadius="0dp" />
                 <solid android:color="@android:color/white" />
             </shape>
         </clip>
@@ -32,6 +37,11 @@
         android:gravity="center_vertical">
         <clip>
             <shape android:shape="rectangle">
+                <corners
+                    android:topLeftRadius="3dp"
+                    android:bottomLeftRadius="3dp"
+                    android:topRightRadius="0dp"
+                    android:bottomRightRadius="0dp" />
                 <solid android:color="@android:color/white" />
             </shape>
         </clip>
