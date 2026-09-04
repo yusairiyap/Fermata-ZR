@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.webkit.CookieManager;
+import android.webkit.ValueCallback;
 import android.webkit.WebStorage;
 import android.webkit.WebViewDatabase;
 
@@ -11,6 +12,7 @@ import androidx.annotation.IdRes;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,11 +82,31 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 
 	public WebBrowserAddon() {
 		prefs = App.get().getSharedPreferences("web", Context.MODE_PRIVATE);
+
+		// YoutubeAddon extends WebBrowserAddon, so this constructor runs once per addon subclass
+		// AddonManager instantiates -- and since "Web Browser" and "YouTube" are independently
+		// enabled (each has its own AddonInfo/enabledPref), a user can have YouTube on with the
+		// Browser tab off, so this can NOT be skipped for subclasses the way the WebBrowserAddon-only
+		// prefs in contributeSettings() are: it's the only registration a YouTube-only user gets.
+		// Running it twice (once per addon instance) is a bit redundant but harmless/idempotent.
+
 		// Registered here rather than in contributeSettings() (only wired up once the user actually
 		// opens Settings) so a Private Mode toggle flipped from the toolbar or the nav-bar menu -
 		// without ever visiting Settings - still clears/restores browsing data.
 		MainActivityPrefs.get().addBroadcastListener(privateModeListener);
 		Log.i("WebBrowserAddon: Private Mode listener registered");
+
+		// PRIVATE_MODE_ENABLED is a persisted pref (so a session left active while "Always" is on
+		// survives a restart), but Private Mode itself is meant to be a per-session thing when
+		// "Always" is off: closing the app while still private shouldn't leave the next launch
+		// stuck private with no normal session to go back to short of a manual toggle. This runs on
+		// every cold start, before any WebView exists, so the resulting restore (via the same path a
+		// manual toggle-off uses) finishes before anything actually loads a page.
+		MainActivityPrefs mp = MainActivityPrefs.get();
+		if (mp.isPrivateModeEnabled() && !mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_ALWAYS)) {
+			Log.i("Private Mode: left enabled from a previous session but Always is off, disabling");
+			mp.setPrivateModeEnabled(false);
+		}
 	}
 
 	private void onPrivateModePrefsChanged(PreferenceStore store, List<Pref<?>> changed) {
@@ -179,19 +201,41 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 		return origins;
 	}
 
+	/**
+	 * Restores the cookies captured by {@link #snapshotCookies()}, then runs {@code onDone} once
+	 * every {@link CookieManager#setCookie(String, String, ValueCallback)} call has actually
+	 * completed. Like {@link #clearBrowsingData}, this can't just fire {@code onDone} right after
+	 * issuing the (asynchronous) writes -- a WebView reloading immediately after would race them and
+	 * still show the logged-out page, exactly the bug that made the clear-side of this unreliable.
+	 */
 	private void restoreCookieSnapshot(Runnable onDone) {
 		Map<String, String> snapshot = getSnapshot();
-		if (!snapshot.isEmpty()) {
-			CookieManager cm = CookieManager.getInstance();
-			for (Map.Entry<String, String> e : snapshot.entrySet()) {
-				for (String pair : e.getValue().split(";\\s*")) {
-					if (!pair.isEmpty()) cm.setCookie(e.getKey(), pair);
-				}
+		List<String[]> pairs = new ArrayList<>();
+		for (Map.Entry<String, String> e : snapshot.entrySet()) {
+			for (String pair : e.getValue().split(";\\s*")) {
+				if (!pair.isEmpty()) pairs.add(new String[]{e.getKey(), pair});
 			}
-			cm.flush();
-			clearSnapshot();
 		}
-		onDone.run();
+
+		if (pairs.isEmpty()) {
+			clearSnapshot();
+			onDone.run();
+			return;
+		}
+
+		Log.i("Private Mode: restoring " + pairs.size() + " cookie(s) from snapshot");
+		CookieManager cm = CookieManager.getInstance();
+		int[] remaining = {pairs.size()};
+		for (String[] p : pairs) {
+			cm.setCookie(p[0], p[1], ignored -> {
+				if (--remaining[0] == 0) {
+					cm.flush();
+					clearSnapshot();
+					Log.i("Private Mode: cookie snapshot restored");
+					onDone.run();
+				}
+			});
+		}
 	}
 
 	private Map<String, String> getSnapshot() {
