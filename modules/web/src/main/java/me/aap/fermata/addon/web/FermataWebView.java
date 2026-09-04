@@ -97,18 +97,13 @@ public class FermataWebView extends WebView
 		addJavascriptInterface(createJsInterface(), FermataJsInterface.NAME);
 
 		addon.getPreferenceStore().addBroadcastListener(this);
-		MainActivityPrefs mp = MainActivityPrefs.get();
-		mp.addBroadcastListener(this);
+		MainActivityPrefs.get().addBroadcastListener(this);
 		getActivity().onSuccess(a -> a.addBroadcastListener(this));
 
-		// "Always use Private Mode" is enforced here, on every WebView (re)creation, rather than
-		// once at app startup, so it also takes effect when the user has left Private Mode manually
-		// and then comes back to the Browser/YouTube tab, and after restarting the app. This has to
-		// run after subscribing above, or this WebView would miss its own resulting
-		// PRIVATE_MODE_DATA_CLEARED_STAMP broadcast once WebBrowserAddon finishes clearing cookies.
-		if (mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_ALWAYS) && !mp.isPrivateModeEnabled()) {
-			mp.setPrivateModeEnabled(true);
-		}
+		// "Always use Private Mode" is enforced by WebBrowserAddon's constructor and
+		// MainActivity.onResume() -- both settle PRIVATE_MODE_ENABLED before any fragment/WebView
+		// exists, so by the time this runs, WebViewCompat.setProfile() (already called on this
+		// instance by WebBrowserFragment/YoutubeFragment before init()) already used the right value.
 		applyPrivateModeCookiePolicy();
 
 		setDesktopMode(addon, false);
@@ -126,16 +121,6 @@ public class FermataWebView extends WebView
 		if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED) ||
 				prefs.contains(MainActivityPrefs.PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES)) {
 			applyPrivateModeCookiePolicy();
-			return;
-		}
-
-		if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_DATA_CLEARED_STAMP)) {
-			// WebBrowserAddon (a separate listener on the same prefs) only bumps this once cookies and
-			// site data have actually finished clearing/restoring -- reloading directly off
-			// PRIVATE_MODE_ENABLED would race CookieManager's asynchronous removal and could still
-			// send the about-to-be-cleared cookies with the request.
-			Log.i(getClass().getSimpleName() + ": data-cleared signal received, resetting WebView");
-			onPrivateModeChanged();
 			return;
 		}
 
@@ -159,15 +144,21 @@ public class FermataWebView extends WebView
 		MainActivityPrefs mp = MainActivityPrefs.get();
 		boolean blockThirdParty = mp.isPrivateModeEnabled() &&
 				mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES);
-		CookieManager.getInstance().setAcceptThirdPartyCookies(this, !blockThirdParty);
+		currentCookieManager().setAcceptThirdPartyCookies(this, !blockThirdParty);
 	}
 
-	/** Wipes this WebView's own cache/history and reloads, once {@code WebBrowserAddon} signals
-	 * that the global cookie/site-data clear (or restore) it triggers is actually done. */
-	protected void onPrivateModeChanged() {
-		clearCache(true);
-		clearHistory();
-		reload();
+	/**
+	 * The {@code CookieManager} for whichever profile this WebView is actually bound to. Plain
+	 * {@code CookieManager.getInstance()} always targets the default profile's cookie jar --
+	 * calling it directly here would silently misconfigure a WebView bound to the Private Mode
+	 * profile (see {@link PrivateProfile}) instead of leaving its own jar alone.
+	 */
+	protected CookieManager currentCookieManager() {
+		if (PrivateProfile.isSupported()) {
+			androidx.webkit.Profile p = androidx.webkit.WebViewCompat.getProfile(this);
+			if (p != null) return p.getCookieManager();
+		}
+		return CookieManager.getInstance();
 	}
 
 	@Override
@@ -279,9 +270,10 @@ public class FermataWebView extends WebView
 				wm.setButtonsVisibility(tb, canGoBack(), canGoForward());
 			}
 
-			// Skip persisting cookies to disk while browsing privately -- they still work normally
-			// in-memory for the rest of the session, they just won't survive it.
-			if (!MainActivityPrefs.get().isPrivateModeEnabled()) CookieManager.getInstance().flush();
+			// Safe to always flush now, even in Private Mode: this targets whichever profile's cookie
+			// jar this WebView is actually bound to, and the private profile's jar is wiped on its own
+			// on the next entry (or on a manual "clear now") regardless of what's flushed to it here.
+			currentCookieManager().flush();
 		});
 	}
 

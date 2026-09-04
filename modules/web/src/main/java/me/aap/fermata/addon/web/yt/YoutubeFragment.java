@@ -4,6 +4,7 @@ import static me.aap.fermata.addon.web.FermataWebClient.isYoutubeUri;
 import static me.aap.utils.async.Completed.completed;
 import static me.aap.utils.async.Completed.completedVoid;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -86,10 +87,7 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 
 		MainActivityDelegate.getActivityDelegate(view.getContext()).onSuccess(a -> {
 			YoutubeWebView webView = a.findViewById(R.id.ytWebView);
-			VideoView videoView = getOrCreateVideoViewOverlay(a);
-			YoutubeWebClient webClient = new YoutubeWebClient();
-			YoutubeChromeClient chromeClient = new YoutubeChromeClient(webView, videoView);
-			webView.init(addon, webClient, chromeClient);
+			initWebView(webView, addon, view);
 			registerListeners(a);
 			webView.loadUrl(DEFAULT_URL);
 			if (!DEFAULT_URL.equals(url)) a.post(() -> webView.loadUrl(url));
@@ -133,6 +131,33 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 		unregisterListeners(MainActivityDelegate.get(requireContext()));
 		removeVideoViewOverlay(MainActivityDelegate.get(requireContext()));
 		super.onDestroyView();
+	}
+
+	@Override
+	protected FermataWebView createWebView(Context ctx) {
+		YoutubeWebView v = new YoutubeWebView(ctx);
+		v.setId(R.id.ytWebView);
+		return v;
+	}
+
+	@Override
+	protected void initWebView(FermataWebView webView, WebBrowserAddon addon, View root) {
+		applyProfile(webView);
+		YoutubeWebView yt = (YoutubeWebView) webView;
+		MainActivityDelegate a = MainActivityDelegate.get(root.getContext());
+		VideoView videoView = getOrCreateVideoViewOverlay(a);
+		YoutubeWebClient webClient = new YoutubeWebClient();
+		YoutubeChromeClient chromeClient = new YoutubeChromeClient(yt, videoView);
+		yt.init(addon, webClient, chromeClient);
+	}
+
+	@Override
+	protected void applyPrivateModeProfile() {
+		// Swapping the WebView drops whatever JS interface/media engine was tied to the old
+		// instance -- stop playback first so the media session doesn't keep pointing at it.
+		MediaSessionCallback cb = MainActivityDelegate.get(requireContext()).getMediaSessionCallback();
+		if (cb.getEngine() instanceof YoutubeMediaEngine) cb.onStop();
+		super.applyPrivateModeProfile();
 	}
 
 	// YouTube's fullscreen custom view used to live nested inside this fragment's own layout, so

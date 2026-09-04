@@ -773,6 +773,7 @@ public class SettingsFragment extends MainActivityFragment
 			o.store = a.getPrefs();
 			o.pref = MainActivityPrefs.PRIVATE_MODE_ENABLED;
 			o.title = R.string.private_mode;
+			o.subtitle = R.string.private_mode_sub;
 		});
 		sub1.addBooleanPref(o -> {
 			o.store = a.getPrefs();
@@ -791,12 +792,6 @@ public class SettingsFragment extends MainActivityFragment
 			o.pref = MainActivityPrefs.PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES;
 			o.title = R.string.private_mode_block_3rd_party_cookies;
 			o.subtitle = R.string.private_mode_block_3rd_party_cookies_sub;
-		});
-		sub1.addBooleanPref(o -> {
-			o.store = a.getPrefs();
-			o.pref = MainActivityPrefs.PRIVATE_MODE_CLEAR_ON_EXIT;
-			o.title = R.string.private_mode_clear_on_exit;
-			o.subtitle = R.string.private_mode_clear_on_exit_sub;
 		});
 		sub1.addButton(o -> {
 			o.title = R.string.private_mode_clear_now;

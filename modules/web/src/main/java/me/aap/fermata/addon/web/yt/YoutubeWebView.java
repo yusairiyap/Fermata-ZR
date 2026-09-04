@@ -10,7 +10,6 @@ import static me.aap.fermata.addon.web.yt.YoutubeJsInterface.JS_VIDEO_QUALITIES;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.webkit.CookieManager;
 
 import androidx.annotation.NonNull;
 
@@ -23,7 +22,6 @@ import me.aap.fermata.addon.web.FermataWebView;
 import me.aap.fermata.addon.web.WebToolBarMediator;
 import me.aap.fermata.media.service.MediaSessionCallback;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
-import me.aap.fermata.ui.activity.MainActivityPrefs;
 import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.async.Promise;
 import me.aap.utils.log.Log;
@@ -101,7 +99,7 @@ public class YoutubeWebView extends FermataWebView {
 		injectSponsorBlock();
 		hideAppPromoBanners();
 		addFocusHighlight();
-		if (!MainActivityPrefs.get().isPrivateModeEnabled()) CookieManager.getInstance().flush();
+		currentCookieManager().flush();
 		refreshAddressBarTitle();
 	}
 
@@ -128,13 +126,6 @@ public class YoutubeWebView extends FermataWebView {
 	private static String unquoteJsResult(String s) {
 		if ((s == null) || (s.length() < 2) || !s.startsWith("\"") || !s.endsWith("\"")) return s;
 		return s.substring(1, s.length() - 1).replace("\\\"", "\"").replace("\\\\", "\\");
-	}
-
-	@Override
-	protected void onPrivateModeChanged() {
-		clearCache(true);
-		clearHistory();
-		loadUrl(YoutubeFragment.DEFAULT_URL);
 	}
 
 	protected void submitForm() {

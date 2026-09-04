@@ -17,6 +17,7 @@ import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.webkit.WebViewCompat;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -28,6 +29,7 @@ import me.aap.fermata.addon.AddonManager;
 import me.aap.fermata.addon.web.yt.YoutubeFragment;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
 import me.aap.fermata.ui.activity.MainActivityListener;
+import me.aap.fermata.ui.activity.MainActivityPrefs;
 import me.aap.fermata.ui.activity.VoiceCommand;
 import me.aap.fermata.ui.fragment.MainActivityFragment;
 import me.aap.utils.function.BooleanConsumer;
@@ -49,6 +51,8 @@ import me.aap.utils.ui.view.ToolBarView;
 public class WebBrowserFragment extends MainActivityFragment
 		implements OverlayMenu.SelectionHandler, MainActivityListener {
 	private boolean fullScreenOnResume;
+	@Nullable
+	private PreferenceStore.Listener privateModeListener;
 
 	@Override
 	public int getFragmentId() {
@@ -70,10 +74,7 @@ public class WebBrowserFragment extends MainActivityFragment
 
 		Context ctx = view.getContext();
 		FermataWebView webView = view.findViewById(R.id.browserWebView);
-		ViewGroup fullScreenView = view.findViewById(R.id.browserFullScreenView);
-		FermataWebClient webClient = new FermataWebClient();
-		FermataChromeClient chromeClient = new FermataChromeClient(webView, fullScreenView);
-		webView.init(addon, webClient, chromeClient);
+		initWebView(webView, addon, view);
 		webView.loadUrl(addon.getLastUrl());
 		MainActivityDelegate.getActivityDelegate(ctx).onSuccess(this::registerListeners);
 	}
@@ -82,6 +83,72 @@ public class WebBrowserFragment extends MainActivityFragment
 	public void onDestroyView() {
 		MainActivityDelegate.getActivityDelegate(requireContext()).onSuccess(this::unregisterListeners);
 		super.onDestroyView();
+	}
+
+	/** Creates a fresh WebView instance carrying the same id as the one declared in this
+	 * fragment's layout, so it's found transparently by every existing {@code findViewById}
+	 * lookup once swapped in by {@link #applyPrivateModeProfile()}. */
+	protected FermataWebView createWebView(Context ctx) {
+		FermataWebView v = new FermataWebView(ctx);
+		v.setId(R.id.browserWebView);
+		return v;
+	}
+
+	/** Binds {@code webView} to the profile matching the current Private Mode state (a no-op on
+	 * WebView releases without multi-profile support) and wires up its client/chrome-client --
+	 * shared between the initial creation in {@link #onViewCreated} and a later profile switch. */
+	protected void initWebView(FermataWebView webView, WebBrowserAddon addon, View root) {
+		applyProfile(webView);
+		ViewGroup fullScreenView = root.findViewById(R.id.browserFullScreenView);
+		FermataWebClient webClient = new FermataWebClient();
+		FermataChromeClient chromeClient = new FermataChromeClient(webView, fullScreenView);
+		webView.init(addon, webClient, chromeClient);
+	}
+
+	protected static void applyProfile(FermataWebView webView) {
+		if (PrivateProfile.isSupported()) {
+			WebViewCompat.setProfile(webView, PrivateProfile.currentName(MainActivityPrefs.get()));
+		}
+	}
+
+	/**
+	 * Recreates the WebView bound to whichever profile (Default or Private) matches the current
+	 * Private Mode state, if it isn't already -- {@code WebViewCompat.setProfile()} only takes
+	 * effect before a WebView is first used, so switching means swapping in a fresh instance
+	 * rather than reconfiguring the live one. A brief overlay covers the swap so the reload that
+	 * follows isn't a jarring blank flash. A no-op on WebView releases without multi-profile
+	 * support (see {@link PrivateProfile}) -- those fall back to {@link WebBrowserAddon}'s simpler
+	 * clear-only behavior on the single shared profile, which never needs a WebView swap.
+	 */
+	protected void applyPrivateModeProfile() {
+		if (!PrivateProfile.isSupported()) return;
+
+		View root = getView();
+		FermataWebView old = getWebView();
+		WebBrowserAddon addon = getAddon();
+		if ((root == null) || (old == null) || (addon == null)) return;
+		if (!(old.getParent() instanceof ViewGroup parent)) return;
+
+		MainActivityPrefs mp = MainActivityPrefs.get();
+		if (PrivateProfile.matchesCurrentProfile(old, mp)) return;
+
+		String url = old.getUrl();
+		int index = parent.indexOfChild(old);
+		ViewGroup.LayoutParams lp = old.getLayoutParams();
+		Context ctx = root.getContext();
+
+		MainActivityDelegate.getActivityDelegate(ctx).onSuccess(a -> {
+			ProfileSwitchOverlay overlay = ProfileSwitchOverlay.show(parent);
+			old.stopLoading();
+			parent.removeView(old);
+			old.destroy();
+
+			FermataWebView fresh = createWebView(ctx);
+			initWebView(fresh, addon, root);
+			parent.addView(fresh, index, lp);
+			fresh.loadUrl((url != null) ? url : addon.getLastUrl());
+			overlay.watch(a);
+		});
 	}
 
 	@Override
@@ -130,12 +197,24 @@ public class WebBrowserFragment extends MainActivityFragment
 
 	protected void registerListeners(MainActivityDelegate a) {
 		a.addBroadcastListener(this, MainActivityListener.ACTIVITY_DESTROY);
+		MainActivityPrefs.get().addBroadcastListener(privateModeListener = (store, prefs) -> {
+			// WebBrowserAddon (a separate listener on the same prefs) only bumps this once the
+			// relevant profile's cookies/site data have actually finished clearing -- switching the
+			// WebView's profile any earlier would race that and could still load with stale data.
+			if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_DATA_CLEARED_STAMP)) {
+				applyPrivateModeProfile();
+			}
+		});
 	}
 
 	protected void unregisterListeners(MainActivityDelegate a) {
 		FermataWebView v = getWebView();
 		WebBrowserAddon addon = getAddon();
 		a.removeBroadcastListener(this);
+		if (privateModeListener != null) {
+			MainActivityPrefs.get().removeBroadcastListener(privateModeListener);
+			privateModeListener = null;
+		}
 		if ((addon != null) && (v != null)) addon.getPreferenceStore().removeBroadcastListener(v);
 	}
 

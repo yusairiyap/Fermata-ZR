@@ -2,18 +2,15 @@ package me.aap.fermata.addon.web;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.webkit.CookieManager;
-import android.webkit.ValueCallback;
 import android.webkit.WebStorage;
 import android.webkit.WebViewDatabase;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
+import androidx.webkit.Profile;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -62,15 +59,6 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 	private static final Pref<BooleanSupplier> DESKTOP_VERSION = Pref.b("DESKTOP_VERSION", false);
 	private static final Pref<BooleanSupplier> WEB_OPEN_ON_START = Pref.b("WEB_OPEN_ON_START", false);
 	private static final Pref<Supplier<String[]>> BOOKMARKS = Pref.sa("BOOKMARKS");
-	// Cookie snapshot taken right before entering Private Mode, restored when leaving it (unless
-	// the user asked to discard it too). Android's CookieManager has no "list all cookies" API, so
-	// this is scoped to a handful of well-known origins rather than being a true full backup -- see
-	// snapshotOrigins().
-	private static final Pref<Supplier<String[]>> PRIVATE_MODE_SNAPSHOT = Pref.sa("PRIVATE_MODE_SNAPSHOT");
-	private static final String[] SNAPSHOT_ORIGINS = {
-			"https://youtube.com", "https://www.youtube.com", "https://m.youtube.com",
-			"https://google.com", "https://www.google.com", "https://accounts.google.com",
-	};
 	private final SharedPreferences prefs;
 	private boolean ignorePrefChange;
 	// EventBroadcaster keeps listeners via WeakReference (ListenerRef extends WeakReference<L>), so
@@ -110,53 +98,55 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 	}
 
 	private void onPrivateModePrefsChanged(PreferenceStore store, List<Pref<?>> changed) {
-		if (changed.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED)) {
-			MainActivityPrefs mp = MainActivityPrefs.get();
-			if (mp.isPrivateModeEnabled()) {
-				Log.i("Private Mode enabled: snapshotting cookies, then clearing browsing data");
-				// Snapshot what's there *before* wiping it, so turning Private Mode back off can bring
-				// the user's normal session back instead of just leaving them logged out everywhere.
-				snapshotCookies();
-				clearBrowsingData(mp::notifyPrivateModeDataCleared);
-			} else if (mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_CLEAR_ON_EXIT)) {
-				Log.i("Private Mode disabled: clearing browsing data, discarding snapshot");
-				clearBrowsingData(() -> {
-					clearSnapshot();
-					mp.notifyPrivateModeDataCleared();
-				});
-			} else {
-				Log.i("Private Mode disabled: clearing browsing data, restoring snapshot");
-				clearBrowsingData(() -> restoreCookieSnapshot(mp::notifyPrivateModeDataCleared));
-			}
+		if (!changed.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED) &&
+				!changed.contains(MainActivityPrefs.PRIVATE_MODE_CLEAR_REQUEST)) {
+			return;
 		}
 
-		if (changed.contains(MainActivityPrefs.PRIVATE_MODE_CLEAR_REQUEST)) {
-			// A manual "clear now" discards the pending snapshot too -- the user asked for everything
-			// gone right now, not for a later mode-exit to quietly bring old cookies back.
-			Log.i("Private Mode: manual clear-now requested");
-			clearBrowsingData(() -> {
-				clearSnapshot();
-				MainActivityPrefs.get().notifyPrivateModeDataCleared();
-			});
+		MainActivityPrefs mp = MainActivityPrefs.get();
+		if (PrivateProfile.isSupported()) {
+			// The private profile is a separate, isolated cookie jar/storage that the default
+			// profile's WebViews never touch -- see PrivateProfile -- so there's nothing to restore
+			// on the way out, only the private profile's own leftovers to wipe on the way in (or on a
+			// manual "clear now"). WebBrowserFragment/YoutubeFragment are what actually rebind their
+			// WebView to the right profile, reacting to the PRIVATE_MODE_DATA_CLEARED_STAMP this
+			// bumps once that wipe has actually finished.
+			Log.i("Private Mode: clearing the private profile's cookies/storage");
+			clearPrivateProfileData(mp::notifyPrivateModeDataCleared);
+		} else {
+			// No isolated profile on this WebView version: fall back to clearing the single jar every
+			// WebView in the app shares. There's deliberately no attempt to restore it afterwards --
+			// Android's CookieManager can't read or write HttpOnly cookies, exactly the kind
+			// Google/YouTube use for actual sign-in, so a snapshot/restore here could never bring a
+			// real session back; better to be upfront that Private Mode signs you out until you sign
+			// in again manually, on these older WebView installs.
+			Log.i("Private Mode: multi-profile unsupported, clearing the shared cookie jar");
+			clearSharedBrowsingData(mp::notifyPrivateModeDataCleared);
 		}
 	}
 
 	/**
-	 * Wipes cookies, DOM/IndexedDB/WebSQL storage and saved form data for every WebView in the
-	 * app, then runs {@code onDone} -- there's no per-instance cookie jar in Android's WebView, so
-	 * this is the closest approximation of "forget this session" available without a custom WebView
-	 * data directory.
-	 * <p>
-	 * {@link CookieManager#removeAllCookies} is asynchronous despite returning immediately, so
-	 * anything that must only happen once cookies are actually gone (e.g. a WebView reloading a
-	 * page that must come back logged out) needs to wait for {@code onDone} rather than running
-	 * right after calling this method -- otherwise the reload can race the clear and the request
-	 * still goes out with the about-to-be-removed cookies attached.
+	 * Wipes cookies and site storage for the isolated Private Mode profile only, then runs
+	 * {@code onDone}. {@link CookieManager#removeAllCookies} is asynchronous despite returning
+	 * immediately, so anything that must only happen once cookies are actually gone (e.g. a WebView
+	 * reloading a page that must come back with a clean slate) needs to wait for {@code onDone}
+	 * rather than running right after calling this method.
 	 */
-	private void clearBrowsingData(Runnable onDone) {
+	private void clearPrivateProfileData(Runnable onDone) {
+		Profile p = PrivateProfile.get(true);
+		CookieManager cm = p.getCookieManager();
+		cm.removeAllCookies(cleared -> {
+			cm.flush();
+			p.getWebStorage().deleteAllData();
+			onDone.run();
+		});
+	}
+
+	/** Fallback for WebView releases without {@link PrivateProfile#isSupported()}: clears the
+	 * single shared cookie jar/storage/form data used by every WebView in the app. */
+	private void clearSharedBrowsingData(Runnable onDone) {
 		CookieManager cm = CookieManager.getInstance();
 		cm.removeAllCookies(cleared -> {
-			Log.i("Private Mode: cookies removed (hadAny=" + cleared + "), clearing storage/form data");
 			cm.flush();
 			WebStorage.getInstance().deleteAllData();
 			try {
@@ -166,103 +156,6 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 			}
 			onDone.run();
 		});
-	}
-
-	/**
-	 * Captures the current cookie string for a handful of well-known origins (YouTube, Google
-	 * sign-in, and whatever the Browser tab was last on) so they can be restored after a private
-	 * session. This is a best-effort approximation, not a full backup: {@link CookieManager} only
-	 * exposes cookies per-URL, not an enumeration of every domain that has one, and the restored
-	 * cookies lose their original expiry/secure/httpOnly attributes (re-set as plain session
-	 * cookies against the same origin).
-	 */
-	private void snapshotCookies() {
-		CookieManager cm = CookieManager.getInstance();
-		Map<String, String> snapshot = new LinkedHashMap<>();
-		for (String origin : snapshotOrigins()) {
-			String cookie = cm.getCookie(origin);
-			if ((cookie != null) && !cookie.isEmpty()) snapshot.put(origin, cookie);
-		}
-		setSnapshot(snapshot);
-	}
-
-	private String[] snapshotOrigins() {
-		String last = getLastUrl();
-		if (TextUtils.isNullOrBlank(last)) return SNAPSHOT_ORIGINS;
-
-		Uri u = Uri.parse(last);
-		String scheme = u.getScheme();
-		String host = u.getHost();
-		if ((scheme == null) || (host == null)) return SNAPSHOT_ORIGINS;
-
-		String origin = scheme + "://" + host;
-		String[] origins = Arrays.copyOf(SNAPSHOT_ORIGINS, SNAPSHOT_ORIGINS.length + 1);
-		origins[SNAPSHOT_ORIGINS.length] = origin;
-		return origins;
-	}
-
-	/**
-	 * Restores the cookies captured by {@link #snapshotCookies()}, then runs {@code onDone} once
-	 * every {@link CookieManager#setCookie(String, String, ValueCallback)} call has actually
-	 * completed. Like {@link #clearBrowsingData}, this can't just fire {@code onDone} right after
-	 * issuing the (asynchronous) writes -- a WebView reloading immediately after would race them and
-	 * still show the logged-out page, exactly the bug that made the clear-side of this unreliable.
-	 */
-	private void restoreCookieSnapshot(Runnable onDone) {
-		Map<String, String> snapshot = getSnapshot();
-		List<String[]> pairs = new ArrayList<>();
-		for (Map.Entry<String, String> e : snapshot.entrySet()) {
-			for (String pair : e.getValue().split(";\\s*")) {
-				if (!pair.isEmpty()) pairs.add(new String[]{e.getKey(), pair});
-			}
-		}
-
-		if (pairs.isEmpty()) {
-			clearSnapshot();
-			onDone.run();
-			return;
-		}
-
-		Log.i("Private Mode: restoring " + pairs.size() + " cookie(s) from snapshot");
-		CookieManager cm = CookieManager.getInstance();
-		int[] remaining = {pairs.size()};
-		for (String[] p : pairs) {
-			cm.setCookie(p[0], p[1], ignored -> {
-				if (--remaining[0] == 0) {
-					cm.flush();
-					clearSnapshot();
-					Log.i("Private Mode: cookie snapshot restored");
-					onDone.run();
-				}
-			});
-		}
-	}
-
-	private Map<String, String> getSnapshot() {
-		String[] p = getPreferenceStore().getStringArrayPref(PRIVATE_MODE_SNAPSHOT);
-		if (p.length == 0) return Collections.emptyMap();
-
-		Map<String, String> m = new LinkedHashMap<>(p.length);
-		for (int i = 0; i < p.length; i++) {
-			m.put(p[i], p[++i]);
-		}
-		return m;
-	}
-
-	private void setSnapshot(Map<String, String> m) {
-		String[] p = new String[m.size() * 2];
-		int i = 0;
-
-		for (Map.Entry<String, String> e : m.entrySet()) {
-			p[i++] = e.getKey();
-			p[i++] = e.getValue();
-		}
-
-		getPreferenceStore().applyStringArrayPref(PRIVATE_MODE_SNAPSHOT, p);
-	}
-
-	private void clearSnapshot() {
-		getPreferenceStore().applyStringArrayPref(PRIVATE_MODE_SNAPSHOT, new String[0]);
 	}
 
 	@IdRes

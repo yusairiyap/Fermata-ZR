@@ -101,16 +101,13 @@ public interface MainActivityPrefs
 	Pref<IntSupplier> DIM_COLOR_CUSTOM_B = Pref.i("DIM_COLOR_CUSTOM_B", 0);
 	// Whether the Browser/YouTube tabs are currently running in Private Mode. Persisted (rather
 	// than session-only) so a session left active survives an app restart, matching
-	// PRIVATE_MODE_ALWAYS's "stay private even after exiting the app" contract.
+	// PRIVATE_MODE_ALWAYS's "stay private even after exiting the app" contract; WebBrowserAddon's
+	// constructor and MainActivity.onResume() are what actually enforce "off unless Always is on".
 	Pref<BooleanSupplier> PRIVATE_MODE_ENABLED = Pref.b("PRIVATE_MODE_ENABLED", false);
 	Pref<BooleanSupplier> PRIVATE_MODE_ALWAYS = Pref.b("PRIVATE_MODE_ALWAYS", false);
 	Pref<BooleanSupplier> PRIVATE_MODE_BLOCK_TRACKERS = Pref.b("PRIVATE_MODE_BLOCK_TRACKERS", true);
 	Pref<BooleanSupplier> PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES =
 			Pref.b("PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES", true);
-	// By default, turning Private Mode off restores the cookies/sign-in that were there before it
-	// was turned on (snapshotted by the web addon module). When this is true, that snapshot is
-	// discarded instead of restored, so nothing -- private or otherwise -- survives the session.
-	Pref<BooleanSupplier> PRIVATE_MODE_CLEAR_ON_EXIT = Pref.b("PRIVATE_MODE_CLEAR_ON_EXIT", false);
 	// Bumped to request an immediate data wipe regardless of whether PRIVATE_MODE_ENABLED actually
 	// changes value (e.g. the Settings "clear now" button while already in Private Mode) -- a plain
 	// boolean pref only broadcasts on a real value change, so a timestamp is used instead.
