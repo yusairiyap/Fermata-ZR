@@ -392,8 +392,8 @@
     <string name="private_mode_block_trackers_sub">Block requests to known ad and tracking domains while Private Mode is on</string>
     <string name="private_mode_block_3rd_party_cookies">Block third-party cookies</string>
     <string name="private_mode_block_3rd_party_cookies_sub">Stop cross-site cookies from being sent while Private Mode is on</string>
-    <string name="private_mode_clear_on_exit">Clear data when leaving Private Mode</string>
-    <string name="private_mode_clear_on_exit_sub">Also wipe cookies, cache and site data when Private Mode is turned off, not just when it\'s turned on</string>
+    <string name="private_mode_clear_on_exit">Don\'t restore previous session on exit</string>
+    <string name="private_mode_clear_on_exit_sub">By default, turning Private Mode off signs you back into YouTube/Google as before. Turn this on to discard that too, so nothing is kept at all</string>
     <string name="private_mode_clear_now">Clear private browsing data now</string>
     <string name="private_mode_clear_now_sub">Immediately clears cookies, cache, form data and site storage for the Browser and YouTube tabs</string>
 

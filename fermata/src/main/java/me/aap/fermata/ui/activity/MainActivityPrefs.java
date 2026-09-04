@@ -107,7 +107,10 @@ public interface MainActivityPrefs
 	Pref<BooleanSupplier> PRIVATE_MODE_BLOCK_TRACKERS = Pref.b("PRIVATE_MODE_BLOCK_TRACKERS", true);
 	Pref<BooleanSupplier> PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES =
 			Pref.b("PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES", true);
-	Pref<BooleanSupplier> PRIVATE_MODE_CLEAR_ON_EXIT = Pref.b("PRIVATE_MODE_CLEAR_ON_EXIT", true);
+	// By default, turning Private Mode off restores the cookies/sign-in that were there before it
+	// was turned on (snapshotted by the web addon module). When this is true, that snapshot is
+	// discarded instead of restored, so nothing -- private or otherwise -- survives the session.
+	Pref<BooleanSupplier> PRIVATE_MODE_CLEAR_ON_EXIT = Pref.b("PRIVATE_MODE_CLEAR_ON_EXIT", false);
 	// Bumped to request an immediate data wipe regardless of whether PRIVATE_MODE_ENABLED actually
 	// changes value (e.g. the Settings "clear now" button while already in Private Mode) -- a plain
 	// boolean pref only broadcasts on a real value change, so a timestamp is used instead.

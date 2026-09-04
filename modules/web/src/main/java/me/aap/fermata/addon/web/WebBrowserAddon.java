@@ -2,6 +2,7 @@ package me.aap.fermata.addon.web;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.webkit.CookieManager;
 import android.webkit.WebStorage;
 import android.webkit.WebViewDatabase;
@@ -10,6 +11,7 @@ import androidx.annotation.IdRes;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -58,6 +60,15 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 	private static final Pref<BooleanSupplier> DESKTOP_VERSION = Pref.b("DESKTOP_VERSION", false);
 	private static final Pref<BooleanSupplier> WEB_OPEN_ON_START = Pref.b("WEB_OPEN_ON_START", false);
 	private static final Pref<Supplier<String[]>> BOOKMARKS = Pref.sa("BOOKMARKS");
+	// Cookie snapshot taken right before entering Private Mode, restored when leaving it (unless
+	// the user asked to discard it too). Android's CookieManager has no "list all cookies" API, so
+	// this is scoped to a handful of well-known origins rather than being a true full backup -- see
+	// snapshotOrigins().
+	private static final Pref<Supplier<String[]>> PRIVATE_MODE_SNAPSHOT = Pref.sa("PRIVATE_MODE_SNAPSHOT");
+	private static final String[] SNAPSHOT_ORIGINS = {
+			"https://youtube.com", "https://www.youtube.com", "https://m.youtube.com",
+			"https://google.com", "https://www.google.com", "https://accounts.google.com",
+	};
 	private final SharedPreferences prefs;
 	private boolean ignorePrefChange;
 
@@ -65,18 +76,30 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 		prefs = App.get().getSharedPreferences("web", Context.MODE_PRIVATE);
 		// Registered here rather than in contributeSettings() (only wired up once the user actually
 		// opens Settings) so a Private Mode toggle flipped from the toolbar or the nav-bar menu -
-		// without ever visiting Settings - still clears browsing data.
+		// without ever visiting Settings - still clears/restores browsing data.
 		MainActivityPrefs.get().addBroadcastListener(this::onPrivateModePrefsChanged);
 	}
 
 	private void onPrivateModePrefsChanged(PreferenceStore store, List<Pref<?>> changed) {
-		boolean cleared = changed.contains(MainActivityPrefs.PRIVATE_MODE_CLEAR_REQUEST);
-		if (!cleared && !changed.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED)) return;
+		if (changed.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED)) {
+			MainActivityPrefs mp = MainActivityPrefs.get();
+			if (mp.isPrivateModeEnabled()) {
+				// Snapshot what's there *before* wiping it, so turning Private Mode back off can bring
+				// the user's normal session back instead of just leaving them logged out everywhere.
+				snapshotCookies();
+				clearBrowsingData();
+			} else {
+				clearBrowsingData();
+				if (mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_CLEAR_ON_EXIT)) clearSnapshot();
+				else restoreCookieSnapshot();
+			}
+		}
 
-		MainActivityPrefs mp = MainActivityPrefs.get();
-		if (cleared || mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_ENABLED) ||
-				mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_CLEAR_ON_EXIT)) {
+		if (changed.contains(MainActivityPrefs.PRIVATE_MODE_CLEAR_REQUEST)) {
+			// A manual "clear now" discards the pending snapshot too -- the user asked for everything
+			// gone right now, not for a later mode-exit to quietly bring old cookies back.
 			clearBrowsingData();
+			clearSnapshot();
 		}
 	}
 
@@ -95,6 +118,80 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 		} catch (Exception ex) {
 			Log.e(ex, "Failed to clear WebView form data");
 		}
+	}
+
+	/**
+	 * Captures the current cookie string for a handful of well-known origins (YouTube, Google
+	 * sign-in, and whatever the Browser tab was last on) so they can be restored after a private
+	 * session. This is a best-effort approximation, not a full backup: {@link CookieManager} only
+	 * exposes cookies per-URL, not an enumeration of every domain that has one, and the restored
+	 * cookies lose their original expiry/secure/httpOnly attributes (re-set as plain session
+	 * cookies against the same origin).
+	 */
+	private void snapshotCookies() {
+		CookieManager cm = CookieManager.getInstance();
+		Map<String, String> snapshot = new LinkedHashMap<>();
+		for (String origin : snapshotOrigins()) {
+			String cookie = cm.getCookie(origin);
+			if ((cookie != null) && !cookie.isEmpty()) snapshot.put(origin, cookie);
+		}
+		setSnapshot(snapshot);
+	}
+
+	private String[] snapshotOrigins() {
+		String last = getLastUrl();
+		if (TextUtils.isNullOrBlank(last)) return SNAPSHOT_ORIGINS;
+
+		Uri u = Uri.parse(last);
+		String scheme = u.getScheme();
+		String host = u.getHost();
+		if ((scheme == null) || (host == null)) return SNAPSHOT_ORIGINS;
+
+		String origin = scheme + "://" + host;
+		String[] origins = Arrays.copyOf(SNAPSHOT_ORIGINS, SNAPSHOT_ORIGINS.length + 1);
+		origins[SNAPSHOT_ORIGINS.length] = origin;
+		return origins;
+	}
+
+	private void restoreCookieSnapshot() {
+		Map<String, String> snapshot = getSnapshot();
+		if (snapshot.isEmpty()) return;
+
+		CookieManager cm = CookieManager.getInstance();
+		for (Map.Entry<String, String> e : snapshot.entrySet()) {
+			for (String pair : e.getValue().split(";\\s*")) {
+				if (!pair.isEmpty()) cm.setCookie(e.getKey(), pair);
+			}
+		}
+		cm.flush();
+		clearSnapshot();
+	}
+
+	private Map<String, String> getSnapshot() {
+		String[] p = getPreferenceStore().getStringArrayPref(PRIVATE_MODE_SNAPSHOT);
+		if (p.length == 0) return Collections.emptyMap();
+
+		Map<String, String> m = new LinkedHashMap<>(p.length);
+		for (int i = 0; i < p.length; i++) {
+			m.put(p[i], p[++i]);
+		}
+		return m;
+	}
+
+	private void setSnapshot(Map<String, String> m) {
+		String[] p = new String[m.size() * 2];
+		int i = 0;
+
+		for (Map.Entry<String, String> e : m.entrySet()) {
+			p[i++] = e.getKey();
+			p[i++] = e.getValue();
+		}
+
+		getPreferenceStore().applyStringArrayPref(PRIVATE_MODE_SNAPSHOT, p);
+	}
+
+	private void clearSnapshot() {
+		getPreferenceStore().applyStringArrayPref(PRIVATE_MODE_SNAPSHOT, new String[0]);
 	}
 
 	@IdRes

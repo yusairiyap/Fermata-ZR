@@ -124,12 +124,10 @@ public class FermataWebView extends WebView
 		if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED) ||
 				prefs.contains(MainActivityPrefs.PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES)) {
 			applyPrivateModeCookiePolicy();
-			if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED)) {
-				MainActivityPrefs mp = MainActivityPrefs.get();
-				if (mp.isPrivateModeEnabled() || mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_CLEAR_ON_EXIT)) {
-					onPrivateModeChanged();
-				}
-			}
+			// Reset this WebView's own cache/history on every transition, in or out -- WebBrowserAddon
+			// (a separate broadcast listener on the same preference) is the one deciding whether the
+			// cookies/site data this clears get restored afterwards or discarded for good.
+			if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED)) onPrivateModeChanged();
 			return;
 		}
 
