@@ -71,13 +71,19 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 	};
 	private final SharedPreferences prefs;
 	private boolean ignorePrefChange;
+	// EventBroadcaster keeps listeners via WeakReference (ListenerRef extends WeakReference<L>), so
+	// a bare `this::onPrivateModePrefsChanged` passed straight to addBroadcastListener() has nothing
+	// else holding it alive and gets garbage-collected shortly after this constructor returns --
+	// silently dropping the listener with no error. Keeping a strong reference in this field is what
+	// keeps it registered for the addon's whole lifetime.
+	private final PreferenceStore.Listener privateModeListener = this::onPrivateModePrefsChanged;
 
 	public WebBrowserAddon() {
 		prefs = App.get().getSharedPreferences("web", Context.MODE_PRIVATE);
 		// Registered here rather than in contributeSettings() (only wired up once the user actually
 		// opens Settings) so a Private Mode toggle flipped from the toolbar or the nav-bar menu -
 		// without ever visiting Settings - still clears/restores browsing data.
-		MainActivityPrefs.get().addBroadcastListener(this::onPrivateModePrefsChanged);
+		MainActivityPrefs.get().addBroadcastListener(privateModeListener);
 		Log.i("WebBrowserAddon: Private Mode listener registered");
 	}
 
