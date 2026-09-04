@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="AppTheme.Light">
 
         <item name="android:colorBackground">#FFFFFF</item>
+        <!-- The base AppTheme hardcodes this false (assuming a dark theme), which left the system
+        status bar drawing light/white icons here too, invisible once the area behind it (the
+        toolbar) went white instead of navy. AppTheme.DynamicLight already overrides this the same
+        way. -->
+        <item name="android:isLightTheme" tools:targetApi="q">true</item>
 
         <!-- Status bar-->
         <item name="colorPrimaryDark">#445D8F</item>
