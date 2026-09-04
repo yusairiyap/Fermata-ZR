@@ -12,7 +12,7 @@
         status bar stays its own blue), keeping the existing blue colorOnPrimary for icons/text
         drawn on top of them. -->
         <item name="colorPrimary">?android:colorBackground</item>
-        <item name="colorOnPrimary">#40C4FF</item>
+        <item name="colorOnPrimary">#0288D1</item>
         <item name="android:textColorPrimary">?colorOnPrimary</item>
 
         <!-- List/Media items: dark ink icon tint and title/subtitle text, rather than the blue icon
