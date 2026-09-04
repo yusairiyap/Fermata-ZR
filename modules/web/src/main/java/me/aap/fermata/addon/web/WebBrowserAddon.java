@@ -109,6 +109,14 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 	}
 
 	private void onPrivateModePrefsChanged(PreferenceStore store, List<Pref<?>> changed) {
+		if (changed.contains(MainActivityPrefs.NORMAL_MODE_CLEAR_REQUEST)) {
+			// Unlike the private profile, the Default profile is exactly what CookieManager.getInstance()
+			// / WebStorage.getInstance() already target -- clearSharedBrowsingData() is the right method
+			// here regardless of whether multi-profile is supported.
+			Log.i("Clearing normal (non-Private Mode) browsing data");
+			clearSharedBrowsingData(() -> {});
+		}
+
 		if (!changed.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED) &&
 				!changed.contains(MainActivityPrefs.PRIVATE_MODE_CLEAR_REQUEST)) {
 			return;
@@ -163,8 +171,10 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 		});
 	}
 
-	/** Fallback for WebView releases without {@link PrivateProfile#isSupported()}: clears the
-	 * single shared cookie jar/storage/form data used by every WebView in the app. */
+	/** Clears the Default profile's cookie jar/storage/form data -- i.e. the regular, non-Private
+	 * Mode browsing session. Used both for the Settings "Clear browsing data" action, and as
+	 * Private Mode's own fallback on WebView releases without {@link PrivateProfile#isSupported()},
+	 * where the Default profile is the only one there is. */
 	private void clearSharedBrowsingData(Runnable onDone) {
 		CookieManager cm = CookieManager.getInstance();
 		cm.removeAllCookies(cleared -> {

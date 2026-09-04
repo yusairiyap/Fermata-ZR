@@ -117,6 +117,10 @@ public interface MainActivityPrefs
 	// PRIVATE_MODE_ENABLED can race the clear and still show the old (personalized) page. WebViews
 	// wait for this signal instead of reacting to PRIVATE_MODE_ENABLED directly for their reload.
 	Pref<LongSupplier> PRIVATE_MODE_DATA_CLEARED_STAMP = Pref.l("PRIVATE_MODE_DATA_CLEARED_STAMP", 0L);
+	// Bumped by the Settings "Clear browsing data" action -- clears the regular (non-Private Mode)
+	// profile's cookies/storage/form data, same mechanism as PRIVATE_MODE_CLEAR_REQUEST but for the
+	// Default profile, so a user can reset their normal session without ever touching Private Mode.
+	Pref<LongSupplier> NORMAL_MODE_CLEAR_REQUEST = Pref.l("NORMAL_MODE_CLEAR_REQUEST", 0L);
 	Pref<BooleanSupplier> VOICE_CONTROl_ENABLED = Pref.b("VOICE_CONTROl_ENABLED", false);
 	Pref<BooleanSupplier> VOICE_CONTROl_FB = Pref.b("VOICE_CONTROl_FB", false);
 	Pref<Supplier<String>> VOICE_CONTROL_SUBST = Pref.s("VOICE_CONTROL_SUBST", "");
@@ -330,6 +334,10 @@ public interface MainActivityPrefs
 
 	default void notifyPrivateModeDataCleared() {
 		applyLongPref(PRIVATE_MODE_DATA_CLEARED_STAMP, System.currentTimeMillis());
+	}
+
+	default void requestNormalDataClear() {
+		applyLongPref(NORMAL_MODE_CLEAR_REQUEST, System.currentTimeMillis());
 	}
 
 	default boolean getVoiceControlEnabledPref() {

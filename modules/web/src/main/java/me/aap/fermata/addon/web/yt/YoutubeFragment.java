@@ -157,7 +157,25 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 		// instance -- stop playback first so the media session doesn't keep pointing at it.
 		MediaSessionCallback cb = MainActivityDelegate.get(requireContext()).getMediaSessionCallback();
 		if (cb.getEngine() instanceof YoutubeMediaEngine) cb.onStop();
+
+		// Also drop out of fullscreen first -- the video-view overlay outlives the WebView swap
+		// (it's reused via getOrCreateVideoViewOverlay()), so leaving it up would keep showing the
+		// old instance's last frame over a WebView that no longer has any content backing it.
+		FermataWebView v = getWebView();
+		if (v != null) {
+			FermataChromeClient chrome = v.getWebChromeClient();
+			if ((chrome != null) && chrome.isFullScreen()) chrome.exitFullScreen();
+		}
+
 		super.applyPrivateModeProfile();
+	}
+
+	@Override
+	protected String urlToLoadAfterProfileSwitch(FermataWebView old, WebBrowserAddon addon) {
+		// A Private Mode switch should always land on a clean homepage, even mid-video (including
+		// fullscreen playback) -- reloading the same video would undercut the fresh,
+		// no-recommendations session Private Mode is supposed to start.
+		return DEFAULT_URL;
 	}
 
 	// YouTube's fullscreen custom view used to live nested inside this fragment's own layout, so

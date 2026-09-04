@@ -376,7 +376,7 @@
     <string name="private_mode_sub">Browses YouTube and the web with a separate, isolated profile, so your normal signed-in session is never touched and needs no restoring when you turn this off</string>
     <string name="private_mode_on">Private Mode is on</string>
     <string name="private_mode_off">Private Mode is off</string>
-    <string name="private_mode_settings">Private Mode settings</string>
+    <string name="private_mode_settings">Privacy settings</string>
     <string name="youtube">YouTube</string>
     <string name="color_black">Black</string>
     <string name="color_blue_light">Blue light filter</string>
@@ -386,7 +386,7 @@
     <string name="color_yellow">Yellow</string>
     <string name="color_custom">Custom</string>
 
-    <string name="private_mode_prefs">Private Mode</string>
+    <string name="private_mode_prefs">Privacy</string>
     <string name="private_mode_always">Always use Private Mode</string>
     <string name="private_mode_always_sub">Browser and YouTube tabs start in Private Mode every time, even after restarting the app</string>
     <string name="private_mode_block_trackers">Block trackers &amp; ads</string>
@@ -396,6 +396,9 @@
     <string name="private_mode_clear_now">Clear private browsing data now</string>
     <string name="private_mode_clear_now_sub">Immediately clears cookies and site storage saved during Private Mode browsing. Your normal Browser/YouTube session is separate and is never affected</string>
     <string name="private_mode_cleared">Private browsing data cleared.</string>
+    <string name="clear_browsing_data">Clear browsing data</string>
+    <string name="clear_browsing_data_sub">Immediately clears cookies, cache and site storage for your regular (non-Private Mode) Browser and YouTube sessions. This does not affect Private Mode, which has its own separate data</string>
+    <string name="browsing_data_cleared">Browsing data cleared.</string>
 
     <string name="other">Other</string>
     <string name="check_updates">Check for updates on startup</string>

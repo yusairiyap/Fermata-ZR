@@ -807,6 +807,15 @@ public class SettingsFragment extends MainActivityFragment
 				UiUtils.showInfo(a.getContext(), R.string.private_mode_cleared);
 			};
 		});
+		sub1.addButton(o -> {
+			o.title = R.string.clear_browsing_data;
+			o.subtitle = R.string.clear_browsing_data_sub;
+			o.onClick = () -> {
+				Log.i("Clear browsing data: button tapped");
+				a.getPrefs().requestNormalDataClear();
+				UiUtils.showInfo(a.getContext(), R.string.browsing_data_cleared);
+			};
+		});
 
 		sub1 = set.subSet(o -> {
 			o.title = R.string.other;

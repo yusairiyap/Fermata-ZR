@@ -132,7 +132,7 @@ public class WebBrowserFragment extends MainActivityFragment
 		MainActivityPrefs mp = MainActivityPrefs.get();
 		if (PrivateProfile.matchesCurrentProfile(old, mp)) return;
 
-		String url = old.getUrl();
+		String url = urlToLoadAfterProfileSwitch(old, addon);
 		int index = parent.indexOfChild(old);
 		ViewGroup.LayoutParams lp = old.getLayoutParams();
 		Context ctx = root.getContext();
@@ -146,9 +146,17 @@ public class WebBrowserFragment extends MainActivityFragment
 			FermataWebView fresh = createWebView(ctx);
 			initWebView(fresh, addon, root);
 			parent.addView(fresh, index, lp);
-			fresh.loadUrl((url != null) ? url : addon.getLastUrl());
+			fresh.loadUrl(url);
 			overlay.watch(a);
 		});
+	}
+
+	/** The URL the freshly profile-switched WebView should load -- by default, whatever page was
+	 * open before the switch (falling back to the last-known URL), so a plain Browser-tab toggle
+	 * just continues where you were, now on the new profile. */
+	protected String urlToLoadAfterProfileSwitch(FermataWebView old, WebBrowserAddon addon) {
+		String url = old.getUrl();
+		return (url != null) ? url : addon.getLastUrl();
 	}
 
 	@Override
