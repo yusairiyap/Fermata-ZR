@@ -220,6 +220,16 @@ class YoutubeMediaEngine implements MediaEngine, OverlayMenu.SelectionHandler {
 		b.addItem(me.aap.fermata.R.id.video_scaling,
 				ResourcesCompat.getDrawable(r, R.drawable.video_scaling, ctx.getTheme()),
 				r.getString(me.aap.fermata.R.string.video_scaling)).setSubmenu(this::videoScalingMenu);
+		b.addItem(R.id.youtube_equalizer,
+				ResourcesCompat.getDrawable(r, me.aap.fermata.R.drawable.equalizer, ctx.getTheme()),
+				r.getString(me.aap.fermata.R.string.audio_effects)).setSubmenu(this::equalizerMenu);
+	}
+
+	private void equalizerMenu(OverlayMenu.Builder b) {
+		YoutubeEqualizerView v = new YoutubeEqualizerView(dynCtx(web.getContext()));
+		v.init(web);
+		b.setView(v);
+		b.setCloseHandlerHandler(m -> v.cleanup());
 	}
 
 	private FutureSupplier<Void> videoQualityMenu(OverlayMenu.Builder b) {
