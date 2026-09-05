@@ -2,10 +2,14 @@ package me.aap.fermata.addon.web;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.webkit.CookieManager;
+import android.webkit.WebStorage;
+import android.webkit.WebViewDatabase;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
+import androidx.webkit.Profile;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -23,6 +27,7 @@ import me.aap.utils.app.App;
 import me.aap.utils.function.BooleanSupplier;
 import me.aap.utils.function.IntSupplier;
 import me.aap.utils.function.Supplier;
+import me.aap.utils.log.Log;
 import me.aap.utils.misc.ChangeableCondition;
 import me.aap.utils.pref.PreferenceSet;
 import me.aap.utils.pref.PreferenceStore;
@@ -56,9 +61,132 @@ public class WebBrowserAddon implements FermataFragmentAddon, SharedPreferenceSt
 	private static final Pref<Supplier<String[]>> BOOKMARKS = Pref.sa("BOOKMARKS");
 	private final SharedPreferences prefs;
 	private boolean ignorePrefChange;
+	// EventBroadcaster keeps listeners via WeakReference (ListenerRef extends WeakReference<L>), so
+	// a bare `this::onPrivateModePrefsChanged` passed straight to addBroadcastListener() has nothing
+	// else holding it alive and gets garbage-collected shortly after this constructor returns --
+	// silently dropping the listener with no error. Keeping a strong reference in this field is what
+	// keeps it registered for the addon's whole lifetime.
+	private final PreferenceStore.Listener privateModeListener = this::onPrivateModePrefsChanged;
 
 	public WebBrowserAddon() {
 		prefs = App.get().getSharedPreferences("web", Context.MODE_PRIVATE);
+
+		// YoutubeAddon extends WebBrowserAddon, so this constructor runs once per addon subclass
+		// AddonManager instantiates -- and since "Web Browser" and "YouTube" are independently
+		// enabled (each has its own AddonInfo/enabledPref), a user can have YouTube on with the
+		// Browser tab off, so this can NOT be skipped for subclasses the way the WebBrowserAddon-only
+		// prefs in contributeSettings() are: it's the only registration a YouTube-only user gets.
+		// Running it twice (once per addon instance) is a bit redundant but harmless/idempotent.
+
+		// Registered here rather than in contributeSettings() (only wired up once the user actually
+		// opens Settings) so a Private Mode toggle flipped from the toolbar or the nav-bar menu -
+		// without ever visiting Settings - still clears/restores browsing data.
+		MainActivityPrefs.get().addBroadcastListener(privateModeListener);
+		Log.i("WebBrowserAddon: Private Mode listener registered");
+
+		// PRIVATE_MODE_ENABLED is a persisted pref (so a session left active while "Always" is on
+		// survives a restart), but Private Mode itself is meant to be a per-session thing when
+		// "Always" is off: closing the app while still private shouldn't leave the next launch
+		// stuck private with no normal session to go back to short of a manual toggle. This runs on
+		// every cold start, before any WebView exists, so the resulting restore (via the same path a
+		// manual toggle-off uses) finishes before anything actually loads a page.
+		MainActivityPrefs mp = MainActivityPrefs.get();
+		if (mp.isPrivateModeEnabled()) {
+			if (mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_ALWAYS)) {
+				// "Always" is meant to survive a restart, but each *session* still shouldn't carry over
+				// the last one's browsing -- real incognito starts every fresh window clean. Since
+				// PRIVATE_MODE_ENABLED is already true here, a plain toggle wouldn't broadcast a change
+				// (no value flip), so force a clear the same way the Settings "Clear now" button does,
+				// before any WebView exists to load a page with the stale data.
+				Log.i("Private Mode: still enabled via Always on cold start, clearing the previous " +
+						"session's data");
+				mp.requestPrivateDataClear();
+			} else {
+				Log.i("Private Mode: left enabled from a previous session but Always is off, disabling");
+				mp.setPrivateModeEnabled(false);
+			}
+		}
+	}
+
+	private void onPrivateModePrefsChanged(PreferenceStore store, List<Pref<?>> changed) {
+		if (changed.contains(MainActivityPrefs.NORMAL_MODE_CLEAR_REQUEST)) {
+			// Unlike the private profile, the Default profile is exactly what CookieManager.getInstance()
+			// / WebStorage.getInstance() already target -- clearSharedBrowsingData() is the right method
+			// here regardless of whether multi-profile is supported.
+			Log.i("Clearing normal (non-Private Mode) browsing data");
+			clearSharedBrowsingData(() -> {});
+		}
+
+		if (!changed.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED) &&
+				!changed.contains(MainActivityPrefs.PRIVATE_MODE_CLEAR_REQUEST)) {
+			return;
+		}
+
+		MainActivityPrefs mp = MainActivityPrefs.get();
+
+		// Keep "Always use Private Mode" honest: it's meant to reflect an active choice, not linger
+		// on once Private Mode has actually been turned off -- whether from the toolbar, a FAB, the
+		// nav-bar menu, or the Settings toggle itself (which writes PRIVATE_MODE_ENABLED directly,
+		// bypassing MainActivityPrefs.setPrivateModeEnabled(), so this broadcast reaction is the one
+		// place all of those paths funnel through).
+		if (changed.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED) && !mp.isPrivateModeEnabled()) {
+			mp.applyBooleanPref(MainActivityPrefs.PRIVATE_MODE_ALWAYS, false);
+		}
+
+		if (PrivateProfile.isSupported()) {
+			// The private profile is a separate, isolated cookie jar/storage that the default
+			// profile's WebViews never touch -- see PrivateProfile -- so there's nothing to restore
+			// on the way out, only the private profile's own leftovers to wipe on the way in (or on a
+			// manual "clear now"). WebBrowserFragment/YoutubeFragment are what actually rebind their
+			// WebView to the right profile, reacting to the PRIVATE_MODE_DATA_CLEARED_STAMP this
+			// bumps once that wipe has actually finished.
+			Log.i("Private Mode: clearing the private profile's cookies/storage");
+			clearPrivateProfileData(mp::notifyPrivateModeDataCleared);
+		} else {
+			// No isolated profile on this WebView version: fall back to clearing the single jar every
+			// WebView in the app shares. There's deliberately no attempt to restore it afterwards --
+			// Android's CookieManager can't read or write HttpOnly cookies, exactly the kind
+			// Google/YouTube use for actual sign-in, so a snapshot/restore here could never bring a
+			// real session back; better to be upfront that Private Mode signs you out until you sign
+			// in again manually, on these older WebView installs.
+			Log.i("Private Mode: multi-profile unsupported, clearing the shared cookie jar");
+			clearSharedBrowsingData(mp::notifyPrivateModeDataCleared);
+		}
+	}
+
+	/**
+	 * Wipes cookies and site storage for the isolated Private Mode profile only, then runs
+	 * {@code onDone}. {@link CookieManager#removeAllCookies} is asynchronous despite returning
+	 * immediately, so anything that must only happen once cookies are actually gone (e.g. a WebView
+	 * reloading a page that must come back with a clean slate) needs to wait for {@code onDone}
+	 * rather than running right after calling this method.
+	 */
+	private void clearPrivateProfileData(Runnable onDone) {
+		Profile p = PrivateProfile.get(true);
+		CookieManager cm = p.getCookieManager();
+		cm.removeAllCookies(cleared -> {
+			cm.flush();
+			p.getWebStorage().deleteAllData();
+			onDone.run();
+		});
+	}
+
+	/** Clears the Default profile's cookie jar/storage/form data -- i.e. the regular, non-Private
+	 * Mode browsing session. Used both for the Settings "Clear browsing data" action, and as
+	 * Private Mode's own fallback on WebView releases without {@link PrivateProfile#isSupported()},
+	 * where the Default profile is the only one there is. */
+	private void clearSharedBrowsingData(Runnable onDone) {
+		CookieManager cm = CookieManager.getInstance();
+		cm.removeAllCookies(cleared -> {
+			cm.flush();
+			WebStorage.getInstance().deleteAllData();
+			try {
+				WebViewDatabase.getInstance(FermataApplication.get()).clearFormData();
+			} catch (Exception ex) {
+				Log.e(ex, "Failed to clear WebView form data");
+			}
+			onDone.run();
+		});
 	}
 
 	@IdRes

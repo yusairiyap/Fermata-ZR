@@ -29,5 +29,9 @@ public class YoutubeToolBarMediator extends WebToolBarMediator {
 				me.aap.fermata.R.id.favorites, RIGHT);
 		addButton(tb, me.aap.fermata.R.drawable.playlist, v -> yt.showPlaylistsMenu(),
 				me.aap.fermata.R.id.playlists, RIGHT);
+		// super.enable() just set the raw URL as the address text; replace it with the video title
+		// (or "YouTube") as soon as it's available.
+		YoutubeWebView wv = yt.getWebView();
+		if (wv != null) wv.refreshAddressBarTitle();
 	}
 }

@@ -421,6 +421,13 @@ public class ToolBarView extends ConstraintLayout implements ActivityListener,
 				ConstraintLayout.LayoutParams lp = setLayoutParams(t, 0, WRAP_CONTENT);
 				lp.horizontalWeight = 2;
 				lp.endToEnd = PARENT_ID;
+				// The title is constrained to sit right after the back button (see enable()), which
+				// gives it natural breathing room whenever that button is visible. When the button is
+				// GONE (a root page), that constraint collapses to 0 and the title runs flush against
+				// the toolbar's edge; goneStartMargin only applies while the constrained-to view is
+				// GONE, so it fills in that gap without touching the back-button case.
+				float scale = ActivityDelegate.get(ctx).getToolBarSize();
+				lp.goneStartMargin = toIntPx(ctx, Math.round(16 * scale));
 				return t;
 			}
 

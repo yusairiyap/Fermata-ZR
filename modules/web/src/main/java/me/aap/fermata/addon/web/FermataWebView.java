@@ -40,6 +40,7 @@ import me.aap.fermata.BuildConfig;
 import me.aap.fermata.ui.activity.ZrAutoActivity;
 import me.aap.fermata.ui.activity.MainActivityDelegate;
 import me.aap.fermata.ui.activity.MainActivityListener;
+import me.aap.fermata.ui.activity.MainActivityPrefs;
 import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.log.Log;
 import me.aap.utils.pref.PreferenceStore;
@@ -94,10 +95,16 @@ public class FermataWebView extends WebView
 		s.setJavaScriptCanOpenWindowsAutomatically(true);
 
 		addJavascriptInterface(createJsInterface(), FermataJsInterface.NAME);
-		CookieManager.getInstance().setAcceptThirdPartyCookies(this, true);
 
 		addon.getPreferenceStore().addBroadcastListener(this);
+		MainActivityPrefs.get().addBroadcastListener(this);
 		getActivity().onSuccess(a -> a.addBroadcastListener(this));
+
+		// "Always use Private Mode" is enforced by WebBrowserAddon's constructor and
+		// MainActivity.onResume() -- both settle PRIVATE_MODE_ENABLED before any fragment/WebView
+		// exists, so by the time this runs, WebViewCompat.setProfile() (already called on this
+		// instance by WebBrowserFragment/YoutubeFragment before init()) already used the right value.
+		applyPrivateModeCookiePolicy();
 
 		setDesktopMode(addon, false);
 		setForceDark(addon, false);
@@ -111,6 +118,12 @@ public class FermataWebView extends WebView
 
 	@Override
 	public void onPreferenceChanged(PreferenceStore store, List<PreferenceStore.Pref<?>> prefs) {
+		if (prefs.contains(MainActivityPrefs.PRIVATE_MODE_ENABLED) ||
+				prefs.contains(MainActivityPrefs.PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES)) {
+			applyPrivateModeCookiePolicy();
+			return;
+		}
+
 		WebBrowserAddon a = getAddon();
 		if (a == null) return;
 
@@ -127,10 +140,32 @@ public class FermataWebView extends WebView
 		}
 	}
 
+	private void applyPrivateModeCookiePolicy() {
+		MainActivityPrefs mp = MainActivityPrefs.get();
+		boolean blockThirdParty = mp.isPrivateModeEnabled() &&
+				mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_BLOCK_3RD_PARTY_COOKIES);
+		currentCookieManager().setAcceptThirdPartyCookies(this, !blockThirdParty);
+	}
+
+	/**
+	 * The {@code CookieManager} for whichever profile this WebView is actually bound to. Plain
+	 * {@code CookieManager.getInstance()} always targets the default profile's cookie jar --
+	 * calling it directly here would silently misconfigure a WebView bound to the Private Mode
+	 * profile (see {@link PrivateProfile}) instead of leaving its own jar alone.
+	 */
+	protected CookieManager currentCookieManager() {
+		if (PrivateProfile.isSupported()) {
+			androidx.webkit.Profile p = androidx.webkit.WebViewCompat.getProfile(this);
+			if (p != null) return p.getCookieManager();
+		}
+		return CookieManager.getInstance();
+	}
+
 	@Override
 	public void onActivityEvent(MainActivityDelegate a, long e) {
 		if (handleActivityDestroyEvent(a, e)) {
 			getAddon().getPreferenceStore().removeBroadcastListener(this);
+			MainActivityPrefs.get().removeBroadcastListener(this);
 		}
 	}
 
@@ -235,7 +270,10 @@ public class FermataWebView extends WebView
 				wm.setButtonsVisibility(tb, canGoBack(), canGoForward());
 			}
 
-			CookieManager.getInstance().flush();
+			// Safe to always flush now, even in Private Mode: this targets whichever profile's cookie
+			// jar this WebView is actually bound to, and the private profile's jar is wiped on its own
+			// on the next entry (or on a manual "clear now") regardless of what's flushed to it here.
+			currentCookieManager().flush();
 		});
 	}
 

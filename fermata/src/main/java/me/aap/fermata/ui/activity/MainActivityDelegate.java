@@ -35,6 +35,7 @@ import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB3_ENABLED;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB_DRAGGABLE;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.FAB_SIZE;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.LOCALE;
+import static me.aap.fermata.ui.activity.MainActivityPrefs.PRIVATE_MODE_ENABLED;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROL_SUBST;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROl_ENABLED;
 import static me.aap.fermata.ui.activity.MainActivityPrefs.VOICE_CONTROl_FB;
@@ -1275,6 +1276,11 @@ public class MainActivityDelegate extends ActivityDelegate
 			if (prefs.contains(DIM_ENABLED) && (floatingButton2 != null)) {
 				fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
 			}
+		} else if (prefs.contains(PRIVATE_MODE_ENABLED)) {
+			// Keeps FAB2/FAB3's icon (when bound to "Private Mode toggle") and the browser/YouTube
+			// toolbar's private-mode button in sync with changes made from Settings, the nav-bar menu,
+			// or another FAB, not just whichever surface was actually tapped.
+			fireBroadcastEvent(FRAGMENT_CONTENT_CHANGED);
 		} else if (prefs.contains(FAB2_ENABLED)) {
 			updateSecondaryFabVisibility();
 		} else if (prefs.contains(FAB2_ACTION)) {

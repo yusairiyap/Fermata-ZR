@@ -59,6 +59,7 @@ import me.aap.fermata.media.lib.DefaultMediaLib;
 import me.aap.fermata.media.lib.MediaLib;
 import me.aap.fermata.media.lib.MediaLib.PlayableItem;
 import me.aap.fermata.media.pref.PlaybackControlPrefs;
+import me.aap.fermata.ui.activity.MainActivityPrefs;
 import me.aap.fermata.util.Utils;
 import me.aap.utils.app.App;
 import me.aap.utils.log.Log;
@@ -160,6 +161,22 @@ public class FermataMediaService extends MediaBrowserServiceCompat {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		MediaButtonReceiver.handleIntent(session, intent);
 		return super.onStartCommand(intent, flags, startId);
+	}
+
+	@Override
+	public void onTaskRemoved(Intent rootIntent) {
+		super.onTaskRemoved(rootIntent);
+		// The user swiping the app away from Recents is the closest thing to "exiting the app" on
+		// Android, but a foreground playback notification (see updateNotification()) can keep this
+		// service -- and the whole process, private-profile cookies included -- alive well past
+		// that. Without this, "Always use Private Mode" would only ever look like it starts a fresh
+		// session on an actual cold start (the process having been killed for some other reason),
+		// not on what the user experiences as closing and reopening the app.
+		MainActivityPrefs mp = MainActivityPrefs.get();
+		if (mp.isPrivateModeEnabled() && mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_ALWAYS)) {
+			Log.i("Private Mode: app task removed while still enabled via Always, clearing session");
+			mp.requestPrivateDataClear();
+		}
 	}
 
 	@Override

@@ -155,6 +155,17 @@ public class MainActivity extends SplitCompatActivityBase
 	protected void onResume() {
 		super.onResume();
 		activeInstance = this;
+
+		// Fragment switches within the app never pause/resume the Activity -- only actually leaving
+		// it (home button, task switcher, another app taking focus) does -- so this is the signal for
+		// "the user came back to the app" that Private Mode without "Always" needs: it's meant to be
+		// gone the moment they've stepped away, not just when the process happens to get killed (a
+		// background app is normally left running, so WebBrowserAddon's own constructor-time check
+		// only catches an actual cold start / force-stop, not this far more common case).
+		MainActivityPrefs mp = MainActivityPrefs.get();
+		if (mp.isPrivateModeEnabled() && !mp.getBooleanPref(MainActivityPrefs.PRIVATE_MODE_ALWAYS)) {
+			mp.setPrivateModeEnabled(false);
+		}
 	}
 
 	@Override
