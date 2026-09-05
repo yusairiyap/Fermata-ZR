@@ -881,6 +881,8 @@ public class ControlPanelView extends ConstraintLayout
 				// the in-place toggles above.
 				b.addItem(R.id.dim_settings, R.drawable.settings, R.string.dim_settings);
 			}
+
+			eng.contributeToMenuEnd(b);
 		}
 
 		private void buildRepeatMenu(OverlayMenu.Builder b) {

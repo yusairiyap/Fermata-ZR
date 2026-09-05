@@ -61,12 +61,12 @@
 
     <style name="AppTheme.EqualizerStyle">
         <item name="android:textColor">?android:attr/textColorSecondary</item>
-        <item name="tint">?attr/colorOnSecondary</item>
+        <item name="tint">?attr/colorControlActivated</item>
         <item name="android:progressDrawable">@drawable/slider_track_thin</item>
         <item name="android:thumb">@drawable/slider_thumb_small</item>
         <item name="android:splitTrack">false</item>
-        <item name="android:thumbTint">?attr/colorOnSecondary</item>
-        <item name="android:progressTint">?attr/colorOnSecondary</item>
+        <item name="android:thumbTint">?attr/colorControlActivated</item>
+        <item name="android:progressTint">?attr/colorControlActivated</item>
         <item name="android:secondaryProgressTint">?android:attr/textColorHint</item>
     </style>
 

@@ -51,7 +51,7 @@ final class YoutubeEqualizerScript {
 		}
 
 		sb.append("],\"bassEnabled\":").append(addon.bassEnabled())
-				.append(",\"bassGain\":").append(addon.bassStrength() * 15f / 1000f)
+				.append(",\"bassGain\":").append(addon.bassStrength() * 18f / 1000f)
 				.append(",\"virtEnabled\":").append(addon.virtEnabled())
 				.append(",\"virtStrength\":").append(addon.virtStrength() / 1000f)
 				.append('}');

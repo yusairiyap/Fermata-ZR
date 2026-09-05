@@ -2,7 +2,7 @@
   if (window.FermataEqualizer) return;
 
   const BAND_FREQS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
-  const BASS_FREQ = 150;
+  const BASS_FREQ = 200;
   const VIRT_MAX_DELAY = 0.03;
 
   const state = {

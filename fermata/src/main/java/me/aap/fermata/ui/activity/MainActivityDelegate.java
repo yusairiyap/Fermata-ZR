@@ -872,6 +872,12 @@ public class MainActivityDelegate extends ActivityDelegate
 	@Nullable
 	@Override
 	public ActivityFragment showFragment(int id, Object input) {
+		// A WebView-hosted player's (YouTube's) native fullscreen is drawn as its own overlay on
+		// the activity root, entirely outside BodyLayout's video mode -- leave it first so the
+		// fragment about to be shown isn't left hidden underneath it (matches what dim_settings'
+		// own explicit exitVideoMode() call already does for that one menu item).
+		VideoView v = getActiveVideoView();
+		if (v != null) v.exitNativeFullscreen();
 		BodyLayout b = getBody();
 		if (b.isVideoMode()) b.setMode(BodyLayout.Mode.BOTH);
 		ActivityFragment f = super.showFragment(id, input);
