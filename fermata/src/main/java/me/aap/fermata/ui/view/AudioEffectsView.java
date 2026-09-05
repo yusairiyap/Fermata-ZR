@@ -339,24 +339,32 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 			}
 		}
 
+		boolean hasEffects = (bass != null) || (virt != null) || (le != null) || (reverb != null);
+		if (!hasEffects) {
+			hide(R.id.effects_title, R.id.equalizer_effects_scroll);
+			return;
+		}
+
+		LinearLayout effects = findViewById(R.id.equalizer_effects);
+
 		if (bass != null) {
-			addEffectChannel(inflater, channels, R.string.bass_boost, () -> bass,
+			addEffectChannel(inflater, effects, R.string.bass_boost, () -> bass,
 					bass::getRoundedStrength, bass::setStrength);
 		}
 
 		if (virt != null) {
-			addEffectChannel(inflater, channels, R.string.virtualizer, () -> virt,
+			addEffectChannel(inflater, effects, R.string.virtualizer, () -> virt,
 					virt::getRoundedStrength, virt::setStrength);
 		}
 
 		if (le != null) {
-			addEffectChannel(inflater, channels, R.string.vol_boost, () -> le,
+			addEffectChannel(inflater, effects, R.string.vol_boost, () -> le,
 					() -> (int) (le.getTargetGain() / 10), g -> le.setTargetGain(g * 10));
 		}
 
 		if (reverb != null) {
 			reverbLevel = getAppliedIntPref(pi, ctrlPrefs, MediaPrefs.REVERB_STRENGTH);
-			addReverbChannel(inflater, channels, reverb);
+			addReverbChannel(inflater, effects, reverb);
 		}
 	}
 

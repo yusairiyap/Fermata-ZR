@@ -115,6 +115,7 @@ final class YoutubeEqualizerView extends android.widget.ScrollView implements Pr
 
 	private void createChannels(YoutubeAddon addon) {
 		LinearLayout channels = findViewById(me.aap.fermata.R.id.equalizer_channels);
+		LinearLayout effects = findViewById(me.aap.fermata.R.id.equalizer_effects);
 		LayoutInflater inflater = LayoutInflater.from(getContext());
 		int[] bands = addon.eqBands();
 		int range = YoutubeEqualizerPresets.BAND_MAX - YoutubeEqualizerPresets.BAND_MIN;
@@ -125,11 +126,11 @@ final class YoutubeEqualizerView extends android.widget.ScrollView implements Pr
 			bindBandChannel(ch, i, bands, range);
 		}
 
-		addEffectChannel(inflater, channels, me.aap.fermata.R.string.bass_boost, addon.bassEnabled(),
+		addEffectChannel(inflater, effects, me.aap.fermata.R.string.bass_boost, addon.bassEnabled(),
 				addon.bassStrength(), addon::setBassEnabled, addon::setBassStrength);
-		addEffectChannel(inflater, channels, me.aap.fermata.R.string.virtualizer, addon.virtEnabled(),
+		addEffectChannel(inflater, effects, me.aap.fermata.R.string.virtualizer, addon.virtEnabled(),
 				addon.virtStrength(), addon::setVirtEnabled, addon::setVirtStrength);
-		addEffectChannel(inflater, channels, me.aap.fermata.R.string.live_hall, addon.reverbEnabled(),
+		addEffectChannel(inflater, effects, me.aap.fermata.R.string.live_hall, addon.reverbEnabled(),
 				addon.reverbStrength(), addon::setReverbEnabled, addon::setReverbStrength);
 	}
 
