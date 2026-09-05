@@ -839,6 +839,20 @@ public class MainActivityDelegate extends ActivityDelegate
 		return videoMode;
 	}
 
+	public boolean isCompactPlayerMode() {
+		return getPrefs().getCompactMediaPlayerPref();
+	}
+
+	public void setCompactPlayerMode(boolean enabled) {
+		if (isCompactPlayerMode() == enabled) return;
+		getPrefs().setCompactMediaPlayerPref(enabled);
+		recreate();
+	}
+
+	public boolean hasActiveVideo() {
+		return videoMode;
+	}
+
 	public void setContentLoading(FutureSupplier<?> contentLoading) {
 		if (this.contentLoading != null) {
 			this.contentLoading.cancel();
@@ -1190,6 +1204,13 @@ public class MainActivityDelegate extends ActivityDelegate
 	@LayoutRes
 	private int getLayout() {
 		MainActivityPrefs prefs = getPrefs();
+		if (prefs.getCompactMediaPlayerPref()) {
+			return switch (prefs.getNavBarPosPref(this)) {
+				case NavBarView.POSITION_LEFT -> R.layout.media_player_compact_left;
+				case NavBarView.POSITION_RIGHT -> R.layout.media_player_compact_right;
+				default -> R.layout.media_player_compact;
+			};
+		}
 		return switch (prefs.getNavBarPosPref(this)) {
 			case NavBarView.POSITION_LEFT -> R.layout.main_activity_left;
 			case NavBarView.POSITION_RIGHT -> R.layout.main_activity_right;
@@ -1222,6 +1243,8 @@ public class MainActivityDelegate extends ActivityDelegate
 		if (MainActivityPrefs.hasThemePref(this, prefs)) {
 			recreate();
 		} else if (MainActivityPrefs.hasNavBarPosPref(this, prefs)) {
+			recreate();
+		} else if (prefs.contains(MainActivityPrefs.COMPACT_MEDIA_PLAYER)) {
 			recreate();
 		} else if (prefs.contains(FAB_SIZE)) {
 			if (floatingButton != null) floatingButton.setScale(getPrefs().getFabSizePref());

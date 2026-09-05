@@ -98,6 +98,7 @@
     <string name="action_fullscreen_toggle">Toggle fullscreen</string>
     <string name="action_dim_toggle">Toggle dim screen</string>
     <string name="action_private_mode_toggle">Toggle Private Mode</string>
+    <string name="action_compact_player_toggle">Toggle Compact Player</string>
     <string name="action_activate_voice_ctrl">Activate voice control</string>
     <string name="action_menu">Menu</string>
     <string name="action_cp_menu">Control panel menu</string>

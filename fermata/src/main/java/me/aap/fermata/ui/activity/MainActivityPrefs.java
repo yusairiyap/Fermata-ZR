@@ -142,6 +142,7 @@ public interface MainActivityPrefs
 	Pref<DoubleSupplier> TEXT_ICON_SIZE_AA = AUTO ? Pref.f("TEXT_ICON_SIZE_AA", 1f) : null;
 	Pref<DoubleSupplier> ICON_SIZE_AA = AUTO ? Pref.f("ICON_SIZE_AA", 1f) : null;
 	Pref<BooleanSupplier> GRID_VIEW_AA = AUTO ? Pref.b("GRID_VIEW_AA", false) : null;
+	Pref<BooleanSupplier> COMPACT_MEDIA_PLAYER = Pref.b("COMPACT_MEDIA_PLAYER", false);
 
 	static MainActivityPrefs get() {
 		return MainActivityDelegate.Prefs.instance;
@@ -283,6 +284,14 @@ public interface MainActivityPrefs
 
 	default void setGridViewPref(MainActivityDelegate a, boolean value) {
 		applyBooleanPref(getGridViewPrefKey(a), value);
+	}
+
+	default boolean getCompactMediaPlayerPref() {
+		return getBooleanPref(COMPACT_MEDIA_PLAYER);
+	}
+
+	default void setCompactMediaPlayerPref(boolean value) {
+		applyBooleanPref(COMPACT_MEDIA_PLAYER, value);
 	}
 
 	default float getFabSizePref() {

@@ -70,6 +70,11 @@ public enum Action {
 					!a.getPrefs().getBooleanPref(MainActivityPrefs.DIM_ENABLED)))),
 	PRIVATE_MODE_TOGGLE(R.string.action_private_mode_toggle, a(a ->
 			a.getPrefs().setPrivateModeEnabled(!a.getPrefs().isPrivateModeEnabled()))),
+	COMPACT_PLAYER_TOGGLE(R.string.action_compact_player_toggle, a(a -> {
+		if (a.hasActiveVideo()) {
+			a.setCompactPlayerMode(!a.isCompactPlayerMode());
+		}
+	})),
 	;
 
 	private static final List<Action> all = unmodifiableList(asList(values()));
