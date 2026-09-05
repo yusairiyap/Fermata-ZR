@@ -636,6 +636,15 @@ public class MainActivityDelegate extends ActivityDelegate
 	}
 
 	@Override
+	public void onBackPressed() {
+		if (isCompactPlayerMode() && hasActiveVideo()) {
+			setCompactPlayerMode(false);
+			return;
+		}
+		super.onBackPressed();
+	}
+
+	@Override
 	public float getTextIconSize() {
 		return getPrefs().getTextIconSizePref(this);
 	}
