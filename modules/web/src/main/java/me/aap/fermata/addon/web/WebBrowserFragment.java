@@ -203,6 +203,26 @@ public class WebBrowserFragment extends MainActivityFragment
 		}));
 	}
 
+	/**
+	 * Best-effort recovery for an Android Auto display takeover (e.g. a car's camera overlay
+	 * briefly taking the screen) that doesn't route through normal Activity/Fragment
+	 * onPause()/onResume() -- see {@code MainCarActivity.onWindowFocusChanged}. Unlike
+	 * onPause()/onResume() above, this fires only on the "we're back" signal and does the full
+	 * exit+enter fullscreen rebuild in one shot, so it's a no-op if that signal never fires -- no
+	 * risk of leaving the user stuck out of fullscreen from a routine, harmless focus blip.
+	 */
+	public void rebuildFullscreenVideoIfActive() {
+		if (!BuildConfig.AUTO) return;
+		FermataWebView v = getWebView();
+		if (v == null) return;
+		FermataChromeClient chrome = v.getWebChromeClient();
+		if ((chrome == null) || !chrome.isFullScreen()) return;
+		v.onResume();
+		chrome.exitFullScreen();
+		MainActivityDelegate.getActivityDelegate(getContext())
+				.onSuccess(a -> a.post(chrome::enterFullScreen));
+	}
+
 	protected void registerListeners(MainActivityDelegate a) {
 		a.addBroadcastListener(this, MainActivityListener.ACTIVITY_DESTROY);
 		MainActivityPrefs.get().addBroadcastListener(privateModeListener = (store, prefs) -> {
