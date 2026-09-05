@@ -9,6 +9,7 @@ import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.media.PlaybackParams;
+import android.media.audiofx.PresetReverb;
 import android.net.Uri;
 
 import androidx.annotation.NonNull;
@@ -34,6 +35,7 @@ public class MediaPlayerEngine extends MediaEngineBase
 	private final MediaPlayer player;
 	private final AudioEffects audioEffects;
 	private PlayableItem source;
+	private float auxSendLevel;
 
 	public MediaPlayerEngine(Context ctx, Listener listener) {
 		super(listener);
@@ -76,10 +78,39 @@ public class MediaPlayerEngine extends MediaEngineBase
 			} else {
 				player.setDataSource(ctx, u);
 			}
+			attachAuxEffect();
 			player.prepareAsync();
 		} catch (Exception ex) {
 			listener.onEngineError(this, ex);
 			this.source = null;
+		}
+	}
+
+	/**
+	 * {@code MediaPlayer.attachAuxEffect()} is only valid between {@code setDataSource()} and
+	 * {@code prepareAsync()}, and is lost on every {@code player.reset()} (called at the top of
+	 * every {@link #prepare}), so it has to be re-attached here on every prepare rather than once.
+	 */
+	private void attachAuxEffect() {
+		if (audioEffects == null) return;
+		PresetReverb reverb = audioEffects.getPresetReverb();
+		if (reverb == null) return;
+
+		try {
+			player.attachAuxEffect(reverb.getId());
+			player.setAuxEffectSendLevel(auxSendLevel);
+		} catch (Exception ex) {
+			Log.e(ex, "Failed to attach aux effect");
+		}
+	}
+
+	@Override
+	public void setAuxEffectSendLevel(float level) {
+		auxSendLevel = level;
+		try {
+			player.setAuxEffectSendLevel(level);
+		} catch (Exception ex) {
+			Log.e(ex, "Failed to set aux effect send level");
 		}
 	}
 

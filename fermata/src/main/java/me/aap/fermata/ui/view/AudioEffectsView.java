@@ -16,22 +16,26 @@ import android.media.audiofx.AudioEffect;
 import android.media.audiofx.BassBoost;
 import android.media.audiofx.Equalizer;
 import android.media.audiofx.LoudnessEnhancer;
+import android.media.audiofx.PresetReverb;
 import android.media.audiofx.Virtualizer;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.appcompat.widget.AppCompatSeekBar;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import me.aap.fermata.R;
 import me.aap.fermata.media.engine.AudioEffects;
@@ -65,6 +69,12 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 	private PreferenceStore ctrlPrefs;
 	@Nullable
 	private AudioEffects effects;
+	@Nullable
+	private MediaSessionCallback cb;
+	// PresetReverb has no strength getter (its "amount" is the player's aux send level, which lives
+	// on the engine, not the effect) -- tracked locally instead so it can still be persisted/restored
+	// the same way the other effects' strengths are read directly off their AudioEffect objects.
+	private int reverbLevel;
 
 	public AudioEffectsView(Context context) {
 		this(context, null);
@@ -82,19 +92,21 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 	}
 
 	public void init(MediaSessionCallback cb, AudioEffects effects, PlayableItem pi) {
+		this.cb = cb;
 		this.effects = effects;
 		this.store = new BasicPreferenceStore();
 		this.store.addBroadcastListener(this);
+		this.ctrlPrefs = cb.getPlaybackControlPrefs();
 		inflate(getContext(), R.layout.audio_effects, this);
 
 		Equalizer eq = effects.getEqualizer();
 		Virtualizer virt = effects.getVirtualizer();
 		BassBoost bass = effects.getBassBoost();
 		LoudnessEnhancer le = effects.getLoudnessEnhancer();
+		PresetReverb reverb = effects.getPresetReverb();
 
-		// Equalizer
+		// Equalizer header: master switch + presets
 		if (eq != null) {
-			ctrlPrefs = cb.getPlaybackControlPrefs();
 			short numPresets = eq.getNumberOfPresets();
 			String[] userPresets = ctrlPrefs.getStringArrayPref(MediaPrefs.EQ_USER_PRESETS);
 			String[] presetNames = new String[numPresets + userPresets.length + 1];
@@ -104,7 +116,6 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 			configureSwitch(findViewById(R.id.equalizer_switch), () -> eq);
 			findViewById(R.id.equalizer_preset_save).setOnClickListener(this::savePreset);
 			findViewById(R.id.equalizer_preset_delete).setOnClickListener(this::deletePreset);
-			createBands(eq);
 
 			presetNames[0] = getResources().getString(R.string.eq_manual);
 
@@ -129,14 +140,11 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 
 			store.applyIntPref(MediaPrefs.EQ_PRESET, preset);
 		} else {
-			hide(R.id.equalizer, R.id.equalizer_title, R.id.equalizer_switch);
+			hide(R.id.equalizer_switch, R.id.equalizer_preset);
 		}
 
-		// Virtualizer
+		// Virtualizer mode dropdown (header)
 		if (virt != null) {
-			configureSwitch(findViewById(R.id.virtualizer_switch), () -> virt);
-			configureSeek(findViewById(R.id.virtualizer_seek), virt::getRoundedStrength, virt::setStrength);
-
 			PreferenceView pref = findViewById(R.id.virtualizer_mode);
 			pref.setPreference(null, () -> {
 				ListOpts o = new ListOpts();
@@ -150,25 +158,10 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 				return o;
 			});
 		} else {
-			hide(R.id.virtualizer, R.id.virtualizer_title, R.id.virtualizer_switch);
+			hide(R.id.virtualizer_mode);
 		}
 
-		// BassBoost
-		if (bass != null) {
-			configureSwitch(findViewById(R.id.bass_switch), () -> bass);
-			configureSeek(findViewById(R.id.bass_seek), bass::getRoundedStrength, bass::setStrength);
-		} else {
-			hide(R.id.bass, R.id.bass_title, R.id.bass_switch);
-		}
-
-		// LoudnessEnhancer
-		if (le != null) {
-			configureSwitch(findViewById(R.id.vol_boost_switch), () -> le);
-			configureSeek(findViewById(R.id.vol_boost_seek), () -> (int) (le.getTargetGain() / 10),
-					g -> le.setTargetGain(g * 10));
-		} else {
-			hide(R.id.vol_boost, R.id.vol_boost_title, R.id.vol_boost_switch);
-		}
+		createChannels(eq, virt, bass, le, reverb, pi, ctrlPrefs);
 
 		// Apply to
 		if (pi.getPrefs().getBooleanPref(AE_ENABLED)) {
@@ -201,6 +194,8 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 		store = null;
 		ctrlPrefs = null;
 		effects = null;
+		cb = null;
+		reverbLevel = 0;
 	}
 
 	public void apply(MediaSessionCallback cb) {
@@ -241,6 +236,7 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 			Virtualizer virt = requireNonNull(effects.getVirtualizer());
 			BassBoost bass = requireNonNull(effects.getBassBoost());
 			LoudnessEnhancer le = requireNonNull(effects.getLoudnessEnhancer());
+			PresetReverb reverb = effects.getPresetReverb();
 			boolean enabled = false;
 
 			if (eq.getEnabled()) {
@@ -293,6 +289,17 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 				e.removePref(MediaPrefs.VOL_BOOST_STRENGTH);
 			}
 
+			if (reverb != null) {
+				if (reverb.getEnabled()) {
+					enabled = true;
+					e.setBooleanPref(MediaPrefs.REVERB_ENABLED, true);
+					e.setIntPref(MediaPrefs.REVERB_STRENGTH, reverbLevel);
+				} else {
+					e.removePref(MediaPrefs.REVERB_ENABLED);
+					e.removePref(MediaPrefs.REVERB_STRENGTH);
+				}
+			}
+
 			if (enabled) e.setBooleanPref(AE_ENABLED, true);
 			else e.removePref(AE_ENABLED);
 		}
@@ -311,85 +318,164 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 			e.removePref(MediaPrefs.BASS_STRENGTH);
 			e.removePref(MediaPrefs.VOL_BOOST_ENABLED);
 			e.removePref(MediaPrefs.VOL_BOOST_STRENGTH);
+			e.removePref(MediaPrefs.REVERB_ENABLED);
+			e.removePref(MediaPrefs.REVERB_STRENGTH);
 		}
 	}
 
-	private void createBands(Equalizer eq) {
-		short[] range = eq.getBandLevelRange();
-		int sbMax = range[1] - range[0];
-		String minText = String.valueOf(range[0] / 100);
-		String maxText = String.valueOf(range[1] / 100);
-		ViewGroup bands = findViewById(R.id.equalizer_bands);
+	private void createChannels(@Nullable Equalizer eq, @Nullable Virtualizer virt,
+															 @Nullable BassBoost bass, @Nullable LoudnessEnhancer le,
+															 @Nullable PresetReverb reverb, PlayableItem pi,
+															 PreferenceStore ctrlPrefs) {
+		LinearLayout channels = findViewById(R.id.equalizer_channels);
 		LayoutInflater inflater = LayoutInflater.from(getContext());
 
-		for (short n = eq.getNumberOfBands(), i = 0; i < n; i++) {
-			inflater.inflate(R.layout.equalizer_band, bands);
-			ViewGroup bandView = (ViewGroup) bands.getChildAt(i);
-			TextView label = bandView.findViewById(R.id.eq_band_title);
-			AppCompatSeekBar sb = bandView.findViewById(R.id.eq_band_seek);
-			TextView min = bandView.findViewById(R.id.eq_band_min);
-			TextView max = bandView.findViewById(R.id.eq_band_max);
-			float freq = (float) eq.getCenterFreq(i) / 1000;
-			short band = i;
-			sb.setMax(sbMax);
-			sb.setProgress(eq.getBandLevel(i) - range[0]);
-			min.setText(minText);
-			max.setText(maxText);
-			sb.setOnSeekBarChangeListener(new SeekBarListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					runWithRetry(() -> eqBandChanged(eq, band, progress, fromUser));
-				}
-			});
-
-			if (freq >= 1000) {
-				freq /= 1000;
-				String strFreq = String.format((freq == Math.floor(freq)) ? "%.0f" : "%.1f", freq);
-				label.setText(getResources().getString(R.string.eq_khz, strFreq));
-			} else {
-				label.setText(getResources().getString(R.string.eq_hz, String.valueOf((int) freq)));
+		if (eq != null) {
+			short[] range = eq.getBandLevelRange();
+			for (short n = eq.getNumberOfBands(), i = 0; i < n; i++) {
+				View ch = inflater.inflate(R.layout.equalizer_channel, channels, false);
+				channels.addView(ch);
+				bindBandChannel(ch, eq, i, range);
 			}
 		}
+
+		if (bass != null) {
+			addEffectChannel(inflater, channels, R.string.bass_boost, () -> bass,
+					bass::getRoundedStrength, bass::setStrength);
+		}
+
+		if (virt != null) {
+			addEffectChannel(inflater, channels, R.string.virtualizer, () -> virt,
+					virt::getRoundedStrength, virt::setStrength);
+		}
+
+		if (le != null) {
+			addEffectChannel(inflater, channels, R.string.vol_boost, () -> le,
+					() -> (int) (le.getTargetGain() / 10), g -> le.setTargetGain(g * 10));
+		}
+
+		if (reverb != null) {
+			reverbLevel = getAppliedIntPref(pi, ctrlPrefs, MediaPrefs.REVERB_STRENGTH);
+			addReverbChannel(inflater, channels, reverb);
+		}
+	}
+
+	private void bindBandChannel(View ch, Equalizer eq, short band, short[] range) {
+		TextView value = ch.findViewById(R.id.eq_channel_value);
+		TextView label = ch.findViewById(R.id.eq_channel_label);
+		AppCompatSeekBar sb = ch.findViewById(R.id.eq_channel_seek);
+		int sbMax = range[1] - range[0];
+		short level = eq.getBandLevel(band);
+
+		value.setText(formatDb(level));
+		sb.setMax(sbMax);
+		sb.setProgress(level - range[0]);
+		sb.setOnSeekBarChangeListener(new SeekBarListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				value.setText(formatDb((short) (progress + range[0])));
+				runWithRetry(() -> eqBandChanged(eq, band, progress, fromUser));
+			}
+		});
+
+		float freq = (float) eq.getCenterFreq(band) / 1000;
+		if (freq >= 1000) {
+			freq /= 1000;
+			String strFreq = String.format((freq == Math.floor(freq)) ? "%.0f" : "%.1f", freq);
+			label.setText(getResources().getString(R.string.eq_khz, strFreq));
+		} else {
+			label.setText(getResources().getString(R.string.eq_hz, String.valueOf((int) freq)));
+		}
+	}
+
+	private void addEffectChannel(LayoutInflater inflater, ViewGroup parent, @StringRes int labelRes,
+																 Supplier<AudioEffect> effect, IntSupplier get, ShortConsumer set) {
+		View ch = inflater.inflate(R.layout.equalizer_channel, parent, false);
+		parent.addView(ch);
+
+		CompoundButton sw = ch.findViewById(R.id.eq_channel_switch);
+		TextView value = ch.findViewById(R.id.eq_channel_value);
+		TextView label = ch.findViewById(R.id.eq_channel_label);
+		AppCompatSeekBar sb = ch.findViewById(R.id.eq_channel_seek);
+
+		sw.setVisibility(VISIBLE);
+		configureSwitch(sw, effect);
+
+		label.setText(labelRes);
+		int initial = get.getAsInt();
+		value.setText(formatPercent(initial));
+		sb.setMax(1000);
+		sb.setProgress(initial);
+		sb.setOnSeekBarChangeListener(new SeekBarListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				value.setText(formatPercent(progress));
+				if (fromUser) runWithRetry(() -> set.accept((short) progress));
+			}
+		});
+	}
+
+	private void addReverbChannel(LayoutInflater inflater, ViewGroup parent, PresetReverb reverb) {
+		View ch = inflater.inflate(R.layout.equalizer_channel, parent, false);
+		parent.addView(ch);
+
+		CompoundButton sw = ch.findViewById(R.id.eq_channel_switch);
+		TextView value = ch.findViewById(R.id.eq_channel_value);
+		TextView label = ch.findViewById(R.id.eq_channel_label);
+		AppCompatSeekBar sb = ch.findViewById(R.id.eq_channel_seek);
+
+		sw.setVisibility(VISIBLE);
+		configureSwitch(sw, () -> reverb);
+
+		label.setText(R.string.live_hall);
+		value.setText(formatPercent(reverbLevel));
+		sb.setMax(1000);
+		sb.setProgress(reverbLevel);
+		sb.setOnSeekBarChangeListener(new SeekBarListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				value.setText(formatPercent(progress));
+				if (!fromUser) return;
+				reverbLevel = progress;
+				MediaEngine eng = (cb != null) ? cb.getEngine() : null;
+				if (eng != null) eng.setAuxEffectSendLevel(progress / 1000f);
+			}
+		});
 	}
 
 	private void setBandValues(Equalizer eq) {
 		short[] range = eq.getBandLevelRange();
-		ViewGroup bandsView = findViewById(R.id.equalizer_bands);
+		LinearLayout channels = findViewById(R.id.equalizer_channels);
 
 		for (short n = eq.getNumberOfBands(), i = 0; i < n; i++) {
-			ViewGroup band = (ViewGroup) bandsView.getChildAt(i);
-			AppCompatSeekBar sb = band.findViewById(R.id.eq_band_seek);
-			sb.setProgress(eq.getBandLevel(i) - range[0]);
+			View ch = channels.getChildAt(i);
+			AppCompatSeekBar sb = ch.findViewById(R.id.eq_channel_seek);
+			TextView value = ch.findViewById(R.id.eq_channel_value);
+			short level = eq.getBandLevel(i);
+			sb.setProgress(level - range[0]);
+			value.setText(formatDb(level));
 		}
 	}
 
 	private void setUserBandValues(Equalizer eq, String[] presets, int preset) {
 		short[] range = eq.getBandLevelRange();
 		int[] bands = MediaPrefs.getUserPresetBands(presets[preset]);
-		ViewGroup bandsView = findViewById(R.id.equalizer_bands);
+		LinearLayout channels = findViewById(R.id.equalizer_channels);
 
 		for (short n = eq.getNumberOfBands(), i = 0; (i < n) && (i < bands.length); i++) {
-			ViewGroup band = (ViewGroup) bandsView.getChildAt(i);
-			AppCompatSeekBar sb = band.findViewById(R.id.eq_band_seek);
+			View ch = channels.getChildAt(i);
+			AppCompatSeekBar sb = ch.findViewById(R.id.eq_channel_seek);
+			TextView value = ch.findViewById(R.id.eq_channel_value);
 			eq.setBandLevel(i, (short) bands[i]);
-			sb.setProgress(eq.getBandLevel(i) - range[0]);
+			short level = eq.getBandLevel(i);
+			sb.setProgress(level - range[0]);
+			value.setText(formatDb(level));
 		}
 	}
 
 	private void configureSwitch(CompoundButton sw, Supplier<AudioEffect> effect) {
 		sw.setChecked(effect.get().getEnabled());
 		sw.setOnCheckedChangeListener((b, checked) -> runWithRetry(() -> effect.get().setEnabled(checked)));
-	}
-
-	private void configureSeek(SeekBar sb, IntSupplier get, ShortConsumer set) {
-		sb.setMax(1000);
-		sb.setProgress(get.getAsInt());
-		sb.setOnSeekBarChangeListener(new SeekBarListener() {
-			@Override
-			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-				runWithRetry(() -> set.accept((short) progress));
-			}
-		});
 	}
 
 	private void eqBandChanged(Equalizer eq, short band, int progress, boolean fromUser) {
@@ -453,6 +539,14 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 			bands[i] = eq.getBandLevel(i);
 		}
 		return bands;
+	}
+
+	private static String formatDb(short centibels) {
+		return String.format(Locale.ROOT, "%+d", Math.round(centibels / 100f));
+	}
+
+	private static String formatPercent(int progress) {
+		return (progress / 10) + "%";
 	}
 
 	private void hide(@IdRes int... ids) {
@@ -556,6 +650,17 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 			prefs = pi.getParent().getPrefs();
 			return prefs.getBooleanPref(AE_ENABLED) ? prefs.getIntPref(EQ_PRESET) :
 					ctrlPrefs.getIntPref(EQ_PRESET);
+		}
+	}
+
+	private static int getAppliedIntPref(PlayableItem pi, PreferenceStore ctrlPrefs, Pref<IntSupplier> pref) {
+		MediaPrefs prefs = pi.getPrefs();
+
+		if (prefs.getBooleanPref(AE_ENABLED)) {
+			return prefs.getIntPref(pref);
+		} else {
+			prefs = pi.getParent().getPrefs();
+			return prefs.getBooleanPref(AE_ENABLED) ? prefs.getIntPref(pref) : ctrlPrefs.getIntPref(pref);
 		}
 	}
 

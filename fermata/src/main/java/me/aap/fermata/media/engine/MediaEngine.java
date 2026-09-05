@@ -89,6 +89,15 @@ public interface MediaEngine extends Closeable {
 		return null;
 	}
 
+	/**
+	 * Sets the send level (0.0-1.0) for {@link AudioEffects#getPresetReverb()}, an auxiliary/send
+	 * effect that -- unlike Equalizer/BassBoost/Virtualizer/LoudnessEnhancer -- doesn't just work
+	 * once created on the audio session; the player itself must explicitly route audio to it (e.g.
+	 * {@code MediaPlayer.attachAuxEffect()}/{@code setAuxEffectSendLevel()}, or Media3's
+	 * {@code AuxEffectInfo} for ExoPlayer). No-op by default for engines that don't support it.
+	 */
+	default void setAuxEffectSendLevel(float level) {}
+
 	default List<AudioStreamInfo> getAudioStreamInfo() {
 		return Collections.emptyList();
 	}

@@ -49,6 +49,8 @@ import static me.aap.fermata.media.pref.MediaPrefs.EQ_BANDS;
 import static me.aap.fermata.media.pref.MediaPrefs.EQ_ENABLED;
 import static me.aap.fermata.media.pref.MediaPrefs.EQ_PRESET;
 import static me.aap.fermata.media.pref.MediaPrefs.EQ_USER_PRESETS;
+import static me.aap.fermata.media.pref.MediaPrefs.REVERB_ENABLED;
+import static me.aap.fermata.media.pref.MediaPrefs.REVERB_STRENGTH;
 import static me.aap.fermata.media.pref.MediaPrefs.VIRT_ENABLED;
 import static me.aap.fermata.media.pref.MediaPrefs.VIRT_MODE;
 import static me.aap.fermata.media.pref.MediaPrefs.VIRT_STRENGTH;
@@ -74,6 +76,7 @@ import android.media.AudioManager;
 import android.media.audiofx.BassBoost;
 import android.media.audiofx.Equalizer;
 import android.media.audiofx.LoudnessEnhancer;
+import android.media.audiofx.PresetReverb;
 import android.media.audiofx.Virtualizer;
 import android.media.session.PlaybackState;
 import android.net.Uri;
@@ -1332,6 +1335,7 @@ public class MediaSessionCallback extends MediaSessionCompat.Callback
 		Virtualizer virt = ae.getVirtualizer();
 		BassBoost bass = ae.getBassBoost();
 		LoudnessEnhancer le = ae.getLoudnessEnhancer();
+		PresetReverb reverb = ae.getPresetReverb();
 
 		for (PreferenceStore s : stores) {
 			if (!s.getBooleanPref(AE_ENABLED)) continue;
@@ -1413,6 +1417,20 @@ public class MediaSessionCallback extends MediaSessionCompat.Callback
 				}
 			}
 
+			if (reverb != null) {
+				if (s.getBooleanPref(REVERB_ENABLED)) {
+					try {
+						reverb.setEnabled(true);
+						engine.setAuxEffectSendLevel(s.getIntPref(REVERB_STRENGTH) / 1000f);
+					} catch (Exception ex) {
+						Log.e(ex, "Failed to configure PresetReverb");
+					}
+				} else {
+					reverb.setEnabled(false);
+					engine.setAuxEffectSendLevel(0f);
+				}
+			}
+
 			return;
 		}
 
@@ -1420,6 +1438,11 @@ public class MediaSessionCallback extends MediaSessionCompat.Callback
 		if (virt != null) virt.setEnabled(false);
 		if (bass != null) bass.setEnabled(false);
 		if (le != null) le.setEnabled(false);
+
+		if (reverb != null) {
+			reverb.setEnabled(false);
+			engine.setAuxEffectSendLevel(0f);
+		}
 	}
 
 	private FutureSupplier<PlayableItem> prepareItem(PlayableItem i) {

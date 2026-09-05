@@ -60,6 +60,8 @@ public class YoutubeAddon extends WebBrowserAddon
 	private static final Pref<IntSupplier> YT_BASS_STRENGTH = Pref.i("YT_BASS_STRENGTH", 0);
 	private static final Pref<BooleanSupplier> YT_VIRT_ENABLED = Pref.b("YT_VIRT_ENABLED", false);
 	private static final Pref<IntSupplier> YT_VIRT_STRENGTH = Pref.i("YT_VIRT_STRENGTH", 0);
+	private static final Pref<BooleanSupplier> YT_REVERB_ENABLED = Pref.b("YT_REVERB_ENABLED", false);
+	private static final Pref<IntSupplier> YT_REVERB_STRENGTH = Pref.i("YT_REVERB_STRENGTH", 0);
 	private boolean ignorePrefChange;
 	private YoutubeRootItem root;
 
@@ -293,11 +295,28 @@ public class YoutubeAddon extends WebBrowserAddon
 		getPreferenceStore().applyIntPref(YT_VIRT_STRENGTH, strength);
 	}
 
+	boolean reverbEnabled() {
+		return getPreferenceStore().getBooleanPref(YT_REVERB_ENABLED);
+	}
+
+	void setReverbEnabled(boolean enabled) {
+		getPreferenceStore().applyBooleanPref(YT_REVERB_ENABLED, enabled);
+	}
+
+	int reverbStrength() {
+		return getPreferenceStore().getIntPref(YT_REVERB_STRENGTH);
+	}
+
+	void setReverbStrength(int strength) {
+		getPreferenceStore().applyIntPref(YT_REVERB_STRENGTH, strength);
+	}
+
 	boolean eqPrefsChanged(List<Pref<?>> prefs) {
 		return prefs.contains(YT_EQ_ENABLED) || prefs.contains(YT_EQ_PRESET) ||
 				prefs.contains(YT_EQ_BANDS) || prefs.contains(YT_BASS_ENABLED) ||
 				prefs.contains(YT_BASS_STRENGTH) || prefs.contains(YT_VIRT_ENABLED) ||
-				prefs.contains(YT_VIRT_STRENGTH);
+				prefs.contains(YT_VIRT_STRENGTH) || prefs.contains(YT_REVERB_ENABLED) ||
+				prefs.contains(YT_REVERB_STRENGTH);
 	}
 
 	enum VideoScale {

@@ -12,10 +12,13 @@
       bassEnabled: false,
       bassGain: 0,
       virtEnabled: false,
-      virtStrength: 0
+      virtStrength: 0,
+      reverbEnabled: false,
+      reverbStrength: 0
     },
     ctx: null,
-    chains: new WeakMap()
+    chains: new WeakMap(),
+    impulse: null
   };
 
   function getContext() {
@@ -25,6 +28,27 @@
     }
     if (state.ctx.state === 'suspended') state.ctx.resume().catch(() => {});
     return state.ctx;
+  }
+
+  // "Live Hall" reverb: Web Audio has no built-in hall-reverb node, so this
+  // synthesizes a plausible impulse response -- exponentially-decaying
+  // stereo white noise, a standard procedural technique for a ConvolverNode
+  // -- once per AudioContext and reuses it for every video's chain.
+  function getImpulseResponse(ctx) {
+    if (state.impulse) return state.impulse;
+
+    const duration = 2.5, decay = 3;
+    const length = Math.floor(ctx.sampleRate * duration);
+    const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
+
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+      }
+    }
+
+    return state.impulse = impulse;
   }
 
   function buildChain(video) {
@@ -70,9 +94,22 @@
     wetR.connect(merger, 0, 1);
     delay.connect(wetL);
     wetL.connect(merger, 0, 0);
-    merger.connect(ctx.destination);
 
-    return {video, bands, bass, dryR, delay, wetR, wetL};
+    // Live Hall reverb: a parallel send -- the dry signal always passes
+    // through, the convolved "wet" signal layers on top, rather than
+    // replacing the direct sound (matching how a real hall effect is used).
+    const convolver = ctx.createConvolver();
+    convolver.buffer = getImpulseResponse(ctx);
+    convolver.normalize = true;
+    const reverbDry = ctx.createGain();
+    const reverbWet = ctx.createGain();
+    merger.connect(reverbDry);
+    merger.connect(convolver);
+    convolver.connect(reverbWet);
+    reverbDry.connect(ctx.destination);
+    reverbWet.connect(ctx.destination);
+
+    return {video, bands, bass, dryR, delay, wetR, wetL, reverbDry, reverbWet};
   }
 
   function applyToChain(chain) {
@@ -89,6 +126,10 @@
     chain.dryR.gain.value = 1 - 0.5 * strength;
     chain.wetR.gain.value = 0.5 * strength;
     chain.wetL.gain.value = 0.3 * strength;
+
+    const reverbStrength = cfg.reverbEnabled ? Math.max(0, Math.min(1, cfg.reverbStrength)) : 0;
+    chain.reverbDry.gain.value = 1;
+    chain.reverbWet.gain.value = reverbStrength * 0.6;
   }
 
   function attach(video) {

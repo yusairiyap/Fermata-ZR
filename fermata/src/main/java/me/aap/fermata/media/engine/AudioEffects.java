@@ -7,6 +7,7 @@ import android.media.audiofx.AudioEffect;
 import android.media.audiofx.BassBoost;
 import android.media.audiofx.Equalizer;
 import android.media.audiofx.LoudnessEnhancer;
+import android.media.audiofx.PresetReverb;
 import android.media.audiofx.Virtualizer;
 import android.os.Build;
 
@@ -22,11 +23,13 @@ public class AudioEffects {
 	private static final byte VIRTUALIZER = 2;
 	private static final byte BASS_BOOST = 4;
 	private static final byte LOUDNESS_ENHANCER = 8;
+	private static final byte PRESET_REVERB = 16;
 	private static final byte supported;
 	private final Equalizer equalizer;
 	private final Virtualizer virtualizer;
 	private final BassBoost bassBoost;
 	private final LoudnessEnhancer loudnessEnhancer;
+	private final PresetReverb presetReverb;
 
 	static {
 		byte s = 0;
@@ -35,6 +38,7 @@ public class AudioEffects {
 			else if (AudioEffect.EFFECT_TYPE_VIRTUALIZER.equals(d.type)) s |= VIRTUALIZER;
 			else if (AudioEffect.EFFECT_TYPE_BASS_BOOST.equals(d.type)) s |= BASS_BOOST;
 			else if (AudioEffect.EFFECT_TYPE_LOUDNESS_ENHANCER.equals(d.type)) s |= LOUDNESS_ENHANCER;
+			else if (AudioEffect.EFFECT_TYPE_PRESET_REVERB.equals(d.type)) s |= PRESET_REVERB;
 		}
 		supported = s;
 	}
@@ -45,6 +49,16 @@ public class AudioEffects {
 				new Virtualizer(priority, audioSessionId) : null;
 		bassBoost = supported(BASS_BOOST) ? new BassBoost(priority, audioSessionId) : null;
 		loudnessEnhancer = supported(LOUDNESS_ENHANCER) ? new LoudnessEnhancer(audioSessionId) : null;
+		// A "Live Hall" reverb is an auxiliary/send effect, not an insert effect like the others --
+		// creating it here just makes it exist on this audioSessionId; actually routing audio to it
+		// (attachAuxEffect/AuxEffectInfo + send level) is the engine's job, not this class's.
+		presetReverb = supported(PRESET_REVERB) ? buildPresetReverb(priority, audioSessionId) : null;
+	}
+
+	private static PresetReverb buildPresetReverb(int priority, int audioSessionId) {
+		PresetReverb reverb = new PresetReverb(priority, audioSessionId);
+		reverb.setPreset(PresetReverb.PRESET_LARGEHALL);
+		return reverb;
 	}
 
 	private static boolean supported(byte type) {
@@ -91,10 +105,16 @@ public class AudioEffects {
 		return loudnessEnhancer;
 	}
 
+	@Nullable
+	public PresetReverb getPresetReverb() {
+		return presetReverb;
+	}
+
 	public void release() {
 		if (equalizer != null) equalizer.release();
 		if (virtualizer != null) virtualizer.release();
 		if (bassBoost != null) bassBoost.release();
 		if (loudnessEnhancer != null) loudnessEnhancer.release();
+		if (presetReverb != null) presetReverb.release();
 	}
 }

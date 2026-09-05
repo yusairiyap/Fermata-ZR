@@ -54,6 +54,8 @@ final class YoutubeEqualizerScript {
 				.append(",\"bassGain\":").append(addon.bassStrength() * 18f / 1000f)
 				.append(",\"virtEnabled\":").append(addon.virtEnabled())
 				.append(",\"virtStrength\":").append(addon.virtStrength() / 1000f)
+				.append(",\"reverbEnabled\":").append(addon.reverbEnabled())
+				.append(",\"reverbStrength\":").append(addon.reverbStrength() / 1000f)
 				.append('}');
 		return sb.toString();
 	}
