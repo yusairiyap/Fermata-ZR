@@ -146,10 +146,17 @@ public class MainCarActivity extends CarActivity implements ZrAutoActivity {
 	 * addons via {@link MainActivityDelegate#onActivityWindowFocusChanged}. See
 	 * {@code WebBrowserAddon.onActivityWindowFocusChanged} for the YouTube-fullscreen mitigation
 	 * this feeds.
+	 * <p>
+	 * Unlike a regular {@code Activity} (whose {@code CarActivity} isn't actually a subclass of --
+	 * confirmed by decompiling {@code aauto.aar}: it's a {@code ContextWrapper} implementing the
+	 * internal {@code HostedCarActivity} interface), this callback is declared as
+	 * {@code onWindowFocusChanged(boolean, boolean)}; the meaning of the second parameter isn't
+	 * documented anywhere reachable here, so it's only passed through to {@code super}, never
+	 * branched on -- only the first (focus) parameter drives the logic below.
 	 */
 	@Override
-	public void onWindowFocusChanged(boolean hasFocus) {
-		super.onWindowFocusChanged(hasFocus);
+	public void onWindowFocusChanged(boolean hasFocus, boolean arg2) {
+		super.onWindowFocusChanged(hasFocus, arg2);
 		if (hasFocus) getActivityDelegate().onSuccess(a -> a.onActivityWindowFocusChanged(true));
 	}
 
