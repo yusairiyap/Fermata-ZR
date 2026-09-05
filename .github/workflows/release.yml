@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version string to build (dry run only — no GitHub Release is published)'
+        required: false
+        default: '0.0.0-dryrun'
 
 permissions:
   contents: write
@@ -23,9 +29,13 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Derive version from tag
+      - name: Derive version
         run: |
-          VERSION="${GITHUB_REF_NAME}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME}"
+          fi
           ver_file=gradle/libs.versions.toml
           sed -ri "s/appVersionName.+/appVersionName = \"$VERSION\"/" $ver_file
           echo "APP_VERSION=$VERSION" >> "$GITHUB_ENV"
@@ -68,7 +78,17 @@ jobs:
           ./gradlew fermata:packageAutoReleaseUniversalApk -PABI=armeabi-v7a --build-cache -PAPP_NAME=zrAuto
           mv "$out"/*.apk "dist/zrauto-${APP_VERSION}-arm.apk"
 
+      - name: Upload dry-run APKs
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zrauto-dryrun-${{ env.APP_VERSION }}
+          path: dist/*.apk
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Create GitHub Release
+        if: github.event_name != 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.APP_VERSION }}
