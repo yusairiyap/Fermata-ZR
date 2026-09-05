@@ -88,6 +88,9 @@ public class ControlPanelView extends ConstraintLayout
 	private static final int[] ICON_IDS = {R.id.show_hide_bars_icon, R.id.control_menu_button_icon,
 			R.id.control_prev, R.id.control_rw, R.id.control_play_pause, R.id.control_ff,
 			R.id.control_next};
+	/** The current-position/duration labels shown at the bottom corners of the seek bar. */
+	@IdRes
+	private static final int[] LABEL_IDS = {R.id.seek_time, R.id.seek_total};
 	private final GestureDetectorCompat gestureDetector;
 	private final ImageView showHideBars;
 	@DimenRes
@@ -102,6 +105,7 @@ public class ControlPanelView extends ConstraintLayout
 	private long scrollStamp;
 	private final int flatBackgroundColor;
 	private final int iconTintColor;
+	private final ColorStateList[] labelTextColors = new ColorStateList[LABEL_IDS.length];
 
 	public ControlPanelView(Context context, AttributeSet attrs) {
 		super(context, attrs, R.attr.appControlPanelStyle);
@@ -116,6 +120,11 @@ public class ControlPanelView extends ConstraintLayout
 		iconTintColor = ta.getColor(R.styleable.ControlPanelView_tint, VIDEO_MODE_ICON_COLOR);
 		setBackgroundColor(flatBackgroundColor);
 		ta.recycle();
+
+		for (int i = 0; i < LABEL_IDS.length; i++) {
+			TextView label = findViewById(LABEL_IDS[i]);
+			if (label != null) labelTextColors[i] = label.getTextColors();
+		}
 
 		MainActivityDelegate a = getActivity();
 		a.addBroadcastListener(this, ACTIVITY_DESTROY);
@@ -146,6 +155,22 @@ public class ControlPanelView extends ConstraintLayout
 		for (int id : ICON_IDS) {
 			ImageView icon = findViewById(id);
 			if (icon != null) icon.setImageTintList(tint);
+		}
+	}
+
+	/** Recolors the position/duration labels, overriding the theme's textColorPrimary. */
+	private void setLabelColor(int color) {
+		for (int id : LABEL_IDS) {
+			TextView label = findViewById(id);
+			if (label != null) label.setTextColor(color);
+		}
+	}
+
+	/** Restores the position/duration labels to the color captured at inflate time. */
+	private void restoreLabelColor() {
+		for (int i = 0; i < LABEL_IDS.length; i++) {
+			TextView label = findViewById(LABEL_IDS[i]);
+			if ((label != null) && (labelTextColors[i] != null)) label.setTextColor(labelTextColors[i]);
 		}
 	}
 
@@ -323,6 +348,7 @@ public class ControlPanelView extends ConstraintLayout
 
 		setBackground(buildScrimGradient(VIDEO_MODE_BG_COLOR, true));
 		setIconTint(VIDEO_MODE_ICON_COLOR);
+		setLabelColor(VIDEO_MODE_ICON_COLOR);
 		a.setBarsHidden(true);
 		setShowHideBarsIcon(a);
 
@@ -368,6 +394,7 @@ public class ControlPanelView extends ConstraintLayout
 		mask &= ~MASK_VIDEO_MODE;
 		setBackgroundColor(flatBackgroundColor);
 		setIconTint(iconTintColor);
+		restoreLabelColor();
 		a.getFloatingButton().setVisibility(VISIBLE);
 
 		if ((mask & MASK_VISIBLE) == 0) {
