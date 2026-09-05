@@ -9,6 +9,7 @@ import static me.aap.utils.ui.UiUtils.isVisible;
 import static me.aap.utils.ui.UiUtils.toIntPx;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -75,6 +76,21 @@ public class ControlPanelView extends ConstraintLayout
 	private static final byte MASK_VIDEO_MODE = 2;
 	/** The vertical padding control_panel_view.xml gives the transport buttons, in dp. */
 	private static final int LAYOUT_BUTTON_PAD_V = 6;
+	/**
+	 * Fullscreen video playback always uses the same black-scrim/white-icon look as the Black
+	 * theme, regardless of the currently selected app theme -- matching what most video players
+	 * do over playback controls, and avoiding barely-visible controls (e.g. blue-on-white) that
+	 * some themes would otherwise put over the video.
+	 */
+	private static final int VIDEO_MODE_BG_COLOR = 0xFF000000;
+	private static final int VIDEO_MODE_ICON_COLOR = 0xFFFFFFFF;
+	@IdRes
+	private static final int[] ICON_IDS = {R.id.show_hide_bars_icon, R.id.control_menu_button_icon,
+			R.id.control_prev, R.id.control_rw, R.id.control_play_pause, R.id.control_ff,
+			R.id.control_next};
+	/** The current-position/duration labels shown at the bottom corners of the seek bar. */
+	@IdRes
+	private static final int[] LABEL_IDS = {R.id.seek_time, R.id.seek_total};
 	private final GestureDetectorCompat gestureDetector;
 	private final ImageView showHideBars;
 	@DimenRes
@@ -88,6 +104,8 @@ public class ControlPanelView extends ConstraintLayout
 	private TextView playbackTimer;
 	private long scrollStamp;
 	private final int flatBackgroundColor;
+	private final int iconTintColor;
+	private final ColorStateList[] labelTextColors = new ColorStateList[LABEL_IDS.length];
 
 	public ControlPanelView(Context context, AttributeSet attrs) {
 		super(context, attrs, R.attr.appControlPanelStyle);
@@ -99,8 +117,14 @@ public class ControlPanelView extends ConstraintLayout
 		size = ta.getLayoutDimension(R.styleable.ControlPanelView_size, 0);
 		textAppearance = ta.getResourceId(R.styleable.ControlPanelView_textAppearance, 0);
 		flatBackgroundColor = ta.getColor(R.styleable.ControlPanelView_android_colorBackground, 0);
+		iconTintColor = ta.getColor(R.styleable.ControlPanelView_tint, VIDEO_MODE_ICON_COLOR);
 		setBackgroundColor(flatBackgroundColor);
 		ta.recycle();
+
+		for (int i = 0; i < LABEL_IDS.length; i++) {
+			TextView label = findViewById(LABEL_IDS[i]);
+			if (label != null) labelTextColors[i] = label.getTextColors();
+		}
 
 		MainActivityDelegate a = getActivity();
 		a.addBroadcastListener(this, ACTIVITY_DESTROY);
@@ -123,6 +147,31 @@ public class ControlPanelView extends ConstraintLayout
 		int transparent = color & 0x00FFFFFF;
 		int[] stops = fadeTowardBottom ? new int[]{transparent, color} : new int[]{color, transparent};
 		return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, stops);
+	}
+
+	/** Retints the transport/menu icons, overriding the tint the theme applied at inflate time. */
+	private void setIconTint(int color) {
+		ColorStateList tint = ColorStateList.valueOf(color);
+		for (int id : ICON_IDS) {
+			ImageView icon = findViewById(id);
+			if (icon != null) icon.setImageTintList(tint);
+		}
+	}
+
+	/** Recolors the position/duration labels, overriding the theme's textColorPrimary. */
+	private void setLabelColor(int color) {
+		for (int id : LABEL_IDS) {
+			TextView label = findViewById(id);
+			if (label != null) label.setTextColor(color);
+		}
+	}
+
+	/** Restores the position/duration labels to the color captured at inflate time. */
+	private void restoreLabelColor() {
+		for (int i = 0; i < LABEL_IDS.length; i++) {
+			TextView label = findViewById(LABEL_IDS[i]);
+			if ((label != null) && (labelTextColors[i] != null)) label.setTextColor(labelTextColors[i]);
+		}
 	}
 
 	@Nullable
@@ -297,7 +346,9 @@ public class ControlPanelView extends ConstraintLayout
 		hideTimer = null;
 		mask |= MASK_VIDEO_MODE;
 
-		setBackground(buildScrimGradient(flatBackgroundColor, true));
+		setBackground(buildScrimGradient(VIDEO_MODE_BG_COLOR, true));
+		setIconTint(VIDEO_MODE_ICON_COLOR);
+		setLabelColor(VIDEO_MODE_ICON_COLOR);
 		a.setBarsHidden(true);
 		setShowHideBarsIcon(a);
 
@@ -342,6 +393,8 @@ public class ControlPanelView extends ConstraintLayout
 		hideTimer = null;
 		mask &= ~MASK_VIDEO_MODE;
 		setBackgroundColor(flatBackgroundColor);
+		setIconTint(iconTintColor);
+		restoreLabelColor();
 		a.getFloatingButton().setVisibility(VISIBLE);
 
 		if ((mask & MASK_VISIBLE) == 0) {

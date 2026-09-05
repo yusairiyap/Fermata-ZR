@@ -12,5 +12,6 @@
         <attr name="size" />
         <attr name="textAppearance" />
         <attr name="android:colorBackground" />
+        <attr name="tint" />
     </declare-styleable>
 </resources>
