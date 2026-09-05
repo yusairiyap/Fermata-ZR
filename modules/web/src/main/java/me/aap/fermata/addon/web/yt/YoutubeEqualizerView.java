@@ -1,7 +1,6 @@
 package me.aap.fermata.addon.web.yt;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -26,13 +25,14 @@ import me.aap.utils.pref.PreferenceView;
 import me.aap.utils.pref.PreferenceView.ListOpts;
 
 /**
- * The YouTube-tab Equalizer/Bass Boost/Virtualizer panel, shown from the video menu. Reuses the
- * native {@code audio_effects.xml}/{@code equalizer_band.xml} layouts (this module already
- * depends on {@code :fermata}) but binds them to {@link YoutubeAddon}'s Web-Audio-backed prefs
- * instead of an {@link android.media.audiofx.AudioEffects} instance, since YouTube plays through
- * the WebView's own audio pipeline rather than one of the app's native engines. Unlike the native
- * panel, settings here are global to the YouTube tab (no per-track/per-folder scope), so the
- * "apply to"/Loudness-Enhancer sections of the shared layout are hidden.
+ * The YouTube-tab Equalizer/Bass Boost/Virtualizer panel, shown full-screen (via a
+ * {@link me.aap.utils.ui.fragment.GenericFragment}) from the video menu. Reuses the native
+ * {@code audio_effects.xml}/{@code equalizer_band.xml} layouts (this module already depends on
+ * {@code :fermata}) but binds them to {@link YoutubeAddon}'s Web-Audio-backed prefs instead of an
+ * {@link android.media.audiofx.AudioEffects} instance, since YouTube plays through the WebView's
+ * own audio pipeline rather than one of the app's native engines. Unlike the native panel,
+ * settings here are global to the YouTube tab (no per-track/per-folder scope), so the "apply
+ * to"/Loudness-Enhancer sections of the shared layout are hidden.
  */
 final class YoutubeEqualizerView extends android.widget.ScrollView implements PreferenceStore.Listener {
 	@Nullable
@@ -42,7 +42,7 @@ final class YoutubeEqualizerView extends android.widget.ScrollView implements Pr
 
 	public YoutubeEqualizerView(Context context) {
 		this(context, null);
-		setLayoutParams(new ViewGroup.LayoutParams(MATCH_PARENT, WRAP_CONTENT));
+		setLayoutParams(new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
 	}
 
 	public YoutubeEqualizerView(Context context, AttributeSet attrs) {
@@ -58,6 +58,22 @@ final class YoutubeEqualizerView extends android.widget.ScrollView implements Pr
 				me.aap.fermata.R.id.virtualizer_mode, me.aap.fermata.R.id.equalizer_preset_save,
 				me.aap.fermata.R.id.equalizer_preset_delete);
 		addon.getPreferenceStore().addBroadcastListener(this);
+		// GenericFragment is a single instance shared by every "generic screen" caller in the app
+		// (e.g. the About screen) -- there's no per-open "closed" callback like OverlayMenu had, so
+		// clean up whenever this view actually leaves the window instead (reliably triggered by
+		// GenericFragment.setContentProvider()'s removeAllViews() on the next re-entrant use, or by
+		// the fragment/activity being torn down).
+		addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+			@Override
+			public void onViewAttachedToWindow(View v) {
+			}
+
+			@Override
+			public void onViewDetachedFromWindow(View v) {
+				removeOnAttachStateChangeListener(this);
+				cleanup();
+			}
+		});
 
 		SwitchCompat eqSwitch = findViewById(me.aap.fermata.R.id.equalizer_switch);
 		eqSwitch.setChecked(addon.eqEnabled());

@@ -130,6 +130,12 @@ public class BodyLayout extends SplitLayout
 				lp.guidePercent = a.getPrefs().getFloatPref(getSplitPercentPref(isPortrait()));
 				vv.showVideo();
 				a.setVideoMode(true, vv);
+				// BOTH is only ever entered from VIDEO (exiting fullscreen into this split view, never
+				// a fresh entry from FRAME) -- but setVideoMode(true, ...) no-ops on that VIDEO->BOTH
+				// transition since videoMode was already true, so disableVideoMode()'s bar-restoring
+				// never runs and the toolbar/nav bar stay hidden from fullscreen. Restore them here
+				// unconditionally, same as disableVideoMode() does for the FRAME exit case.
+				a.setBarsHidden(a.getPrefs().getHideBarsPref(a));
 				MediaItemListView.focusActive(getContext(), vv);
 			}
 		}

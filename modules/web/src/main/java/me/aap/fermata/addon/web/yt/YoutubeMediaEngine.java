@@ -1,5 +1,6 @@
 package me.aap.fermata.addon.web.yt;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static me.aap.fermata.media.pref.MediaPrefs.MEDIA_ENG_YT;
 import static me.aap.fermata.util.Utils.dynCtx;
 import static me.aap.utils.async.Completed.completed;
@@ -9,6 +10,7 @@ import android.content.res.Resources;
 import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.support.v4.media.MediaMetadataCompat;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,6 +35,7 @@ import me.aap.utils.async.FutureSupplier;
 import me.aap.utils.log.Log;
 import me.aap.utils.text.SharedTextBuilder;
 import me.aap.utils.ui.UiUtils;
+import me.aap.utils.ui.fragment.GenericFragment;
 import me.aap.utils.ui.menu.OverlayMenu;
 import me.aap.utils.ui.menu.OverlayMenuItem;
 import me.aap.utils.vfs.VirtualResource;
@@ -222,14 +225,28 @@ class YoutubeMediaEngine implements MediaEngine, OverlayMenu.SelectionHandler {
 				r.getString(me.aap.fermata.R.string.video_scaling)).setSubmenu(this::videoScalingMenu);
 		b.addItem(R.id.youtube_equalizer,
 				ResourcesCompat.getDrawable(r, me.aap.fermata.R.drawable.equalizer, ctx.getTheme()),
-				r.getString(me.aap.fermata.R.string.audio_effects)).setSubmenu(this::equalizerMenu);
+				r.getString(me.aap.fermata.R.string.audio_effects)).setHandler(item -> showEqualizer());
 	}
 
-	private void equalizerMenu(OverlayMenu.Builder b) {
-		YoutubeEqualizerView v = new YoutubeEqualizerView(dynCtx(web.getContext()));
-		v.init(web);
-		b.setView(v);
-		b.setCloseHandlerHandler(m -> v.cleanup());
+	/**
+	 * Opens the Equalizer/Bass Boost/Virtualizer panel as a full-screen {@link GenericFragment}
+	 * instead of an {@link OverlayMenu} submenu -- the submenu is a narrow, edge-docked popup
+	 * ({@code wrap_content}), too cramped for 10 band sliders, especially on Android Auto's wider
+	 * screen. {@link GenericFragment} is reused (not a new addon-registered fragment) since
+	 * addon fragment routing is one-fragment-per-addon and {@link YoutubeAddon} already owns its
+	 * id for {@link YoutubeFragment}.
+	 */
+	private boolean showEqualizer() {
+		MainActivityDelegate a = MainActivityDelegate.get(web.getContext());
+		if (!(a.showFragment(me.aap.utils.R.id.generic_fragment) instanceof GenericFragment f))
+			return false;
+		f.setTitle(a.getContext().getString(me.aap.fermata.R.string.audio_effects));
+		f.setContentProvider(g -> {
+			YoutubeEqualizerView v = new YoutubeEqualizerView(g.getContext());
+			v.init(web);
+			g.addView(v, new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+		});
+		return true;
 	}
 
 	private FutureSupplier<Void> videoQualityMenu(OverlayMenu.Builder b) {
