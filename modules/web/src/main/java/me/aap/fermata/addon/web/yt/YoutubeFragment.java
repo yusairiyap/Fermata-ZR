@@ -128,8 +128,18 @@ public class YoutubeFragment extends WebBrowserFragment implements FermataServic
 
 	@Override
 	public void onDestroyView() {
-		unregisterListeners(MainActivityDelegate.get(requireContext()));
-		removeVideoViewOverlay(MainActivityDelegate.get(requireContext()));
+		MainActivityDelegate a = MainActivityDelegate.get(requireContext());
+		// The WebView (and the YoutubeMediaEngine built around it) is about to be torn down along
+		// with this view -- same situation as applyPrivateModeProfile() swapping the WebView below,
+		// and the same fix applies: stop first, or the media session keeps pointing at an engine
+		// tied to a dead WebView (e.g. after a theme switch recreates the Activity) until a new
+		// video happens to start playing. Without this, the control panel/video menu built from
+		// that stale engine stays showing and its actions (e.g. "Audio effects") can end up running
+		// against an already-destroyed Activity.
+		MediaSessionCallback cb = a.getMediaSessionCallback();
+		if (cb.getEngine() instanceof YoutubeMediaEngine) cb.onStop();
+		unregisterListeners(a);
+		removeVideoViewOverlay(a);
 		super.onDestroyView();
 	}
 
