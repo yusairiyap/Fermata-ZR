@@ -51,14 +51,25 @@ public class AudioEffects {
 		loudnessEnhancer = supported(LOUDNESS_ENHANCER) ? new LoudnessEnhancer(audioSessionId) : null;
 		// A "Live Hall" reverb is an auxiliary/send effect, not an insert effect like the others --
 		// creating it here just makes it exist on this audioSessionId; actually routing audio to it
-		// (attachAuxEffect/AuxEffectInfo + send level) is the engine's job, not this class's.
-		presetReverb = supported(PRESET_REVERB) ? buildPresetReverb(priority, audioSessionId) : null;
+		// (attachAuxEffect/AuxEffectInfo + send level) is the engine's job, not this class's. Some
+		// devices report EFFECT_TYPE_PRESET_REVERB as available but still fail to actually construct
+		// one (real-world platform flakiness, seen especially on emulators/certain audio HALs) -- that
+		// failure is isolated here so it can't take the other four (otherwise solid) effects down
+		// with it, unlike everything else in this constructor which is allowed to propagate and be
+		// retried by create() below.
+		presetReverb = supported(PRESET_REVERB) ? tryBuildPresetReverb(priority, audioSessionId) : null;
 	}
 
-	private static PresetReverb buildPresetReverb(int priority, int audioSessionId) {
-		PresetReverb reverb = new PresetReverb(priority, audioSessionId);
-		reverb.setPreset(PresetReverb.PRESET_LARGEHALL);
-		return reverb;
+	@Nullable
+	private static PresetReverb tryBuildPresetReverb(int priority, int audioSessionId) {
+		try {
+			PresetReverb reverb = new PresetReverb(priority, audioSessionId);
+			reverb.setPreset(PresetReverb.PRESET_LARGEHALL);
+			return reverb;
+		} catch (Exception ex) {
+			Log.w(ex, "PresetReverb (Live Hall) unavailable on this device");
+			return null;
+		}
 	}
 
 	private static boolean supported(byte type) {

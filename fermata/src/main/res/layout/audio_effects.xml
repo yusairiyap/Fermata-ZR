@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <!-- ====================== Header: master switch + presets ====================== -->
+    <!-- ====================== Header + mixer strip (one card, one color) ====================== -->
     <me.aap.utils.ui.view.OutlinedConstraintLayout
         android:id="@+id/equalizer_header"
         android:layout_width="match_parent"
@@ -13,7 +13,7 @@
         android:layout_margin="6dp"
         android:orientation="vertical"
         app:backgroundColor="?attr/colorSecondary"
-        app:boxStrokeColor="?attr/colorOnSecondary"
+        app:boxStrokeWidth="0dp"
         app:cornerRadius="?attr/cornerRadius"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -45,6 +45,8 @@
             android:nextFocusDown="@id/equalizer_preset"
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
+            android:scaleX="1.3"
+            android:scaleY="1.3"
             app:layout_constraintBottom_toBottomOf="@id/equalizer_title"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/equalizer_title" />
@@ -106,35 +108,21 @@
             android:layout_margin="6dp"
             android:background="@drawable/focusable_shape_transparent"
             android:focusable="true"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/equalizer_channels_scroll"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/equalizer_preset"
             tools:ignore="RtlSymmetry" />
-    </me.aap.utils.ui.view.OutlinedConstraintLayout>
-    <!-- ================================================================================ -->
-
-    <!-- ====================== Mixer strip: vertical channel faders ====================== -->
-    <me.aap.utils.ui.view.OutlinedConstraintLayout
-        android:id="@+id/mixer_card"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="6dp"
-        app:backgroundColor="?attr/colorSecondary"
-        app:boxStrokeColor="?attr/colorOnSecondary"
-        app:cornerRadius="?attr/cornerRadius"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/equalizer_header">
 
         <HorizontalScrollView
+            android:id="@+id/equalizer_channels_scroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:scrollbars="none"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toBottomOf="@id/virtualizer_mode">
 
             <LinearLayout
                 android:id="@+id/equalizer_channels"
@@ -147,7 +135,7 @@
                 android:paddingBottom="16dp" />
         </HorizontalScrollView>
     </me.aap.utils.ui.view.OutlinedConstraintLayout>
-    <!-- ==================================================================================== -->
+    <!-- ======================================================================================= -->
 
     <!-- ====================== Apply to  ====================== -->
     <me.aap.utils.ui.view.OutlinedLinearLayout
@@ -157,11 +145,11 @@
         android:layout_margin="6dp"
         android:orientation="vertical"
         app:backgroundColor="?attr/colorSecondary"
-        app:boxStrokeColor="?attr/colorOnSecondary"
+        app:boxStrokeWidth="0dp"
         app:cornerRadius="?attr/cornerRadius"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/mixer_card">
+        app:layout_constraintTop_toBottomOf="@id/equalizer_header">
 
         <me.aap.utils.ui.view.ScalableTextView
             android:id="@+id/apply_to_title"
