@@ -177,6 +177,15 @@ public class MediaItemMenuHandler implements OverlayMenu.SelectionHandler {
 			b.addItem(R.id.video, R.drawable.video, R.string.video).setSubmenu(this::buildVideoMenu);
 		}
 
+		if (pi.isVideo()) {
+			b.addItem(R.id.compact_player, R.drawable.video_fullscreen, R.string.action_compact_player_toggle)
+					.setHandler(item -> {
+						MainActivityDelegate a1 = getMainActivity();
+						a1.setCompactPlayerMode(!a1.isCompactPlayerMode());
+						return true;
+					});
+		}
+
 		if (addSubtitlesMenu()) {
 			b.addItem(R.id.subtitle_prefs, R.drawable.subtitles, R.string.subtitles)
 					.setSubmenu(this::buildSubtitlesMenu);
