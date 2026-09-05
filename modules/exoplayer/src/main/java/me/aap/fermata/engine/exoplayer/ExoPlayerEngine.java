@@ -101,7 +101,8 @@ public class ExoPlayerEngine extends MediaEngineBase implements Player.Listener 
 	private final Timeline.Period period = new Timeline.Period();
 	private final PendingLoadAudioProcessor audioProc = new PendingLoadAudioProcessor(accessor);
 	private final ExoPlayer player;
-	private final AudioEffects audioEffects;
+	@Nullable
+	private AudioEffects audioEffects;
 	private volatile PlayableItem source;
 	private boolean preparing;
 	private boolean buffering;
@@ -133,8 +134,6 @@ public class ExoPlayerEngine extends MediaEngineBase implements Player.Listener 
 			}
 		}).setMediaSourceFactory(msFactory).build();
 		player.addListener(this);
-		audioEffects = AudioEffects.create(0, player.getAudioSessionId());
-		attachAuxEffect();
 
 		try {
 			Field f = player.getClass().getDeclaredField("internalPlayer");
@@ -281,9 +280,33 @@ public class ExoPlayerEngine extends MediaEngineBase implements Player.Listener 
 		return (f == null) ? 0 : f.height;
 	}
 
+	@Nullable
 	@Override
 	public AudioEffects getAudioEffects() {
 		return audioEffects;
+	}
+
+	@Override
+	public boolean supportsAudioEffects() {
+		return AudioEffects.isSupported();
+	}
+
+	@Nullable
+	@Override
+	public AudioEffects ensureAudioEffects() {
+		if (audioEffects == null) {
+			audioEffects = AudioEffects.create(0, player.getAudioSessionId());
+			attachAuxEffect();
+		}
+		return audioEffects;
+	}
+
+	@Override
+	public void disposeAudioEffectsIfIdle() {
+		if (audioEffects == null) return;
+		player.setAuxEffectInfo(new AuxEffectInfo(0, 0f));
+		audioEffects.release();
+		audioEffects = null;
 	}
 
 	/**

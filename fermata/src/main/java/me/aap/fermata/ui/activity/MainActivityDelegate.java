@@ -421,11 +421,38 @@ public class MainActivityDelegate extends ActivityDelegate
 	}
 
 	@Override
-	protected void onActivityPause() {
+	public void onActivityPause() {
 		super.onActivityPause();
 		for (FermataAddon addon : AddonManager.get().getAddons()) {
 			if (addon instanceof FermataActivityAddon)
 				((FermataActivityAddon) addon).onActivityPause(this);
+		}
+	}
+
+	// Widened to public (base ActivityDelegate declares these protected) and given trivial
+	// public overrides purely so MainCarActivity -- in a different package, and not a subclass of
+	// this class -- can forward onStart()/onStop() into the delegate the same way it already does
+	// for onActivityResume()/onActivityDestroy(), restoring lifecycle parity with the phone path
+	// (see ActivityBase, which forwards all of these but only works there because it's in the same
+	// package as the base ActivityDelegate class).
+	@Override
+	public void onActivityStart() {
+		super.onActivityStart();
+	}
+
+	@Override
+	public void onActivityStop() {
+		super.onActivityStop();
+	}
+
+	/**
+	 * Fired when the Activity's window focus changes -- see
+	 * {@link FermataActivityAddon#onActivityWindowFocusChanged}.
+	 */
+	public void onActivityWindowFocusChanged(boolean hasFocus) {
+		for (FermataAddon addon : AddonManager.get().getAddons()) {
+			if (addon instanceof FermataActivityAddon)
+				((FermataActivityAddon) addon).onActivityWindowFocusChanged(this, hasFocus);
 		}
 	}
 

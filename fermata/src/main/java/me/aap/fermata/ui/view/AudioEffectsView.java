@@ -201,27 +201,34 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 	public void apply(MediaSessionCallback cb) {
 		if (store == null) return;
 
-		MediaEngine eng = cb.getEngine();
+		try {
+			MediaEngine eng = cb.getEngine();
 
-		if (eng != null) {
-			PlayableItem pi = eng.getSource();
+			if (eng != null) {
+				PlayableItem pi = eng.getSource();
 
-			if (pi != null) {
-				if (store.getBooleanPref(TRACK)) {
-					apply(pi.getPrefs());
-					return;
-				} else if (store.getBooleanPref(FOLDER)) {
-					apply(pi.getParent().getPrefs());
-					clearPrefs(pi.getPrefs());
-					return;
-				} else {
-					clearPrefs(pi.getPrefs());
-					clearPrefs(pi.getParent().getPrefs());
+				if (pi != null) {
+					if (store.getBooleanPref(TRACK)) {
+						apply(pi.getPrefs());
+						return;
+					} else if (store.getBooleanPref(FOLDER)) {
+						apply(pi.getParent().getPrefs());
+						clearPrefs(pi.getPrefs());
+						return;
+					} else {
+						clearPrefs(pi.getPrefs());
+						clearPrefs(pi.getParent().getPrefs());
+					}
 				}
 			}
-		}
 
-		apply(cb.getPlaybackControlPrefs());
+			apply(cb.getPlaybackControlPrefs());
+		} finally {
+			// Reconcile now rather than waiting for the next track boundary, so opening the screen
+			// (which lazily creates AudioEffects to show its switches) and leaving without enabling
+			// anything doesn't leave that just-created instance attached for the rest of the session.
+			cb.reconcileAudioEffects();
+		}
 	}
 
 	private void apply(PreferenceStore ps) {
@@ -437,7 +444,7 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 
 		label.setText(R.string.live_hall);
 		value.setText(formatPercent(reverbLevel));
-		sb.setMax(1000);
+		sb.setMax(1500);
 		sb.setProgress(reverbLevel);
 		sb.setOnSeekBarChangeListener(new SeekBarListener() {
 			@Override
@@ -446,7 +453,11 @@ public class AudioEffectsView extends ScrollView implements PreferenceStore.List
 				if (!fromUser) return;
 				reverbLevel = progress;
 				MediaEngine eng = (cb != null) ? cb.getEngine() : null;
-				if (eng != null) eng.setAuxEffectSendLevel(progress / 1000f);
+				// PresetReverb's aux send level is a hard platform API contract (0.0-1.0, where 1.0 =
+				// 0dB/no attenuation) -- there's no "boost past unity" concept for this effect type, so
+				// the 100%-150% region of the widened slider plateaus at 1.0 rather than sending an
+				// out-of-range value to the platform.
+				if (eng != null) eng.setAuxEffectSendLevel(Math.min(1f, progress / 1000f));
 			}
 		});
 	}

@@ -76,6 +76,11 @@ public class AudioEffects {
 		return (supported & type) != 0;
 	}
 
+	/** Whether this device supports any {@code android.media.audiofx} effect type at all. */
+	public static boolean isSupported() {
+		return supported != 0;
+	}
+
 	@Nullable
 	public static AudioEffects create(int priority, int audioSessionId) {
 		if (supported == 0) return null;

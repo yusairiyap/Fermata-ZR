@@ -109,7 +109,8 @@
     reverbDry.connect(ctx.destination);
     reverbWet.connect(ctx.destination);
 
-    return {video, bands, bass, dryR, delay, wetR, wetL, reverbDry, reverbWet};
+    return {video, source, bands, bass, splitter, merger, dryR, delay, wetR, wetL, convolver,
+            reverbDry, reverbWet};
   }
 
   function applyToChain(chain) {
@@ -127,13 +128,29 @@
     chain.wetR.gain.value = 0.5 * strength;
     chain.wetL.gain.value = 0.3 * strength;
 
-    const reverbStrength = cfg.reverbEnabled ? Math.max(0, Math.min(1, cfg.reverbStrength)) : 0;
+    // Live Hall's slider allows up to 150% (see YoutubeEqualizerView's Live Hall channel), unlike
+    // Bass/Virtualizer which stay 0-100% -- keep this ceiling in sync with that slider's max, and
+    // note it deliberately differs from the native PresetReverb path, whose aux send level is a
+    // hard 0.0-1.0 platform API contract with no headroom above unity to raise a ceiling into.
+    const REVERB_MAX_STRENGTH = 1.5;
+    const reverbStrength = cfg.reverbEnabled ?
+        Math.max(0, Math.min(REVERB_MAX_STRENGTH, cfg.reverbStrength)) : 0;
     chain.reverbDry.gain.value = 1;
     chain.reverbWet.gain.value = reverbStrength * 0.6;
   }
 
+  function anyEffectEnabled(cfg) {
+    return cfg.eqEnabled || cfg.bassEnabled || cfg.virtEnabled || cfg.reverbEnabled;
+  }
+
   function attach(video) {
     if (video.getAttribute('FermataEqAttached') === 'true') return;
+    // createMediaElementSource() irreversibly reroutes this element's audio through Web Audio --
+    // there's no going back to the browser's zero-overhead direct path for it. So don't build the
+    // graph (no AudioContext, no ConvolverNode running a continuous convolution, etc.) until the
+    // user has actually enabled something; configure() re-scans on every config push, so the very
+    // next one after enabling naturally retries any previously-skipped video.
+    if (!anyEffectEnabled(state.config)) return;
     video.setAttribute('FermataEqAttached', 'true');
 
     let chain;
@@ -149,14 +166,51 @@
     video.addEventListener('playing', () => getContext());
   }
 
+  function disconnectChain(chain) {
+    const nodes = [chain.source, ...chain.bands, chain.bass, chain.splitter, chain.merger,
+                    chain.dryR, chain.delay, chain.wetR, chain.wetL, chain.convolver,
+                    chain.reverbDry, chain.reverbWet];
+    for (const n of nodes) {
+      try { n.disconnect(); } catch (err) { /* already disconnected */ }
+    }
+  }
+
+  function detach(video) {
+    const chain = state.chains.get(video);
+    if (!chain) return;
+    disconnectChain(chain);
+    state.chains.delete(video);
+  }
+
+  function collectRemovedVideos(node, out) {
+    if (node.nodeType !== 1) return;
+    if (node.tagName === 'VIDEO') out.push(node);
+    else if (node.querySelectorAll) node.querySelectorAll('video').forEach((v) => out.push(v));
+  }
+
   function scan() {
     document.querySelectorAll('video').forEach(attach);
+  }
+
+  // Handles both discovering newly-added <video> elements (as before) and tearing down chains for
+  // ones YouTube's SPA player removes -- e.g. on a video-to-video transition, which swaps in a
+  // fresh element -- so a stale chain (with its own live convolution reverb) never keeps running
+  // alongside the new one.
+  function handleMutations(mutations) {
+    for (const m of mutations) {
+      m.removedNodes.forEach((n) => {
+        const removed = [];
+        collectRemovedVideos(n, removed);
+        removed.forEach(detach);
+      });
+    }
+    scan();
   }
 
   function startWatching() {
     scan();
     if (!window.__fermataEqObserver) {
-      window.__fermataEqObserver = new MutationObserver(scan);
+      window.__fermataEqObserver = new MutationObserver(handleMutations);
       window.__fermataEqObserver.observe(document.body, {childList: true, subtree: true});
     }
   }

@@ -127,11 +127,11 @@ final class YoutubeEqualizerView extends android.widget.ScrollView implements Pr
 		}
 
 		addEffectChannel(inflater, effects, me.aap.fermata.R.string.bass_boost, addon.bassEnabled(),
-				addon.bassStrength(), addon::setBassEnabled, addon::setBassStrength);
+				addon.bassStrength(), 1000, addon::setBassEnabled, addon::setBassStrength);
 		addEffectChannel(inflater, effects, me.aap.fermata.R.string.virtualizer, addon.virtEnabled(),
-				addon.virtStrength(), addon::setVirtEnabled, addon::setVirtStrength);
+				addon.virtStrength(), 1000, addon::setVirtEnabled, addon::setVirtStrength);
 		addEffectChannel(inflater, effects, me.aap.fermata.R.string.live_hall, addon.reverbEnabled(),
-				addon.reverbStrength(), addon::setReverbEnabled, addon::setReverbStrength);
+				addon.reverbStrength(), 1500, addon::setReverbEnabled, addon::setReverbStrength);
 	}
 
 	private void bindBandChannel(View ch, int band, int[] bands, int range) {
@@ -163,7 +163,7 @@ final class YoutubeEqualizerView extends android.widget.ScrollView implements Pr
 	}
 
 	private void addEffectChannel(LayoutInflater inflater, ViewGroup parent, @StringRes int labelRes,
-																 boolean enabled, int strength, BooleanConsumer onEnabledChanged,
+																 boolean enabled, int strength, int max, BooleanConsumer onEnabledChanged,
 																 IntConsumer onStrengthChanged) {
 		View ch = inflater.inflate(me.aap.fermata.R.layout.equalizer_channel, parent, false);
 		parent.addView(ch);
@@ -182,7 +182,7 @@ final class YoutubeEqualizerView extends android.widget.ScrollView implements Pr
 
 		label.setText(labelRes);
 		value.setText(formatPercent(strength));
-		sb.setMax(1000);
+		sb.setMax(max);
 		sb.setProgress(strength);
 		sb.setOnSeekBarChangeListener(new SeekBarListener() {
 			@Override

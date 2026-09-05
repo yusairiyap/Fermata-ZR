@@ -117,9 +117,40 @@ public class MainCarActivity extends CarActivity implements ZrAutoActivity {
 	}
 
 	@Override
+	public void onStart() {
+		super.onStart();
+		getActivityDelegate().onSuccess(MainActivityDelegate::onActivityStart);
+	}
+
+	@Override
 	public void onResume() {
 		super.onResume();
 		getActivityDelegate().onSuccess(MainActivityDelegate::onActivityResume);
+	}
+
+	@Override
+	public void onPause() {
+		getActivityDelegate().onSuccess(MainActivityDelegate::onActivityPause);
+		super.onPause();
+	}
+
+	@Override
+	public void onStop() {
+		getActivityDelegate().onSuccess(MainActivityDelegate::onActivityStop);
+		super.onStop();
+	}
+
+	/**
+	 * Best-effort catch-all for an Android Auto display takeover (e.g. a car's camera overlay
+	 * briefly taking the screen) that doesn't route through onPause()/onStop() at all -- routed to
+	 * addons via {@link MainActivityDelegate#onActivityWindowFocusChanged}. See
+	 * {@code WebBrowserAddon.onActivityWindowFocusChanged} for the YouTube-fullscreen mitigation
+	 * this feeds.
+	 */
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (hasFocus) getActivityDelegate().onSuccess(a -> a.onActivityWindowFocusChanged(true));
 	}
 
 	@Override

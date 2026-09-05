@@ -7,7 +7,6 @@ import static me.aap.utils.async.Completed.completed;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.support.v4.media.MediaMetadataCompat;
 import android.view.ViewGroup;
@@ -15,7 +14,6 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
-import androidx.media.AudioFocusRequestCompat;
 
 import com.google.android.play.core.splitcompat.SplitCompat;
 
@@ -198,14 +196,12 @@ class YoutubeMediaEngine implements MediaEngine, OverlayMenu.SelectionHandler {
 	public void close() {
 	}
 
-	@Override
-	public boolean requestAudioFocus(@Nullable AudioManager audioManager, @Nullable AudioFocusRequestCompat audioFocusReq) {
-		return true;
-	}
-
-	@Override
-	public void releaseAudioFocus(@Nullable AudioManager audioManager, @Nullable AudioFocusRequestCompat audioFocusReq) {
-	}
+	// requestAudioFocus()/releaseAudioFocus() intentionally not overridden: MediaEngine's default
+	// implementations already do the real AudioManagerCompat calls correctly, letting YouTube
+	// participate in MediaSessionCallback's existing auto-pause-on-focus-loss/auto-resume-on-gain
+	// machinery (e.g. a transient interruption from another app or the car) the same way every
+	// other engine already does. pause()/start() above already guard against this kind of external
+	// pause via ignorePause.
 
 	@Override
 	public boolean hasVideoMenu() {
