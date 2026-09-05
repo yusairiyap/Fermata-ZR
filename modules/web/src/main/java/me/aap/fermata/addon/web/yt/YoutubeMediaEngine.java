@@ -241,16 +241,24 @@ class YoutubeMediaEngine implements MediaEngine, OverlayMenu.SelectionHandler {
 	 * screen. {@link GenericFragment} is reused (not a new addon-registered fragment) since
 	 * addon fragment routing is one-fragment-per-addon and {@link YoutubeAddon} already owns its
 	 * id for {@link YoutubeFragment}.
+	 * <p>
+	 * Uses {@link MainActivityDelegate#getActivityDelegate} rather than the synchronous
+	 * {@code MainActivityDelegate.get()} -- a menu tap can be delivered after the Activity backing
+	 * this WebView's Context has already been destroyed/recreated (e.g. a rotation or an Android
+	 * Auto reconnect while the menu was open), in which case {@code get()} throws
+	 * {@code ActivityDestroyedException} instead of returning; {@code onSuccess} simply no-ops
+	 * there instead of crashing.
 	 */
 	private boolean showEqualizer() {
-		MainActivityDelegate a = MainActivityDelegate.get(web.getContext());
-		if (!(a.showFragment(me.aap.utils.R.id.generic_fragment) instanceof GenericFragment f))
-			return false;
-		f.setTitle(a.getContext().getString(me.aap.fermata.R.string.audio_effects));
-		f.setContentProvider(g -> {
-			YoutubeEqualizerView v = new YoutubeEqualizerView(g.getContext());
-			v.init(web);
-			g.addView(v, new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+		MainActivityDelegate.getActivityDelegate(web.getContext()).onSuccess(a -> {
+			if (!(a.showFragment(me.aap.utils.R.id.generic_fragment) instanceof GenericFragment f))
+				return;
+			f.setTitle(a.getContext().getString(me.aap.fermata.R.string.audio_effects));
+			f.setContentProvider(g -> {
+				YoutubeEqualizerView v = new YoutubeEqualizerView(g.getContext());
+				v.init(web);
+				g.addView(v, new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+			});
 		});
 		return true;
 	}
