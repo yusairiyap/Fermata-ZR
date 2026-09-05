@@ -71,6 +71,12 @@
         <item name="android:thumbTint">?attr/colorControlActivated</item>
         <item name="android:progressTint">?attr/colorControlActivated</item>
         <item name="android:secondaryProgressTint">?android:attr/textColorHint</item>
+        <!-- SwitchCompat ignores the android:thumbTint/progressTint above (those only apply to
+        SeekBar); it reads its own app:trackTint/thumbTint instead. Without an explicit opaque
+        override here, the default Material "off" track renders semi-transparent by design,
+        letting whatever is behind the switch show through, so force both states fully opaque. -->
+        <item name="trackTint">@color/switch_track_tint</item>
+        <item name="thumbTint">@color/switch_thumb_tint</item>
     </style>
 
     <style name="AppTheme.StreamProgressStyle">
